@@ -168,14 +168,54 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
 
   if (draft.status === 'confirmed') {
     return (
-      <div className="max-w-2xl space-y-4">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Purchase Scan Review</h1>
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-6">
-          <p className="text-emerald-400 font-medium">This import has already been confirmed.</p>
-          <p className="text-slate-400 text-sm mt-1">Purchase records have been saved.</p>
-          <a href="/uploads" className="inline-block mt-4 text-sm text-amber-400 hover:underline">
-            View Import Reports →
-          </a>
+      <div className="max-w-4xl space-y-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Purchase Scan — Confirmed</h1>
+            <p className="text-gray-500 mt-1 text-sm truncate max-w-xs sm:max-w-none">
+              {draft.document_upload?.filename ?? 'Scanned document'}
+            </p>
+          </div>
+          <a href="/purchase-scan" className="text-xs text-slate-500 hover:text-slate-300 mt-1 shrink-0">← Back</a>
+        </div>
+
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 flex items-center gap-3">
+          <span className="text-emerald-400 text-lg shrink-0">✓</span>
+          <div>
+            <p className="text-emerald-400 font-medium text-sm">Import confirmed</p>
+            <p className="text-slate-400 text-xs mt-0.5">
+              {vendorName && `${vendorName} · `}{purchaseDate && `${purchaseDate} · `}
+              {draft.lines.length} line{draft.lines.length !== 1 ? 's' : ''} saved to purchases
+            </p>
+          </div>
+        </div>
+
+        <DocumentPreview draft={draft} showRawText={showRawText} setShowRawText={setShowRawText} />
+
+        <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="px-4 sm:px-5 py-4 border-b border-gray-800">
+            <h2 className="text-sm font-semibold text-slate-200">Imported Line Items</h2>
+          </div>
+          <div className="divide-y divide-gray-800/70">
+            {draft.lines.map((line) => (
+              <div key={line.id} className="px-4 sm:px-5 py-3 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-200 truncate">{line.raw_item_name}</p>
+                  {line.inventory_item && (
+                    <p className="text-xs text-slate-500 mt-0.5">{line.inventory_item.name}</p>
+                  )}
+                </div>
+                <div className="text-right shrink-0 space-y-0.5">
+                  {line.quantity != null && (
+                    <p className="text-sm text-slate-300">{line.quantity} {line.unit_type ?? ''}</p>
+                  )}
+                  {line.unit_cost != null && (
+                    <p className="text-xs text-slate-500">${Number(line.unit_cost).toFixed(2)} each</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )
