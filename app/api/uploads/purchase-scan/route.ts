@@ -30,10 +30,15 @@ export async function POST(req: NextRequest) {
 
     // Extract structured data using Claude
     let parsed
-    if (mimeType === 'application/pdf') {
-      parsed = await extractFromPdf(buffer)
-    } else {
-      parsed = await extractFromImage(buffer, mimeType as 'image/jpeg' | 'image/png' | 'image/webp')
+    try {
+      if (mimeType === 'application/pdf') {
+        parsed = await extractFromPdf(buffer)
+      } else {
+        parsed = await extractFromImage(buffer, mimeType as 'image/jpeg' | 'image/png' | 'image/webp')
+      }
+    } catch (claudeErr) {
+      console.error('[purchase-scan] Claude extraction failed:', claudeErr)
+      return NextResponse.json({ error: `AI extraction failed: ${claudeErr instanceof Error ? claudeErr.message : String(claudeErr)}` }, { status: 500 })
     }
 
     // Store the document upload record
@@ -49,7 +54,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (docError) return NextResponse.json({ error: docError.message }, { status: 500 })
+    if (docError) {
+      console.error('[purchase-scan] document_uploads insert failed:', docError)
+      return NextResponse.json({ error: `DB error (document_uploads): ${docError.message}` }, { status: 500 })
+    }
 
     // Create the draft header
     const { data: draft, error: draftError } = await supabase
@@ -66,7 +74,10 @@ export async function POST(req: NextRequest) {
       .select()
       .single()
 
-    if (draftError) return NextResponse.json({ error: draftError.message }, { status: 500 })
+    if (draftError) {
+      console.error('[purchase-scan] purchase_import_drafts insert failed:', draftError)
+      return NextResponse.json({ error: `DB error (purchase_import_drafts): ${draftError.message}` }, { status: 500 })
+    }
 
     // Resolve each line item against inventory
     const draftLines = await Promise.all(
@@ -92,7 +103,10 @@ export async function POST(req: NextRequest) {
       const { error: linesError } = await supabase
         .from('purchase_import_draft_lines')
         .insert(draftLines)
-      if (linesError) return NextResponse.json({ error: linesError.message }, { status: 500 })
+      if (linesError) {
+        console.error('[purchase-scan] purchase_import_draft_lines insert failed:', linesError)
+        return NextResponse.json({ error: `DB error (draft_lines): ${linesError.message}` }, { status: 500 })
+      }
     }
 
     return NextResponse.json({
@@ -102,6 +116,7 @@ export async function POST(req: NextRequest) {
       line_count: draftLines.length,
     })
   } catch (err: unknown) {
+    console.error('[purchase-scan] Unhandled error:', err)
     const message = err instanceof Error ? err.message : 'Processing failed'
     return NextResponse.json({ error: message }, { status: 500 })
   }
