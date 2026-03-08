@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { PurchaseImportDraftWithLines, PurchaseImportDraftLine, InventoryItem } from '@/types'
 
 const UNIT_OPTIONS = ['oz', 'ml', 'l', 'bottle', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
+const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'mixer', 'non-alcoholic', 'supply', 'other']
 
 interface EditableLine {
   id: string
@@ -276,6 +277,10 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
               inventoryItems={inventoryItems}
               onChange={(patch) => updateLine(idx, patch)}
               onRemove={() => removeLine(idx)}
+              onNewInventoryItem={(item) => {
+                setInventoryItems((prev) => [...prev, item])
+                updateLine(idx, { inventory_item_id: item.id })
+              }}
             />
           ))}
         </div>
@@ -303,6 +308,10 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
                   inventoryItems={inventoryItems}
                   onChange={(patch) => updateLine(idx, patch)}
                   onRemove={() => removeLine(idx)}
+                  onNewInventoryItem={(item) => {
+                    setInventoryItems((prev) => [...prev, item])
+                    updateLine(idx, { inventory_item_id: item.id })
+                  }}
                 />
               ))}
             </tbody>
@@ -406,14 +415,92 @@ function MatchBadge({ status, confidence }: { status: EditableLine['match_status
   return <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-400 font-medium">unmatched</span>
 }
 
+// ── Add to inventory inline form ──────────────────────────────────────────────
+
+function AddToInventoryForm({ rawName, onSave, onCancel }: {
+  rawName: string
+  onSave: (item: InventoryItem) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(rawName)
+  const [unit, setUnit] = useState('bottle')
+  const [category, setCategory] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function handleSave() {
+    if (!name.trim() || !unit) { setErr('Name and unit are required'); return }
+    setSaving(true)
+    setErr(null)
+    try {
+      const res = await fetch('/api/inventory-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), unit, category: category || null }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error ?? 'Failed to create'); return }
+      onSave(data)
+    } catch {
+      setErr('Failed to create item')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-2 bg-slate-800/80 border border-amber-500/30 rounded-lg p-3 space-y-2">
+      <p className="text-[11px] font-medium text-amber-400">Add new inventory item</p>
+      <div className="space-y-2">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Item name"
+          className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <select value={unit} onChange={(e) => setUnit(e.target.value)}
+            className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+          </select>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}
+            className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+            <option value="">category (opt)</option>
+            {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+      {err && <p className="text-red-400 text-[10px]">{err}</p>}
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex-1 py-1.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs font-semibold disabled:opacity-50 transition-colors"
+        >
+          {saving ? 'Adding…' : 'Add to Inventory'}
+        </button>
+        <button
+          onClick={onCancel}
+          className="py-1.5 px-3 rounded bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Mobile card per line ──────────────────────────────────────────────────────
 
-function MobileLineCard({ line, inventoryItems, onChange, onRemove }: {
+function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInventoryItem }: {
   line: EditableLine
   inventoryItems: InventoryItem[]
   onChange: (patch: Partial<EditableLine>) => void
   onRemove: () => void
+  onNewInventoryItem: (item: InventoryItem) => void
 }) {
+  const [showAdd, setShowAdd] = useState(false)
   const isLowConf = line.confidence === 'low'
   return (
     <div className={`p-4 space-y-3 ${isLowConf ? 'bg-amber-500/5' : ''} ${!line.is_approved ? 'opacity-40' : ''}`}>
@@ -460,8 +547,23 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove }: {
             <span className="text-[11px] text-slate-500">Save alias for future imports</span>
           </label>
         )}
-        {line.match_status === 'unmatched' && line.is_approved && (
-          <p className="text-red-400 text-[10px] mt-1">Not linked to inventory — purchases may not calculate correctly</p>
+        {line.match_status === 'unmatched' && line.is_approved && !showAdd && (
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-red-400 text-[10px]">Not linked to inventory</p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="text-[11px] text-amber-400 hover:text-amber-300 transition-colors font-medium"
+            >
+              + Add to inventory
+            </button>
+          </div>
+        )}
+        {showAdd && (
+          <AddToInventoryForm
+            rawName={line.raw_item_name}
+            onSave={(item) => { onNewInventoryItem(item); setShowAdd(false) }}
+            onCancel={() => setShowAdd(false)}
+          />
         )}
       </div>
 
@@ -494,12 +596,14 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove }: {
 
 // ── Desktop table row ─────────────────────────────────────────────────────────
 
-function DesktopLineRow({ line, inventoryItems, onChange, onRemove }: {
+function DesktopLineRow({ line, inventoryItems, onChange, onRemove, onNewInventoryItem }: {
   line: EditableLine
   inventoryItems: InventoryItem[]
   onChange: (patch: Partial<EditableLine>) => void
   onRemove: () => void
+  onNewInventoryItem: (item: InventoryItem) => void
 }) {
+  const [showAdd, setShowAdd] = useState(false)
   const isLowConf = line.confidence === 'low'
   return (
     <tr className={`${isLowConf ? 'bg-amber-500/5' : ''} ${!line.is_approved ? 'opacity-40' : ''}`}>
@@ -529,6 +633,21 @@ function DesktopLineRow({ line, inventoryItems, onChange, onRemove }: {
                 className="accent-amber-500 w-3 h-3" />
               <span className="text-[10px] text-slate-500">Save alias</span>
             </label>
+          )}
+          {line.match_status === 'unmatched' && line.is_approved && !showAdd && (
+            <button
+              onClick={() => setShowAdd(true)}
+              className="text-[10px] text-amber-400 hover:text-amber-300 transition-colors font-medium"
+            >
+              + Add to inventory
+            </button>
+          )}
+          {showAdd && (
+            <AddToInventoryForm
+              rawName={line.raw_item_name}
+              onSave={(item) => { onNewInventoryItem(item); setShowAdd(false) }}
+              onCancel={() => setShowAdd(false)}
+            />
           )}
         </div>
       </td>
