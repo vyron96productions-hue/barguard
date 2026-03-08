@@ -5,6 +5,13 @@ import { resolveInventoryItemId } from '@/lib/aliases'
 
 export const maxDuration = 60
 
+export const config = {
+  api: {
+    bodyParser: false,
+    sizeLimit: '10mb',
+  },
+}
+
 const SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const
 type SupportedMimeType = (typeof SUPPORTED_TYPES)[number]
 
