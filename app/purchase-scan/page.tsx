@@ -187,14 +187,14 @@ function groupByUploadMonth(drafts: PurchaseImportDraft[]): { label: string; dra
   const map = new Map<string, PurchaseImportDraft[]>()
   for (const draft of drafts) {
     const d = new Date(draft.created_at)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
     if (!map.has(key)) map.set(key, [])
     map.get(key)!.push(draft)
   }
   return Array.from(map.entries())
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([key, items]) => ({
-      label: new Date(key + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      label: new Date(key + '-02T00:00:00Z').toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
       drafts: items,
     }))
 }
@@ -246,7 +246,7 @@ function DraftList({
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs text-slate-500">
-                      {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
                     </span>
                     {draft.vendor_name && (
                       <span className="text-xs text-slate-500">{draft.vendor_name}</span>
