@@ -183,6 +183,22 @@ export default function PurchaseScanPage() {
   )
 }
 
+function groupByUploadMonth(drafts: PurchaseImportDraft[]): { label: string; drafts: PurchaseImportDraft[] }[] {
+  const map = new Map<string, PurchaseImportDraft[]>()
+  for (const draft of drafts) {
+    const d = new Date(draft.created_at)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(draft)
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, items]) => ({
+      label: new Date(key + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      drafts: items,
+    }))
+}
+
 function DraftList({
   drafts,
   loading,
@@ -207,35 +223,47 @@ function DraftList({
     )
   }
 
+  const groups = groupByUploadMonth(drafts)
+
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl divide-y divide-gray-800">
-      {drafts.map((draft) => (
-        <a
-          key={draft.id}
-          href={`/purchase-scan/${draft.id}`}
-          className="flex items-center justify-between px-5 py-4 hover:bg-gray-800/50 transition-colors group"
-        >
-          <div className="space-y-0.5 min-w-0">
-            <p className="text-sm font-medium text-slate-200 truncate">
-              {draft.document_upload?.filename ?? 'Unnamed document'}
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-slate-500">
-                {new Date(draft.created_at).toLocaleDateString()}
-              </span>
-              {draft.vendor_name && (
-                <span className="text-xs text-slate-500">{draft.vendor_name}</span>
-              )}
-              {draft.purchase_date && (
-                <span className="text-xs text-slate-500">{draft.purchase_date}</span>
-              )}
-            </div>
+    <div className="space-y-4">
+      {groups.map((group) => (
+        <div key={group.label}>
+          <div className="flex items-center gap-3 mb-2 px-1">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{group.label}</span>
+            <span className="text-xs text-slate-600">{group.drafts.length} upload{group.drafts.length !== 1 ? 's' : ''}</span>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <StatusPill status={draft.status} />
-            <span className="text-slate-600 group-hover:text-slate-400 text-xs">→</span>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl divide-y divide-gray-800">
+            {group.drafts.map((draft) => (
+              <a
+                key={draft.id}
+                href={`/purchase-scan/${draft.id}`}
+                className="flex items-center justify-between px-5 py-4 hover:bg-gray-800/50 transition-colors group"
+              >
+                <div className="space-y-0.5 min-w-0">
+                  <p className="text-sm font-medium text-slate-200 truncate">
+                    {draft.document_upload?.filename ?? 'Unnamed document'}
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-slate-500">
+                      {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                    {draft.vendor_name && (
+                      <span className="text-xs text-slate-500">{draft.vendor_name}</span>
+                    )}
+                    {draft.purchase_date && (
+                      <span className="text-xs text-slate-500">· invoice {draft.purchase_date}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <StatusPill status={draft.status} />
+                  <span className="text-slate-600 group-hover:text-slate-400 text-xs">→</span>
+                </div>
+              </a>
+            ))}
           </div>
-        </a>
+        </div>
       ))}
     </div>
   )
