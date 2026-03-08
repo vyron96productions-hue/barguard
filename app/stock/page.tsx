@@ -1,6 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+
+const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy']
 
 interface StockItem {
   id: string
@@ -143,7 +145,13 @@ export default function StockPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {catItems.map((item) => (
-                <StockCard key={item.id} item={item} />
+                <StockCard
+                  key={item.id}
+                  item={item}
+                  onUpdate={(updated) =>
+                    setItems((prev) => prev.map((i) => (i.id === updated.id ? { ...i, ...updated } : i)))
+                  }
+                />
               ))}
             </div>
           </div>
@@ -153,33 +161,106 @@ export default function StockPage() {
   )
 }
 
-function StockCard({ item }: { item: StockItem }) {
+function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Partial<StockItem> & { id: string }) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(item.name)
+  const [category, setCategory] = useState(item.category ?? '')
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
+
+  function openEdit() {
+    setName(item.name)
+    setCategory(item.category ?? '')
+    setErr(null)
+    setEditing(true)
+    setTimeout(() => nameRef.current?.focus(), 50)
+  }
+
+  async function handleSave() {
+    if (!name.trim()) { setErr('Name required'); return }
+    setSaving(true)
+    setErr(null)
+    const res = await fetch('/api/inventory-items', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: item.id, name: name.trim(), category: category || null }),
+    })
+    const data = await res.json()
+    setSaving(false)
+    if (!res.ok) { setErr(data.error ?? 'Save failed'); return }
+    onUpdate({ id: item.id, name: data.name, category: data.category })
+    setEditing(false)
+  }
+
   const status = staleness(item)
+  const dotColor = { fresh: 'bg-emerald-400', aging: 'bg-amber-400', stale: 'bg-red-400', never: 'bg-slate-600' }[status]
+  const qtyColor = item.quantity_on_hand === null ? 'text-slate-600' : item.quantity_on_hand === 0 ? 'text-red-400' : 'text-gray-100'
 
-  const dotColor = {
-    fresh: 'bg-emerald-400',
-    aging: 'bg-amber-400',
-    stale: 'bg-red-400',
-    never: 'bg-slate-600',
-  }[status]
-
-  const qtyColor = item.quantity_on_hand === null
-    ? 'text-slate-600'
-    : item.quantity_on_hand === 0
-    ? 'text-red-400'
-    : 'text-gray-100'
+  if (editing) {
+    return (
+      <div className="bg-gray-900 border border-amber-500/40 rounded-xl p-4 flex flex-col gap-3">
+        <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Edit Item</p>
+        <div className="space-y-2">
+          <input
+            ref={nameRef}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Item name"
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+          />
+          <div className="relative">
+            <input
+              list={`cat-options-${item.id}`}
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Category (e.g. rum)"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+            />
+            <datalist id={`cat-options-${item.id}`}>
+              {CATEGORY_OPTIONS.map((c) => <option key={c} value={c} />)}
+            </datalist>
+          </div>
+        </div>
+        {err && <p className="text-red-400 text-[10px]">{err}</p>}
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs font-semibold disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            onClick={() => setEditing(false)}
+            className="py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col gap-3 hover:border-gray-700 transition-colors">
-      {/* Name + freshness dot */}
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col gap-3 hover:border-gray-700 transition-colors group">
+      {/* Name + dot + edit button */}
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-slate-200 leading-snug">{item.name}</p>
-        <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-0.5 ${dotColor}`} title={
-          status === 'fresh' ? 'Counted recently' :
-          status === 'aging' ? 'Counted 8–30 days ago' :
-          status === 'stale' ? 'Counted 30+ days ago' :
-          'Never counted'
-        } />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={openEdit}
+            className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-amber-400 transition-all text-xs leading-none p-0.5"
+            title="Edit"
+          >
+            ✎
+          </button>
+          <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} title={
+            status === 'fresh' ? 'Counted recently' :
+            status === 'aging' ? 'Counted 8–30 days ago' :
+            status === 'stale' ? 'Counted 30+ days ago' : 'Never counted'
+          } />
+        </div>
       </div>
 
       {/* Big quantity */}

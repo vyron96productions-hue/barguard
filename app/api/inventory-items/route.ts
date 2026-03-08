@@ -31,6 +31,28 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(data, { status: 201 })
 }
 
+export async function PATCH(req: NextRequest) {
+  const body = await req.json()
+  const { id, name, category } = body
+
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const updates: Record<string, string | null> = {}
+  if (name !== undefined) updates.name = name.trim()
+  if (category !== undefined) updates.category = category || null
+
+  const { data, error } = await supabase
+    .from('inventory_items')
+    .update(updates)
+    .eq('id', id)
+    .eq('business_id', DEMO_BUSINESS_ID)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
 export async function DELETE(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
