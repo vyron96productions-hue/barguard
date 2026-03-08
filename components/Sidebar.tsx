@@ -5,7 +5,9 @@ import { usePathname } from 'next/navigation'
 
 const nav = [
   { href: '/', label: 'Dashboard', icon: '▣' },
+  { href: '/connections', label: 'POS Connections', icon: '⇋' },
   { href: '/uploads', label: 'Import Reports', icon: '⇪' },
+  { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
   { href: '/inventory-items', label: 'Inventory', icon: '◈' },
   { href: '/menu-items', label: 'Drink Recipes', icon: '◉' },
   { href: '/aliases', label: 'Name Matching', icon: '⇌' },
@@ -15,7 +17,7 @@ const nav = [
 export default function Sidebar() {
   const pathname = usePathname()
   return (
-    <aside className="w-56 bg-slate-950 border-r border-slate-800/60 flex flex-col shrink-0">
+    <aside className="hidden md:flex w-56 bg-slate-950 border-r border-slate-800/60 flex-col shrink-0">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-slate-800/60">
         <div className="flex items-center gap-2.5">

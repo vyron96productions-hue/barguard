@@ -46,7 +46,6 @@ export default function CsvUploader({ type, onSuccess }: Props) {
     const text = await f.text()
     const { headers: h } = parseCsvText(text)
     setHeaders(h)
-    // Auto-map if header names match exactly
     const autoMap: Record<string, string> = {}
     for (const field of [...required, ...optional]) {
       if (h.includes(field)) autoMap[field] = field
@@ -75,7 +74,7 @@ export default function CsvUploader({ type, onSuccess }: Props) {
       setHeaders([])
       setMapping({})
       if (inputRef.current) inputRef.current.value = ''
-    } catch (e) {
+    } catch {
       setError('Network error')
     } finally {
       setLoading(false)
@@ -89,22 +88,26 @@ export default function CsvUploader({ type, onSuccess }: Props) {
         type="file"
         accept=".csv"
         onChange={handleFileChange}
-        className="block text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-amber-500/20 file:text-amber-400 hover:file:bg-amber-500/30 cursor-pointer"
+        className="block w-full text-sm text-gray-400
+          file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0
+          file:text-sm file:font-medium file:bg-amber-500/20 file:text-amber-400
+          hover:file:bg-amber-500/30 active:file:bg-amber-500/40 cursor-pointer"
       />
 
       {headers.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm text-gray-400">Map CSV columns to required fields:</p>
+
           {[...required.map(f => ({ field: f, req: true })), ...optional.map(f => ({ field: f, req: false }))].map(({ field, req }) => (
-            <div key={field} className="flex items-center gap-3">
-              <label className="w-44 text-sm">
+            <div key={field} className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+              <label className="text-sm text-gray-300 sm:w-44 shrink-0">
                 {field}
                 {req && <span className="text-red-400 ml-1">*</span>}
               </label>
               <select
                 value={mapping[field] ?? ''}
                 onChange={(e) => setMapping((m) => ({ ...m, [field]: e.target.value }))}
-                className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 flex-1"
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200"
               >
                 <option value="">— skip —</option>
                 {headers.map((h) => (
@@ -119,7 +122,7 @@ export default function CsvUploader({ type, onSuccess }: Props) {
           <button
             onClick={handleUpload}
             disabled={loading}
-            className="px-4 py-2 bg-amber-500 text-gray-900 font-medium rounded text-sm hover:bg-amber-400 disabled:opacity-50"
+            className="w-full sm:w-auto px-5 py-2.5 bg-amber-500 text-gray-900 font-medium rounded text-sm hover:bg-amber-400 active:bg-amber-300 disabled:opacity-50 transition-colors"
           >
             {loading ? 'Uploading…' : 'Upload'}
           </button>

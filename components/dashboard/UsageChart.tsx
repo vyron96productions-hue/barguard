@@ -14,8 +14,8 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   const full = payload[0]?.payload?.fullName ?? label
   return (
-    <div className="bg-slate-900 border border-slate-700/60 rounded-xl px-4 py-3 shadow-xl text-xs min-w-[160px]">
-      <p className="text-slate-200 font-semibold mb-2">{full}</p>
+    <div className="bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2.5 shadow-xl text-xs min-w-[140px]">
+      <p className="text-slate-200 font-semibold mb-2 truncate max-w-[160px]">{full}</p>
       {payload.map((p: any) => {
         if (p.dataKey === 'variancePct') {
           const isOver = p.value > 0
@@ -61,40 +61,43 @@ export default function UsageChart({ summaries }: Props) {
   if (data.length === 0) return null
 
   return (
-    <div className="rounded-2xl bg-slate-900/60 border border-slate-800/60 p-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-100">Expected vs Actual Usage</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Bars in ounces · Line shows variance %</p>
-        </div>
-        <div className="flex items-center gap-4 text-[11px] text-slate-500">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block" /> Expected
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" /> Actual
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-5 h-0.5 bg-white/40 inline-block rounded-full" /> Variance %
-          </span>
+    <div className="rounded-2xl bg-slate-900/60 border border-slate-800/60 p-4 sm:p-6">
+      <div className="mb-4 sm:mb-5">
+        <div className="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">Expected vs Actual Usage</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Bars in ounces · Line shows variance %</p>
+          </div>
+          {/* Legend */}
+          <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] text-slate-500 flex-wrap">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-slate-600 inline-block" /> Expected
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" /> Actual
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-0.5 bg-white/40 inline-block rounded-full" /> Variance %
+            </span>
+          </div>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={200}>
         <ComposedChart data={data} barGap={4} barCategoryGap="30%">
           <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.04)" />
           <XAxis
             dataKey="name"
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: '#64748b', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             yAxisId="oz"
-            tick={{ fill: '#64748b', fontSize: 11 }}
+            tick={{ fill: '#64748b', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
-            width={36}
+            width={30}
           />
           <YAxis
             yAxisId="pct"
@@ -102,7 +105,7 @@ export default function UsageChart({ summaries }: Props) {
             tick={{ fill: '#64748b', fontSize: 10 }}
             axisLine={false}
             tickLine={false}
-            width={36}
+            width={30}
             tickFormatter={(v) => `${v}%`}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />

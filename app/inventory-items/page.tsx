@@ -55,31 +55,49 @@ export default function InventoryItemsPage() {
   }, {})
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-5 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-100">Inventory Items</h1>
-        <p className="text-gray-500 mt-1">Physical items you track — bottles, kegs, cases.</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Inventory Items</h1>
+        <p className="text-gray-500 mt-1 text-sm">Physical items you track — bottles, kegs, cases.</p>
       </div>
 
       {/* Add form */}
-      <form onSubmit={handleAdd} className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+      <form onSubmit={handleAdd} className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5 space-y-3">
         <h2 className="font-medium text-gray-200">Add Item</h2>
-        <div className="flex gap-3 flex-wrap">
+        <div className="space-y-3">
           <input
-            value={name} onChange={(e) => setName(e.target.value)} placeholder="Item name (e.g. Tito's Vodka)"
-            className="flex-1 min-w-48 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 placeholder-gray-600"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Item name (e.g. Tito's Vodka)"
+            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
           />
-          <select value={unit} onChange={(e) => setUnit(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200">
-            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-          </select>
-          <input
-            value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category (optional)"
-            className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200 placeholder-gray-600 w-40"
-          />
-          <button type="submit" disabled={saving}
-            className="px-4 py-2 bg-amber-500 text-gray-900 font-medium rounded text-sm hover:bg-amber-400 disabled:opacity-50">
-            Add
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Unit</label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200"
+              >
+                {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Category (optional)</label>
+              <input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g. Vodka"
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full sm:w-auto px-5 py-2.5 bg-amber-500 text-gray-900 font-medium rounded text-sm hover:bg-amber-400 active:bg-amber-300 disabled:opacity-50 transition-colors"
+          >
+            {saving ? 'Adding…' : 'Add Item'}
           </button>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -91,37 +109,30 @@ export default function InventoryItemsPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-16 text-gray-600">
           <p className="text-4xl mb-3">🍾</p>
-          <p>No inventory items yet. Add your first item above.</p>
+          <p className="text-sm">No inventory items yet. Add your first item above.</p>
         </div>
       ) : (
         Object.entries(grouped).map(([cat, catItems]) => (
           <div key={cat} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-800 bg-gray-800/50">
+            <div className="px-4 sm:px-5 py-3 border-b border-gray-800 bg-gray-800/50">
               <h3 className="text-sm font-medium text-gray-400">{cat}</h3>
             </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-800 text-gray-500 text-left">
-                  <th className="px-5 py-3">Name</th>
-                  <th className="px-5 py-3">Unit</th>
-                  <th className="px-5 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {catItems.map((item) => (
-                  <tr key={item.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                    <td className="px-5 py-3 font-medium">{item.name}</td>
-                    <td className="px-5 py-3 text-gray-400">{item.unit}</td>
-                    <td className="px-5 py-3 text-right">
-                      <button onClick={() => handleDelete(item.id)}
-                        className="text-xs text-gray-600 hover:text-red-400 transition-colors">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="divide-y divide-gray-800/50">
+              {catItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-gray-800/30 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <p className="font-medium text-sm text-gray-200 truncate">{item.name}</p>
+                    <span className="text-xs text-gray-500 shrink-0 bg-gray-800 px-2 py-0.5 rounded">{item.unit}</span>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-xs text-gray-600 hover:text-red-400 active:text-red-300 transition-colors ml-3 shrink-0 py-1 px-2"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         ))
       )}

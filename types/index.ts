@@ -146,3 +146,53 @@ export interface ColumnMapping {
 export type VarianceStatus = 'normal' | 'warning' | 'critical'
 
 export type CsvUploadType = 'sales' | 'inventory' | 'purchases'
+
+// ─── Purchase Scan Import ───────────────────────────────────────────────────
+
+export interface DocumentUpload {
+  id: string
+  business_id: string
+  filename: string
+  file_type: string
+  file_data: string | null      // base64-encoded file content
+  raw_extracted_text: string | null
+  created_at: string
+}
+
+export interface PurchaseImportDraft {
+  id: string
+  business_id: string
+  document_upload_id: string | null
+  vendor_name: string | null
+  purchase_date: string | null
+  status: 'pending' | 'confirmed' | 'cancelled'
+  confidence: 'high' | 'medium' | 'low'
+  warning_message: string | null
+  created_at: string
+  confirmed_at: string | null
+  document_upload?: Pick<DocumentUpload, 'id' | 'filename' | 'file_type'>
+}
+
+export interface PurchaseImportDraftLine {
+  id: string
+  draft_id: string
+  raw_item_name: string
+  inventory_item_id: string | null
+  quantity: number | null
+  unit_type: string | null
+  unit_cost: number | null
+  line_total: number | null
+  match_status: 'matched' | 'unmatched' | 'manual'
+  confidence: 'high' | 'medium' | 'low'
+  is_approved: boolean
+  sort_order: number
+  inventory_item?: Pick<InventoryItem, 'id' | 'name' | 'unit' | 'category'>
+}
+
+export interface PurchaseImportDraftWithLines extends PurchaseImportDraft {
+  lines: PurchaseImportDraftLine[]
+  document_upload?: Pick<DocumentUpload, 'id' | 'filename' | 'file_type' | 'file_data' | 'raw_extracted_text'>
+}
+
+// Re-export POS types for convenience
+export type { PosProvider, PosConnection, PosSyncLog, NormalizedSaleItem } from '@/lib/pos/types'
