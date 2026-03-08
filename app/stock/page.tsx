@@ -250,7 +250,7 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={openEdit}
-            className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-amber-400 transition-all text-xs leading-none p-0.5"
+            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-slate-500 hover:text-amber-400 active:text-amber-300 transition-all text-sm leading-none p-1"
             title="Edit"
           >
             ✎
