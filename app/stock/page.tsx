@@ -165,6 +165,8 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [category, setCategory] = useState(item.category ?? '')
+  const [unit, setUnit] = useState(item.unit)
+  const [quantity, setQuantity] = useState(item.quantity_on_hand?.toString() ?? '')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
@@ -172,6 +174,8 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
   function openEdit() {
     setName(item.name)
     setCategory(item.category ?? '')
+    setUnit(item.unit)
+    setQuantity(item.quantity_on_hand?.toString() ?? '')
     setErr(null)
     setEditing(true)
     setTimeout(() => nameRef.current?.focus(), 50)
@@ -179,17 +183,31 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
 
   async function handleSave() {
     if (!name.trim()) { setErr('Name required'); return }
+    if (!unit) { setErr('Unit required'); return }
     setSaving(true)
     setErr(null)
-    const res = await fetch('/api/inventory-items', {
+    const res = await fetch('/api/stock-levels', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: item.id, name: name.trim(), category: category || null }),
+      body: JSON.stringify({
+        id: item.id,
+        name: name.trim(),
+        category: category || null,
+        unit,
+        quantity_on_hand: quantity !== '' ? parseFloat(quantity) : null,
+      }),
     })
     const data = await res.json()
     setSaving(false)
     if (!res.ok) { setErr(data.error ?? 'Save failed'); return }
-    onUpdate({ id: item.id, name: data.name, category: data.category })
+    onUpdate({
+      id: item.id,
+      name: name.trim(),
+      category: category || null,
+      unit,
+      quantity_on_hand: quantity !== '' ? parseFloat(quantity) : item.quantity_on_hand,
+      count_date: quantity !== '' ? new Date().toISOString().slice(0, 10) : item.count_date,
+    })
     setEditing(false)
   }
 
@@ -202,25 +220,56 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
       <div className="bg-gray-900 border border-amber-500/40 rounded-xl p-4 flex flex-col gap-3">
         <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Edit Item</p>
         <div className="space-y-2">
-          <input
-            ref={nameRef}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Item name"
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
-          />
-          <div className="relative">
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider">Name</label>
+            <input
+              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Item name"
+              className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider">Category</label>
             <input
               list={`cat-options-${item.id}`}
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="Category (e.g. rum)"
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+              placeholder="e.g. rum, cognac, beer"
+              className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
             />
             <datalist id={`cat-options-${item.id}`}>
               {CATEGORY_OPTIONS.map((c) => <option key={c} value={c} />)}
             </datalist>
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase tracking-wider">Unit</label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+              >
+                {['oz', 'ml', 'l', 'bottle', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint'].map((u) => (
+                  <option key={u} value={u}>{u}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase tracking-wider">Qty on Hand</label>
+              <input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder={item.quantity_on_hand?.toString() ?? '—'}
+                className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+              />
+            </div>
+          </div>
+          {quantity !== '' && (
+            <p className="text-[10px] text-slate-500">Saving a quantity records a manual stock adjustment for today.</p>
+          )}
         </div>
         {err && <p className="text-red-400 text-[10px]">{err}</p>}
         <div className="flex gap-2">
