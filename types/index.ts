@@ -52,6 +52,12 @@ export interface SalesTransaction {
   menu_item_id: string | null
   quantity_sold: number
   gross_sales: number | null
+  /** Precise transaction timestamp (from POS or time-stamped CSV). Null for date-only CSV imports. */
+  sale_timestamp: string | null
+  /** Guest / cover count per transaction, when available from POS. Null for CSV imports. */
+  guest_count: number | null
+  /** POS check or order reference ID, for deduplication. */
+  check_id: string | null
 }
 
 export interface InventoryCountUpload {
@@ -113,6 +119,17 @@ export interface InventoryUsageSummary {
   status: 'normal' | 'warning' | 'critical'
   calculated_at: string
   inventory_item?: InventoryItem
+  // ── Shift tracking (nullable; populated when a shift window was specified) ──
+  /** ISO 8601 absolute start of the shift window */
+  shift_start: string | null
+  /** ISO 8601 absolute end of the shift window */
+  shift_end: string | null
+  /** Human-readable shift label: "Dinner · Mon, Mar 9, 2026 · 5:00 PM – 9:00 PM" */
+  shift_label: string | null
+  /** Total gross sales revenue for the period/shift */
+  total_revenue: number | null
+  /** Total guests / covers for the period/shift (exact from POS, or null if unavailable) */
+  total_covers: number | null
 }
 
 export interface AiSummary {
@@ -122,6 +139,8 @@ export interface AiSummary {
   period_end: string
   summary_text: string
   created_at: string
+  /** Shift label this summary was generated for, if shift mode was used */
+  shift_label: string | null
 }
 
 export interface InventoryItemAlias {

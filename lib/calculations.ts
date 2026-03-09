@@ -10,6 +10,10 @@ export interface RecipeIngredient {
 export interface SaleRecord {
   menu_item_id: string
   quantity_sold: number
+  /** Gross sales revenue for this line, if available */
+  gross_sales?: number | null
+  /** Guest / cover count for this transaction, if available from POS */
+  guest_count?: number | null
 }
 
 export interface RecipeMap {
@@ -54,6 +58,37 @@ export function calculateActualUsage(
   endingOz: number
 ): number {
   return beginningOz + purchasedOz - endingOz
+}
+
+/**
+ * Sum gross_sales across all sale records.
+ * Returns 0 when no records have gross_sales populated.
+ */
+export function aggregateRevenue(sales: SaleRecord[]): number {
+  return sales.reduce((sum, s) => sum + (s.gross_sales ?? 0), 0)
+}
+
+/**
+ * Estimate guest / cover count from sale records.
+ *
+ * Priority:
+ *  1. Exact: sum of guest_count when POS provides per-transaction cover counts.
+ *  2. None:  returns null when no guest_count data is present.
+ *
+ * Callers should label the result clearly:
+ *  - source 'exact'  → display as-is
+ *  - source 'none'   → omit or show "—"
+ */
+export interface GuestCountResult {
+  count: number | null
+  /** How the count was derived — display this clearly in the UI */
+  source: 'exact' | 'none'
+}
+
+export function estimateGuestCount(sales: SaleRecord[]): GuestCountResult {
+  const total = sales.reduce((sum, s) => sum + (s.guest_count ?? 0), 0)
+  if (total > 0) return { count: total, source: 'exact' }
+  return { count: null, source: 'none' }
 }
 
 /**

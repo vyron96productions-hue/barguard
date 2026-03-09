@@ -4,7 +4,9 @@ import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const periodStart = searchParams.get('period_start')
-  const periodEnd = searchParams.get('period_end')
+  const periodEnd   = searchParams.get('period_end')
+  // When present, filter to a specific shift; when absent, return all rows for the period.
+  const shiftLabel  = searchParams.get('shift_label')
 
   let query = supabase
     .from('inventory_usage_summaries')
@@ -14,7 +16,8 @@ export async function GET(req: NextRequest) {
     .order('variance_percent', { ascending: false })
 
   if (periodStart) query = query.gte('period_start', periodStart)
-  if (periodEnd) query = query.lte('period_end', periodEnd)
+  if (periodEnd)   query = query.lte('period_end', periodEnd)
+  if (shiftLabel !== null) query = query.eq('shift_label', shiftLabel)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

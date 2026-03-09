@@ -21,7 +21,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'CSV parse failed', details: errors }, { status: 400 })
   }
 
-  const validRows: { date: string; item_name: string; quantity: number; gross_sales: number | null }[] = []
+  const validRows: {
+    date: string
+    item_name: string
+    quantity: number
+    gross_sales: number | null
+    sale_timestamp: string | null
+    guest_count: number | null
+    check_id: string | null
+  }[] = []
   const rowErrors: string[] = []
 
   for (let i = 0; i < rows.length; i++) {
@@ -36,7 +44,17 @@ export async function POST(req: NextRequest) {
     if (quantity === null || quantity < 0) { rowErrors.push(`Row ${i + 2}: invalid quantity "${qtyStr}"`); continue }
 
     const grossSales = mapping.gross_sales ? parseFloatSafe(row[mapping.gross_sales]) : null
-    validRows.push({ date, item_name: itemName, quantity, gross_sales: grossSales })
+
+    // Optional POS fields — only present when the CSV has them and the user mapped them
+    const rawTimestamp = mapping.sale_timestamp ? row[mapping.sale_timestamp] : null
+    const saleTimestamp = rawTimestamp && rawTimestamp.trim() ? rawTimestamp.trim() : null
+
+    const rawGuest = mapping.guest_count ? parseFloatSafe(row[mapping.guest_count]) : null
+    const guestCount = rawGuest !== null && rawGuest >= 0 ? Math.round(rawGuest) : null
+
+    const checkId = mapping.check_id && row[mapping.check_id] ? row[mapping.check_id].trim() || null : null
+
+    validRows.push({ date, item_name: itemName, quantity, gross_sales: grossSales, sale_timestamp: saleTimestamp, guest_count: guestCount, check_id: checkId })
   }
 
   if (validRows.length === 0) {
@@ -68,6 +86,9 @@ export async function POST(req: NextRequest) {
         menu_item_id: menuItemId,
         quantity_sold: r.quantity,
         gross_sales: r.gross_sales,
+        sale_timestamp: r.sale_timestamp,
+        guest_count: r.guest_count,
+        check_id: r.check_id,
       }
     })
   )

@@ -4,6 +4,8 @@ import {
   calculateExpectedUsage,
   calculateActualUsage,
   calculateVariance,
+  aggregateRevenue,
+  estimateGuestCount,
   type RecipeMap,
   type SaleRecord,
 } from '@/lib/calculations'
@@ -11,55 +13,90 @@ import { convertToOz } from '@/lib/conversions'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { period_start, period_end } = body
+  const { period_start, period_end, shift_start, shift_end, shift_label } = body
 
   if (!period_start || !period_end) {
     return NextResponse.json({ error: 'period_start and period_end are required' }, { status: 400 })
   }
 
-  // Load sales transactions for period
-  const { data: salesData, error: salesError } = await supabase
-    .from('sales_transactions')
-    .select('menu_item_id, quantity_sold')
-    .eq('business_id', DEMO_BUSINESS_ID)
-    .gte('sale_date', period_start)
-    .lte('sale_date', period_end)
-    .not('menu_item_id', 'is', null)
+  const isShiftMode = !!(shift_start && shift_end)
+
+  // ── Load sales transactions ─────────────────────────────────────────────────
+  // When a shift window is provided we use the Postgres RPC function which
+  // applies precise timestamp filtering with a date-only fallback for CSV rows.
+  // Without a shift window, we use the standard date-range filter.
+  let salesData: Array<{
+    menu_item_id: string
+    quantity_sold: number
+    gross_sales: number | null
+    guest_count: number | null
+  }> | null = null
+  let salesError: { message: string } | null = null
+
+  if (isShiftMode) {
+    const { data, error } = await supabase.rpc('get_sales_in_shift', {
+      p_business_id: DEMO_BUSINESS_ID,
+      p_shift_start: shift_start,
+      p_shift_end:   shift_end,
+      p_date_start:  period_start,
+      p_date_end:    period_end,
+    })
+    salesData  = data
+    salesError = error
+  } else {
+    const { data, error } = await supabase
+      .from('sales_transactions')
+      .select('menu_item_id, quantity_sold, gross_sales, guest_count')
+      .eq('business_id', DEMO_BUSINESS_ID)
+      .gte('sale_date', period_start)
+      .lte('sale_date', period_end)
+      .not('menu_item_id', 'is', null)
+    salesData  = data
+    salesError = error
+  }
 
   if (salesError) return NextResponse.json({ error: salesError.message }, { status: 500 })
 
-  // Load all recipes
+  // ── Load recipes ────────────────────────────────────────────────────────────
   const { data: recipesData, error: recipesError } = await supabase
     .from('menu_item_recipes')
     .select('menu_item_id, inventory_item_id, quantity, unit')
 
   if (recipesError) return NextResponse.json({ error: recipesError.message }, { status: 500 })
 
-  // Load inventory items (for units)
+  // ── Load inventory items ────────────────────────────────────────────────────
   const { data: inventoryItems } = await supabase
     .from('inventory_items')
     .select('id, name, unit')
     .eq('business_id', DEMO_BUSINESS_ID)
 
-  // Build recipe map
+  // ── Build lookup maps ───────────────────────────────────────────────────────
   const recipeMap: RecipeMap = {}
   for (const r of recipesData ?? []) {
     if (!recipeMap[r.menu_item_id]) recipeMap[r.menu_item_id] = []
-    recipeMap[r.menu_item_id].push({ inventory_item_id: r.inventory_item_id, quantity: r.quantity, unit: r.unit })
+    recipeMap[r.menu_item_id].push({
+      inventory_item_id: r.inventory_item_id,
+      quantity: r.quantity,
+      unit: r.unit,
+    })
   }
 
   const itemUnits: Record<string, string> = {}
   for (const item of inventoryItems ?? []) itemUnits[item.id] = item.unit
 
+  // ── Aggregate sales metrics ─────────────────────────────────────────────────
   const sales: SaleRecord[] = (salesData ?? []).map((s) => ({
     menu_item_id: s.menu_item_id,
     quantity_sold: s.quantity_sold,
+    gross_sales: s.gross_sales,
+    guest_count: s.guest_count,
   }))
 
-  const expectedUsage = calculateExpectedUsage(sales, recipeMap, itemUnits)
+  const expectedUsage  = calculateExpectedUsage(sales, recipeMap, itemUnits)
+  const totalRevenue   = aggregateRevenue(sales)
+  const guestEstimate  = estimateGuestCount(sales)
 
-  // Get beginning inventory (earliest count <= period_start)
-  // Get ending inventory (latest count <= period_end)
+  // ── Inventory counts — beginning and ending ─────────────────────────────────
   const { data: beginCounts } = await supabase
     .from('inventory_counts')
     .select('inventory_item_id, quantity_on_hand, unit_type, count_date')
@@ -76,7 +113,7 @@ export async function POST(req: NextRequest) {
     .not('inventory_item_id', 'is', null)
     .order('count_date', { ascending: false })
 
-  // Latest count per item for beginning and ending
+  // Latest count per item
   const beginByItem: Record<string, { qty: number; unit: string | null }> = {}
   for (const c of beginCounts ?? []) {
     if (!beginByItem[c.inventory_item_id]) {
@@ -91,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Get purchases in period
+  // ── Purchases in period ─────────────────────────────────────────────────────
   const { data: purchasesData } = await supabase
     .from('purchases')
     .select('inventory_item_id, quantity_purchased, unit_type')
@@ -103,11 +140,11 @@ export async function POST(req: NextRequest) {
   const purchasedByItem: Record<string, number> = {}
   for (const p of purchasesData ?? []) {
     const unit = p.unit_type ?? itemUnits[p.inventory_item_id] ?? 'oz'
-    const oz = convertToOz(p.quantity_purchased, unit)
-    purchasedByItem[p.inventory_item_id] = (purchasedByItem[p.inventory_item_id] ?? 0) + oz
+    purchasedByItem[p.inventory_item_id] =
+      (purchasedByItem[p.inventory_item_id] ?? 0) + convertToOz(p.quantity_purchased, unit)
   }
 
-  // All item IDs involved
+  // ── Build summaries ─────────────────────────────────────────────────────────
   const allItemIds = new Set([
     ...Object.keys(expectedUsage),
     ...Object.keys(beginByItem),
@@ -117,39 +154,53 @@ export async function POST(req: NextRequest) {
 
   const summaries = []
   for (const itemId of allItemIds) {
-    const unit = itemUnits[itemId] ?? 'oz'
+    const unit     = itemUnits[itemId] ?? 'oz'
     const beginRaw = beginByItem[itemId]
-    const endRaw = endByItem[itemId]
-    const beginOz = beginRaw ? convertToOz(beginRaw.qty, beginRaw.unit ?? unit) : 0
-    const endOz = endRaw ? convertToOz(endRaw.qty, endRaw.unit ?? unit) : 0
+    const endRaw   = endByItem[itemId]
+    const beginOz  = beginRaw ? convertToOz(beginRaw.qty, beginRaw.unit ?? unit) : 0
+    const endOz    = endRaw   ? convertToOz(endRaw.qty,   endRaw.unit   ?? unit) : 0
     const purchasedOz = purchasedByItem[itemId] ?? 0
-    const expected = expectedUsage[itemId] ?? 0
+    const expected    = expectedUsage[itemId] ?? 0
 
     const actual = calculateActualUsage(beginOz, purchasedOz, endOz)
     const { variance, variancePercent, status } = calculateVariance(actual, expected)
 
     summaries.push({
-      business_id: DEMO_BUSINESS_ID,
-      inventory_item_id: itemId,
+      business_id:        DEMO_BUSINESS_ID,
+      inventory_item_id:  itemId,
       period_start,
       period_end,
       beginning_inventory: beginOz,
-      ending_inventory: endOz,
-      purchased: purchasedOz,
-      actual_usage: actual,
-      expected_usage: expected,
+      ending_inventory:    endOz,
+      purchased:           purchasedOz,
+      actual_usage:        actual,
+      expected_usage:      expected,
       variance,
-      variance_percent: variancePercent,
+      variance_percent:    variancePercent,
       status,
+      // ── Shift metadata (null for date-range calculations) ──
+      shift_start:   shift_start   ?? null,
+      shift_end:     shift_end     ?? null,
+      shift_label:   shift_label   ?? null,
+      total_revenue: totalRevenue  > 0 ? totalRevenue : null,
+      total_covers:  guestEstimate.count,
     })
   }
 
-  // Upsert summaries
+  // ── Upsert ─────────────────────────────────────────────────────────────────
   const { error: upsertError } = await supabase
     .from('inventory_usage_summaries')
     .upsert(summaries, { onConflict: 'business_id,inventory_item_id,period_start,period_end' })
 
   if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 })
 
-  return NextResponse.json({ calculated: summaries.length, period_start, period_end })
+  return NextResponse.json({
+    calculated: summaries.length,
+    period_start,
+    period_end,
+    shift_label: shift_label ?? null,
+    total_revenue: totalRevenue > 0 ? totalRevenue : null,
+    total_covers: guestEstimate.count,
+    guest_count_source: guestEstimate.source,
+  })
 }
