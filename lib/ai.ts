@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { InventoryUsageSummary } from '@/types'
+import type { InventoryUsageSummary, DrinkProfitSummary } from '@/types'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -91,6 +91,73 @@ ${shiftPerformanceSection}`
     model: 'claude-sonnet-4-6',
     max_tokens: 900,
     messages: [{ role: 'user', content: prompt }],
+  })
+
+  const content = message.content[0]
+  if (content.type !== 'text') throw new Error('Unexpected AI response type')
+  return content.text
+}
+
+// ── Profit Intelligence AI ────────────────────────────────────────────────────
+
+export interface ProfitInsightsInput {
+  periodStart: string
+  periodEnd:   string
+  summaries:   Pick<
+    DrinkProfitSummary,
+    | 'quantity_sold'
+    | 'gross_revenue'
+    | 'estimated_cost'
+    | 'estimated_profit'
+    | 'profit_margin_pct'
+    | 'has_full_cost'
+    | 'menu_item'
+  >[]
+}
+
+export async function generateProfitInsights(input: ProfitInsightsInput): Promise<string> {
+  const totalRevenue = input.summaries.reduce((s, r) => s + (r.gross_revenue ?? 0), 0)
+  const totalProfit  = input.summaries.reduce((s, r) => s + (r.estimated_profit ?? 0), 0)
+  const avgMargin    = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : null
+
+  const rows = input.summaries.map((r) => ({
+    drink:         r.menu_item?.name ?? 'Unknown',
+    quantity_sold: r.quantity_sold,
+    revenue:       `$${(r.gross_revenue ?? 0).toFixed(2)}`,
+    est_cost:      r.estimated_cost != null ? `$${r.estimated_cost.toFixed(2)}` : 'N/A',
+    est_profit:    r.estimated_profit != null ? `$${r.estimated_profit.toFixed(2)}` : 'N/A',
+    margin:        r.profit_margin_pct != null ? `${r.profit_margin_pct.toFixed(1)}%` : 'N/A',
+    full_cost_data: r.has_full_cost,
+  }))
+
+  const prompt = `You are a bar profitability advisor reviewing drink-level performance data for a manager.
+
+Period: ${input.periodStart} to ${input.periodEnd}
+Total revenue: $${totalRevenue.toFixed(2)}
+Total estimated profit: $${totalProfit.toFixed(2)}
+Average margin: ${avgMargin != null ? `${avgMargin.toFixed(1)}%` : 'N/A'}
+
+Drink performance data:
+${JSON.stringify(rows, null, 2)}
+
+Write a concise profit intelligence briefing using EXACTLY these sections. Each section: 2–4 lines max. Be specific — reference actual drink names and numbers. No filler, no obvious advice.
+
+## What's Working
+The 1–2 drinks delivering the best margin or profit. Why they matter to the bottom line.
+
+## Watch List
+The 1–2 drinks with weak margin, high cost, or volume that isn't converting to profit. Be specific.
+
+## Opportunities
+1–2 concrete actions to improve profit: pricing adjustments, recipe cost changes, promotion of high-margin items, or menu decisions. Prioritize by impact.
+
+## Bottom Line
+One sentence: the single most important thing this manager should focus on this week.`
+
+  const message = await client.messages.create({
+    model:      'claude-sonnet-4-6',
+    max_tokens: 600,
+    messages:   [{ role: 'user', content: prompt }],
   })
 
   const content = message.content[0]
