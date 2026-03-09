@@ -10,6 +10,7 @@ export interface InventoryItem {
   name: string
   unit: string // oz, ml, bottle, case, keg, etc.
   category: string | null
+  pack_size: number | null // units per pack (e.g. 24 for a 24-pack); null = no pack tracking
   created_at: string
 }
 

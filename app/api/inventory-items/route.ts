@@ -15,15 +15,20 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { name, unit, category } = body
+  const { name, unit, category, pack_size } = body
 
   if (!name || !unit) {
     return NextResponse.json({ error: 'name and unit are required' }, { status: 400 })
   }
 
+  const packSizeVal = pack_size ? parseInt(pack_size, 10) : null
+  if (packSizeVal !== null && (isNaN(packSizeVal) || packSizeVal < 1)) {
+    return NextResponse.json({ error: 'pack_size must be a positive integer' }, { status: 400 })
+  }
+
   const { data, error } = await supabase
     .from('inventory_items')
-    .insert({ business_id: DEMO_BUSINESS_ID, name: name.trim(), unit, category: category || null })
+    .insert({ business_id: DEMO_BUSINESS_ID, name: name.trim(), unit, category: category || null, pack_size: packSizeVal })
     .select()
     .single()
 

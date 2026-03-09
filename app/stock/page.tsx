@@ -9,6 +9,7 @@ interface StockItem {
   name: string
   unit: string
   category: string | null
+  pack_size: number | null
   quantity_on_hand: number | null
   count_date: string | null
 }
@@ -318,6 +319,12 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
           {item.quantity_on_hand !== null ? item.quantity_on_hand : '—'}
         </p>
         <p className="text-xs text-slate-500 mt-1">{item.unit}</p>
+        {item.pack_size && item.quantity_on_hand !== null && (
+          <p className="text-xs text-amber-500/70 mt-1">
+            {Math.floor(item.quantity_on_hand / item.pack_size)} × {item.pack_size}-pack
+            {item.quantity_on_hand % item.pack_size > 0 && ` + ${item.quantity_on_hand % item.pack_size}`}
+          </p>
+        )}
       </div>
 
       {/* Last counted */}

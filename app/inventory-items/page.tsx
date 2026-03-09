@@ -11,6 +11,7 @@ export default function InventoryItemsPage() {
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('oz')
   const [category, setCategory] = useState('')
+  const [packSize, setPackSize] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,11 +33,11 @@ export default function InventoryItemsPage() {
     const res = await fetch('/api/inventory-items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, unit, category }),
+      body: JSON.stringify({ name, unit, category, pack_size: packSize || null }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
-    setName(''); setCategory('')
+    setName(''); setCategory(''); setPackSize('')
     fetchItems()
     setSaving(false)
   }
@@ -87,10 +88,22 @@ export default function InventoryItemsPage() {
               <input
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. Vodka"
+                placeholder="e.g. beer"
                 className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Pack size (optional)</label>
+            <input
+              type="number"
+              min="1"
+              value={packSize}
+              onChange={(e) => setPackSize(e.target.value)}
+              placeholder="e.g. 24 for a 24-pack"
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
+            />
+            <p className="text-[10px] text-gray-600 mt-1">Units per pack. Stock will display both individual count and pack count.</p>
           </div>
           <button
             type="submit"
@@ -120,9 +133,12 @@ export default function InventoryItemsPage() {
             <div className="divide-y divide-gray-800/50">
               {catItems.map((item) => (
                 <div key={item.id} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-gray-800/30 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-wrap">
                     <p className="font-medium text-sm text-gray-200 truncate">{item.name}</p>
                     <span className="text-xs text-gray-500 shrink-0 bg-gray-800 px-2 py-0.5 rounded">{item.unit}</span>
+                    {item.pack_size && (
+                      <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">{item.pack_size}/pack</span>
+                    )}
                   </div>
                   <button
                     onClick={() => handleDelete(item.id)}
