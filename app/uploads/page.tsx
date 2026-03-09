@@ -57,7 +57,7 @@ export default function UploadsPage() {
                 <ul className="mt-1 text-xs text-gray-400 list-disc list-inside">
                   {unresolvedAliases.map((name) => <li key={name}>{name}</li>)}
                 </ul>
-                <p className="text-xs text-gray-500 mt-2">Go to Name Matching to map these names.</p>
+                <p className="text-xs text-gray-500 mt-2">These names will need to be matched before they can be used in calculations.</p>
               </div>
             )}
           </div>
