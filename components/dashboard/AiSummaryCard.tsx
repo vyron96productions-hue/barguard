@@ -31,7 +31,7 @@ export default function AiSummaryCard({ summary }: Props) {
   return (
     <div className="rounded-2xl border border-amber-500/15 bg-gradient-to-br from-amber-500/[0.04] to-slate-900/60 overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-amber-500/10 flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-4 border-b border-amber-500/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/20 flex items-center justify-center">
             <span className="text-amber-400 text-sm">◈</span>
@@ -50,7 +50,7 @@ export default function AiSummaryCard({ summary }: Props) {
       </div>
 
       {/* Content */}
-      <div className="px-6 py-5">
+      <div className="px-4 sm:px-6 py-5">
         <div className="prose prose-invert prose-sm max-w-none
           prose-headings:text-amber-400 prose-headings:font-semibold prose-headings:text-sm prose-headings:mt-4 prose-headings:mb-2
           prose-p:text-slate-300 prose-p:leading-7 prose-p:text-sm prose-p:my-2

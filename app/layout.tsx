@@ -12,6 +12,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MobileNav />
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 overflow-auto min-w-0 pt-14 md:pt-0 px-4 py-5 md:px-8 md:py-8 lg:px-10">
+          <main className="flex-1 overflow-auto min-w-0 pt-14 md:pt-0 px-4 py-5 md:px-8 md:py-8 lg:px-10 pb-[calc(1.25rem+env(safe-area-inset-bottom))] md:pb-8">
             {children}
           </main>
         </div>

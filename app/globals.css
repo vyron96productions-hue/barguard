@@ -25,6 +25,10 @@
 }
 .fade-up { animation: fadeUp 0.4s ease both; }
 
+/* iPhone safe areas */
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top    { padding-top: env(safe-area-inset-top); }
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

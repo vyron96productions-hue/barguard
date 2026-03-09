@@ -85,21 +85,21 @@ export default function VarianceReportsPage() {
       {/* Summary KPIs */}
       {summaries.length > 0 && (
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5">
-            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Total Variance</p>
-            <p className={`text-2xl sm:text-3xl font-bold mt-1 ${totalVariance > 0 ? 'text-red-400' : 'text-green-400'}`}>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-5">
+            <p className="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider leading-tight">Total Variance</p>
+            <p className={`text-xl sm:text-3xl font-bold mt-1 ${totalVariance > 0 ? 'text-red-400' : 'text-green-400'}`}>
               {totalVariance > 0 ? '+' : ''}{totalVariance.toFixed(1)}
             </p>
             <p className="text-[10px] text-gray-600 mt-0.5">oz</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5">
-            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Critical</p>
-            <p className="text-2xl sm:text-3xl font-bold mt-1 text-red-400">{criticalCount}</p>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-5">
+            <p className="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider leading-tight">Critical</p>
+            <p className="text-xl sm:text-3xl font-bold mt-1 text-red-400">{criticalCount}</p>
             <p className="text-[10px] text-gray-600 mt-0.5">items</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5">
-            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Warning</p>
-            <p className="text-2xl sm:text-3xl font-bold mt-1 text-yellow-400">{warningCount}</p>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-5">
+            <p className="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider leading-tight">Warning</p>
+            <p className="text-xl sm:text-3xl font-bold mt-1 text-yellow-400">{warningCount}</p>
             <p className="text-[10px] text-gray-600 mt-0.5">items</p>
           </div>
         </div>

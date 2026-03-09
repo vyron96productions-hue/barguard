@@ -84,10 +84,10 @@ export default function PurchaseScanPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-5 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-100">Purchase Scan Import</h1>
-        <p className="text-gray-500 mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Purchase Scan Import</h1>
+        <p className="text-gray-500 mt-1 text-sm">
           Upload a receipt or invoice image (JPG, PNG) or PDF to automatically extract purchase data for review.
         </p>
       </div>
@@ -120,7 +120,7 @@ export default function PurchaseScanPage() {
             onDrop={handleDrop}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
             onDragLeave={() => setDragOver(false)}
-            className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors ${
+            className={`border-2 border-dashed rounded-xl p-6 sm:p-10 text-center cursor-pointer transition-colors ${
               dragOver
                 ? 'border-amber-400 bg-amber-500/5'
                 : selectedFile

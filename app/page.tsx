@@ -45,6 +45,7 @@ export default function DashboardPage() {
   const [periodStart, setPeriodStart] = useState('')
   const [periodEnd, setPeriodEnd] = useState('')
   const [calcMsg, setCalcMsg] = useState('')
+  const [cmdError, setCmdError] = useState('')
 
   async function fetchData(start: string, end: string) {
     setLoading(true)
@@ -59,7 +60,8 @@ export default function DashboardPage() {
   }
 
   async function runCalculation() {
-    if (!periodStart || !periodEnd) { alert('Set period start and end first'); return }
+    if (!periodStart || !periodEnd) { setCmdError('Select a date range first'); return }
+    setCmdError('')
     setCalcMsg('Calculating…')
     setSummaries([])
     setAiSummary(null)
@@ -84,7 +86,8 @@ export default function DashboardPage() {
   }
 
   async function generateSummary() {
-    if (!periodStart || !periodEnd) { alert('Set period start and end first'); return }
+    if (!periodStart || !periodEnd) { setCmdError('Select a date range first'); return }
+    setCmdError('')
     setGenerating(true)
     const res = await fetch('/api/ai/summary', {
       method: 'POST',
@@ -125,7 +128,7 @@ export default function DashboardPage() {
             <input
               type="date"
               value={periodStart}
-              onChange={(e) => setPeriodStart(e.target.value)}
+              onChange={(e) => { setPeriodStart(e.target.value); setCmdError('') }}
               className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 sm:py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/50 transition-colors"
             />
           </div>
@@ -134,7 +137,7 @@ export default function DashboardPage() {
             <input
               type="date"
               value={periodEnd}
-              onChange={(e) => setPeriodEnd(e.target.value)}
+              onChange={(e) => { setPeriodEnd(e.target.value); setCmdError('') }}
               className="w-full bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-2 sm:py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/50 transition-colors"
             />
           </div>
@@ -174,7 +177,10 @@ export default function DashboardPage() {
             </svg>
           </button>
 
-          {calcMsg && (
+          {cmdError && (
+            <span className="w-full sm:w-auto text-xs text-red-400 font-medium">{cmdError}</span>
+          )}
+          {calcMsg && !cmdError && (
             <span className="w-full sm:w-auto sm:ml-auto text-xs text-amber-400 font-medium">{calcMsg}</span>
           )}
         </div>

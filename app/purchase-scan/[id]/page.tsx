@@ -226,7 +226,7 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
   const approvedCount = lines.filter((l) => l.is_approved).length
 
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="space-y-5 max-w-4xl pb-28 sm:pb-0">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -372,7 +372,7 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      <div className="flex items-center gap-3 pb-4">
+      <div className="fixed bottom-0 left-0 right-0 z-20 sm:static bg-slate-950/95 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none border-t border-slate-800/60 sm:border-0 px-4 py-3 sm:p-0 flex items-center gap-3 safe-bottom">
         <button
           onClick={handleConfirm}
           disabled={submitting}
