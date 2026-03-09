@@ -83,6 +83,66 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { error: purchasesError } = await supabase.from('purchases').insert(purchases)
     if (purchasesError) return NextResponse.json({ error: purchasesError.message }, { status: 500 })
 
+    // ── Update stock levels: add received quantities to current on-hand ──────
+    const matchedLines = approvedLines.filter((l) => l.inventory_item_id && (l.quantity ?? 0) > 0)
+    if (matchedLines.length > 0) {
+      const itemIds = matchedLines.map((l) => l.inventory_item_id!)
+
+      // Get the latest count for each item
+      const { data: latestCounts } = await supabase
+        .from('inventory_counts')
+        .select('inventory_item_id, quantity_on_hand')
+        .eq('business_id', businessId)
+        .in('inventory_item_id', itemIds)
+        .order('count_date', { ascending: false })
+
+      const latestByItem = new Map<string, number>()
+      for (const c of latestCounts ?? []) {
+        if (!latestByItem.has(c.inventory_item_id)) {
+          latestByItem.set(c.inventory_item_id, c.quantity_on_hand)
+        }
+      }
+
+      // Get item names/units for the count records
+      const { data: invItems } = await supabase
+        .from('inventory_items')
+        .select('id, name, unit')
+        .eq('business_id', businessId)
+        .in('id', itemIds)
+
+      const itemMeta = new Map<string, { name: string; unit: string }>()
+      for (const item of invItems ?? []) itemMeta.set(item.id, { name: item.name, unit: item.unit })
+
+      // Create a count upload record for this delivery
+      const { data: countUpload } = await supabase
+        .from('inventory_count_uploads')
+        .insert({
+          business_id: businessId,
+          filename: `delivery-${id.slice(0, 8)}`,
+          count_date: purchaseDate,
+          row_count: matchedLines.length,
+        })
+        .select('id')
+        .single()
+
+      if (countUpload) {
+        const countRecords = matchedLines.map((line) => {
+          const prev = latestByItem.get(line.inventory_item_id!) ?? 0
+          const meta = itemMeta.get(line.inventory_item_id!)
+          return {
+            upload_id: countUpload.id,
+            business_id: businessId,
+            count_date: purchaseDate,
+            raw_item_name: line.raw_item_name,
+            inventory_item_id: line.inventory_item_id,
+            quantity_on_hand: prev + (line.quantity ?? 0),
+            unit_type: line.unit_type ?? meta?.unit ?? null,
+          }
+        })
+        await supabase.from('inventory_counts').insert(countRecords)
+      }
+    }
+
     await supabase
       .from('purchase_import_drafts')
       .update({ status: 'confirmed', vendor_name: body.vendor_name, purchase_date: purchaseDate, confirmed_at: new Date().toISOString() })
