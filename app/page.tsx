@@ -8,6 +8,7 @@ import NextActionsPanel from '@/components/dashboard/NextActionsPanel'
 import UsageChart from '@/components/dashboard/UsageChart'
 import ShiftSelector from '@/components/dashboard/ShiftSelector'
 import PerformanceSummaryCard from '@/components/dashboard/PerformanceSummaryCard'
+import DrinkProfitPreview from '@/components/dashboard/DrinkProfitPreview'
 import { SHIFT_PRESETS, resolveShiftWindow, type ResolvedShiftWindow } from '@/lib/shifts'
 import type { PerformanceData } from '@/app/api/reports/performance/route'
 import type { InventoryUsageSummary, AiSummary } from '@/types'
@@ -470,6 +471,20 @@ export default function DashboardPage() {
 
           {/* Business performance — shown whenever we have sales data */}
           {hasPerfData && <PerformanceSummaryCard data={perfData!} />}
+
+          {/* Drink profit preview — shown when profit data has been calculated */}
+          {hasPerfData && (() => {
+            const ep = effectivePeriod()
+            const shiftLabel = resolvedWindow?.displayLabel ?? customShiftWindow?.label ?? null
+            if (!ep.start || !ep.end) return null
+            return (
+              <DrinkProfitPreview
+                periodStart={ep.start}
+                periodEnd={ep.end}
+                shiftLabel={shiftLabel}
+              />
+            )
+          })()}
 
           {/* Inventory health KPIs */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">

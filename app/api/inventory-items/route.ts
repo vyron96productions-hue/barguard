@@ -54,6 +54,10 @@ export async function PATCH(req: NextRequest) {
   if (category !== undefined) updates.category = category || null
   if (package_type !== undefined) updates.package_type = package_type || null
   if (body.pack_size !== undefined) updates.pack_size = body.pack_size ? parseInt(body.pack_size, 10) : null
+  if (body.cost_per_oz !== undefined) {
+    const v = body.cost_per_oz !== '' ? parseFloat(body.cost_per_oz) : null
+    updates.cost_per_oz = v !== null && !isNaN(v) ? v : null
+  }
 
   const { data, error } = await supabase
     .from('inventory_items')

@@ -22,6 +22,7 @@ export default function InventoryItemsPage() {
   const [category, setCategory] = useState('')
   const [packageType, setPackageType] = useState('')
   const [packSize, setPackSize] = useState('')
+  const [costPerOz, setCostPerOz] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,11 +50,12 @@ export default function InventoryItemsPage() {
         category,
         package_type: packageType || null,
         pack_size: packSize || null,
+        cost_per_oz: costPerOz || null,
       }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
-    setName(''); setCategory(''); setPackageType(''); setPackSize('')
+    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerOz('')
     fetchItems()
     setSaving(false)
   }
@@ -155,6 +157,24 @@ export default function InventoryItemsPage() {
             </p>
           )}
 
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">
+              Cost per oz <span className="text-gray-600">(optional, for profit tracking)</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">$</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={costPerOz}
+                onChange={(e) => setCostPerOz(e.target.value)}
+                placeholder="e.g. 0.87"
+                className="w-full bg-gray-800 border border-gray-700 rounded pl-7 pr-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
+              />
+            </div>
+          </div>
+
           <button
             type="submit"
             disabled={saving}
@@ -194,6 +214,11 @@ export default function InventoryItemsPage() {
                     {item.pack_size && !item.package_type && (
                       <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
                         {item.pack_size}/pack
+                      </span>
+                    )}
+                    {item.cost_per_oz != null && (
+                      <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                        ${item.cost_per_oz.toFixed(2)}/oz
                       </span>
                     )}
                   </div>

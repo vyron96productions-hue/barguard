@@ -10,7 +10,9 @@ const nav = [
   { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
   { href: '/stock', label: 'Stock Levels', icon: '◫' },
   { href: '/inventory-items', label: 'Inventory Items', icon: '◈' },
-  { href: '/menu-items', label: 'Drink Recipes', icon: '◉' },
+  { href: '/drink-library', label: 'Drink Library', icon: '◍' },
+  { href: '/menu-items', label: 'Recipe Mapping', icon: '◉' },
+  { href: '/profit-intelligence', label: 'Profit Intelligence', icon: '◑' },
   { href: '/variance-reports', label: 'Loss Reports', icon: '◐' },
 ]
 

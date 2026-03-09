@@ -12,7 +12,61 @@ export interface InventoryItem {
   category: string | null
   pack_size: number | null    // units per package (e.g. 6 for a 6-pack)
   package_type: string | null // label for package format (e.g. '6-pack', 'case', 'keg')
+  cost_per_oz: number | null  // cost in USD per oz for profit calculations
   created_at: string
+}
+
+// ─── Drink Library ───────────────────────────────────────────────────────────
+
+export interface DrinkLibraryItem {
+  id: string
+  business_id: string
+  name: string
+  category: string | null       // e.g. 'cocktail', 'shot', 'beer', 'mocktail'
+  glassware: string | null
+  garnish: string | null
+  instructions: string | null
+  notes: string | null
+  menu_item_id: string | null   // optional link to operational engine
+  created_at: string
+  ingredients?: DrinkLibraryIngredient[]
+  aliases?: DrinkLibraryAlias[]
+}
+
+export interface DrinkLibraryIngredient {
+  id: string
+  drink_library_id: string
+  inventory_item_id: string | null
+  ingredient_name: string
+  quantity_oz: number
+  notes: string | null
+  sort_order: number
+  inventory_item?: Pick<InventoryItem, 'id' | 'name' | 'unit' | 'cost_per_oz'>
+}
+
+export interface DrinkLibraryAlias {
+  id: string
+  drink_library_id: string
+  alias: string
+}
+
+// ─── Drink Profit Summaries ──────────────────────────────────────────────────
+
+export interface DrinkProfitSummary {
+  id: string
+  business_id: string
+  menu_item_id: string
+  period_start: string
+  period_end: string
+  shift_label: string | null
+  quantity_sold: number
+  gross_revenue: number | null
+  estimated_cost: number | null
+  estimated_profit: number | null
+  profit_margin_pct: number | null
+  has_full_cost: boolean
+  calculated_at: string
+  menu_item?: Pick<MenuItem, 'id' | 'name' | 'category'>
 }
 
 export interface MenuItem {
