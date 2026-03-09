@@ -131,7 +131,7 @@ insert into drink_library_aliases (drink_library_id, alias) values
   ('30000000-0000-0000-0000-000000000007', 'Vod Shot'),
   ('30000000-0000-0000-0000-000000000008', 'Tequila Slam'),
   ('30000000-0000-0000-0000-000000000009', 'Collins'),
-  ('30000000-0000-0000-0000-000000000010', 'Espresso Martini', ),
+  ('30000000-0000-0000-0000-000000000010', 'Espresso Martini'),
   ('30000000-0000-0000-0000-000000000010', 'Espresso Tini')
 on conflict (drink_library_id, alias) do nothing;
 
