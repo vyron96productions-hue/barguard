@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
     }
 
     const draftLines = await Promise.all(
-      parsed.line_items.map(async (item: { raw_item_name: string; quantity: number; unit_type: string | null; unit_cost: number | null; line_total: number | null; confidence: number; package_type?: string; units_per_package?: number }, idx: number) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      parsed.line_items.map(async (item: any, idx: number) => {
         const inventoryItemId = await resolveInventoryItemId(item.raw_item_name, supabase, businessId)
         return {
           draft_id: draft.id,
