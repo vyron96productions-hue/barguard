@@ -4,6 +4,13 @@ import { useEffect, useState, useRef } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
 
+const PRESET_CATEGORIES = [
+  'spirits', 'beer', 'wine', 'keg',
+  'mixer', 'non-alcoholic', 'supply',
+  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
+  'other',
+]
+
 interface StockItem {
   id: string
   name: string
@@ -44,7 +51,10 @@ export default function StockPage() {
   }, [])
 
   const categories = ['all', ...Array.from(new Set(items.map((i) => i.category ?? 'Uncategorized'))).sort()]
-  const allCategories = [...new Set(items.map((i) => i.category).filter(Boolean) as string[])].sort()
+  const allCategories = [...new Set([
+    ...PRESET_CATEGORIES,
+    ...items.map((i) => i.category).filter(Boolean) as string[],
+  ])].sort()
 
   const visible = items.filter((item) => {
     const matchesCat = filter === 'all' || (item.category ?? 'Uncategorized') === filter
