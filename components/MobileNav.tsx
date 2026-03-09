@@ -12,7 +12,6 @@ const nav = [
   { href: '/stock', label: 'Stock Levels', icon: '◫' },
   { href: '/inventory-items', label: 'Inventory Items', icon: '◈' },
   { href: '/menu-items', label: 'Drink Recipes', icon: '◉' },
-  { href: '/aliases', label: 'Name Matching', icon: '⇌' },
   { href: '/variance-reports', label: 'Loss Reports', icon: '◐' },
 ]
 
