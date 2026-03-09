@@ -4,15 +4,37 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const nav = [
-  { href: '/', label: 'Dashboard', icon: '▣' },
-  { href: '/connections', label: 'POS Connections', icon: '⇋' },
-  { href: '/uploads', label: 'Import Reports', icon: '⇪' },
-  { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
-  { href: '/stock', label: 'Stock Levels', icon: '◫' },
-  { href: '/inventory-items', label: 'Inventory Items', icon: '◈' },
-  { href: '/menu-items', label: 'Drink Recipes', icon: '◉' },
-  { href: '/variance-reports', label: 'Loss Reports', icon: '◐' },
+const sections = [
+  {
+    label: null,
+    items: [
+      { href: '/', label: 'Dashboard', icon: '▣' },
+    ],
+  },
+  {
+    label: 'Bartender',
+    items: [
+      { href: '/drink-library', label: 'Drink Library', icon: '◍' },
+    ],
+  },
+  {
+    label: 'Manager',
+    items: [
+      { href: '/stock', label: 'Stock Levels', icon: '◫' },
+      { href: '/uploads', label: 'Import Reports', icon: '⇪' },
+      { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
+      { href: '/profit-intelligence', label: 'Profit Intelligence', icon: '◑' },
+      { href: '/variance-reports', label: 'Loss Reports', icon: '◐' },
+    ],
+  },
+  {
+    label: 'Setup',
+    items: [
+      { href: '/inventory-items', label: 'Inventory Items', icon: '◈' },
+      { href: '/menu-items', label: 'Recipe Mapping', icon: '◉' },
+      { href: '/connections', label: 'POS Connections', icon: '⇋' },
+    ],
+  },
 ]
 
 export default function MobileNav() {
@@ -74,28 +96,39 @@ export default function MobileNav() {
             </div>
 
             {/* Nav links */}
-            <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-              {nav.map((item) => {
-                const active = pathname === item.href
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-150 ${
-                      active
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60 active:bg-slate-800 border border-transparent'
-                    }`}
-                  >
-                    <span className={`text-xs font-mono ${active ? 'text-amber-400' : 'text-slate-600'}`}>
-                      {item.icon}
-                    </span>
-                    <span className="font-medium">{item.label}</span>
-                    {active && <span className="ml-auto w-1 h-4 rounded-full bg-amber-500 opacity-80" />}
-                  </Link>
-                )
-              })}
+            <nav className="flex-1 px-3 py-4 space-y-0 overflow-y-auto">
+              {sections.map((section, si) => (
+                <div key={si} className={si > 0 ? 'mt-4 pt-4 border-t border-slate-800/50' : ''}>
+                  {section.label && (
+                    <p className="px-3 mb-1.5 text-[9px] font-semibold text-slate-700 uppercase tracking-[0.15em]">
+                      {section.label}
+                    </p>
+                  )}
+                  <div className="space-y-0.5">
+                    {section.items.map((item) => {
+                      const active = pathname === item.href
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-150 ${
+                            active
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60 active:bg-slate-800 border border-transparent'
+                          }`}
+                        >
+                          <span className={`text-xs font-mono ${active ? 'text-amber-400' : 'text-slate-600'}`}>
+                            {item.icon}
+                          </span>
+                          <span className="font-medium">{item.label}</span>
+                          {active && <span className="ml-auto w-1 h-4 rounded-full bg-amber-500 opacity-80" />}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             {/* Footer */}

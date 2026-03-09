@@ -4,85 +4,219 @@ import { useEffect, useState } from 'react'
 import type { DrinkLibraryItem } from '@/types'
 
 export default function DrinkLibraryPage() {
-  const [items, setItems] = useState<DrinkLibraryItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [selected, setSelected] = useState<DrinkLibraryItem | null>(null)
+  const [allItems, setAllItems]   = useState<DrinkLibraryItem[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [search, setSearch]       = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [selected, setSelected]   = useState<DrinkLibraryItem | null>(null)
+  // Mobile: 'list' shows the search + list; 'detail' shows the selected drink
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
 
   useEffect(() => {
     fetch('/api/drink-library')
       .then((r) => r.json())
-      .then((data) => { setItems(Array.isArray(data) ? data : []); setLoading(false) })
+      .then((data) => {
+        const items = Array.isArray(data) ? data : []
+        setAllItems(items)
+        if (items.length > 0) setSelected(items[0])
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
+  // Debounced search
   useEffect(() => {
-    const handler = setTimeout(() => {
+    const t = setTimeout(() => {
       const q = search.trim()
       fetch(`/api/drink-library${q ? `?q=${encodeURIComponent(q)}` : ''}`)
         .then((r) => r.json())
-        .then((data) => setItems(Array.isArray(data) ? data : []))
+        .then((data) => setAllItems(Array.isArray(data) ? data : []))
     }, 200)
-    return () => clearTimeout(handler)
+    return () => clearTimeout(t)
   }, [search])
 
-  // Auto-select first item on load
-  useEffect(() => {
-    if (items.length > 0 && !selected) setSelected(items[0])
-  }, [items, selected])
+  const categories = ['all', ...Array.from(new Set(allItems.map((i) => i.category ?? 'other'))).sort()]
+  const visible = categoryFilter === 'all'
+    ? allItems
+    : allItems.filter((i) => (i.category ?? 'other') === categoryFilter)
 
-  return (
-    <div className="flex gap-0 h-[calc(100vh-6rem)] max-w-5xl overflow-hidden">
-      {/* Left: search + list */}
-      <div className="w-64 shrink-0 flex flex-col border-r border-gray-800">
-        <div className="p-3 border-b border-gray-800">
-          <h1 className="text-base font-bold text-gray-100 mb-2">Drink Library</h1>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search drinks…"
-            className="w-full bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/60"
-          />
+  function selectDrink(item: DrinkLibraryItem) {
+    setSelected(item)
+    setMobileView('detail')
+  }
+
+  // ── Mobile list view ──────────────────────────────────────────────────────
+  const MobileList = (
+    <div className="flex flex-col gap-0 md:hidden">
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-100">Drink Library</h1>
+            <p className="text-slate-500 text-xs mt-0.5">{allItems.length} drinks · tap to view recipe</p>
+          </div>
+          <span className="text-[10px] px-2 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-semibold uppercase tracking-wider">
+            Bartender
+          </span>
         </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <p className="text-gray-600 text-xs p-4">Loading…</p>
-          ) : items.length === 0 ? (
-            <p className="text-gray-600 text-xs p-4">No drinks found.</p>
-          ) : (
-            items.map((item) => (
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search drinks or nicknames…"
+          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+        />
+        {categories.length > 1 && (
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+            {categories.map((cat) => (
               <button
-                key={item.id}
-                onClick={() => setSelected(item)}
-                className={`w-full text-left px-4 py-3 border-b border-gray-800/50 transition-colors ${
-                  selected?.id === item.id
-                    ? 'bg-amber-500/10 border-l-2 border-l-amber-500'
-                    : 'hover:bg-gray-800/40 border-l-2 border-l-transparent'
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
+                  categoryFilter === cat
+                    ? 'bg-amber-500 text-slate-900'
+                    : 'bg-slate-900 border border-slate-800 text-slate-500 hover:text-slate-300'
                 }`}
               >
-                <p className="text-sm font-medium text-gray-200">{item.name}</p>
-                {item.category && (
-                  <p className="text-xs text-gray-600 capitalize mt-0.5">{item.category}</p>
-                )}
+                {cat === 'all' ? 'All' : cat}
               </button>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Right: recipe detail */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {selected ? (
-          <DrinkDetail item={selected} />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-600 text-sm">Select a drink to view its recipe.</p>
+            ))}
           </div>
         )}
       </div>
+      {loading ? (
+        <p className="text-slate-600 text-sm text-center py-12">Loading…</p>
+      ) : visible.length === 0 ? (
+        <p className="text-slate-600 text-sm text-center py-12">No drinks found.</p>
+      ) : (
+        <div className="space-y-2">
+          {visible.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => selectDrink(item)}
+              className="w-full text-left bg-slate-900 border border-slate-800 rounded-xl px-4 py-3.5 hover:border-slate-700 active:bg-slate-800 transition-colors"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-200">{item.name}</p>
+                  <p className="text-xs text-slate-600 mt-0.5 capitalize">
+                    {item.glassware ?? item.category ?? ''}
+                    {item.ingredients && item.ingredients.length > 0 && (
+                      <span> · {item.ingredients.length} ingredient{item.ingredients.length !== 1 ? 's' : ''}</span>
+                    )}
+                  </p>
+                </div>
+                <span className="text-slate-700 shrink-0">›</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
+  )
+
+  const MobileDetail = selected && (
+    <div className="md:hidden">
+      <button
+        onClick={() => setMobileView('list')}
+        className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 mb-5 transition-colors"
+      >
+        <span className="text-lg leading-none">‹</span>
+        <span>All Drinks</span>
+      </button>
+      <DrinkDetail item={selected} />
+    </div>
+  )
+
+  return (
+    <>
+      {/* Mobile */}
+      <div className="md:hidden">
+        {mobileView === 'list' ? MobileList : MobileDetail}
+      </div>
+
+      {/* Desktop split panel */}
+      <div className="hidden md:flex gap-0 max-w-5xl -mx-8 lg:-mx-10 min-h-[80vh]">
+        {/* Left: list panel */}
+        <div className="w-64 shrink-0 border-r border-slate-800/60 flex flex-col">
+          {/* Panel header */}
+          <div className="px-5 pt-8 pb-4 border-b border-slate-800/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-base font-bold text-slate-100">Drink Library</h1>
+                <p className="text-[11px] text-slate-600 mt-0.5">{allItems.length} drinks</p>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-semibold uppercase tracking-wider shrink-0">
+                Bartender
+              </span>
+            </div>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search drinks…"
+              className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+            />
+            {categories.length > 1 && (
+              <div className="flex gap-1 overflow-x-auto scrollbar-none pb-0.5">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`shrink-0 px-2.5 py-1 rounded text-[11px] font-medium transition-colors capitalize ${
+                      categoryFilter === cat
+                        ? 'bg-amber-500 text-slate-900'
+                        : 'text-slate-600 hover:text-slate-300'
+                    }`}
+                  >
+                    {cat === 'all' ? 'All' : cat}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
+            {loading ? (
+              <p className="text-slate-600 text-xs px-5 py-6">Loading…</p>
+            ) : visible.length === 0 ? (
+              <p className="text-slate-600 text-xs px-5 py-6">No drinks found.</p>
+            ) : (
+              visible.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setSelected(item)}
+                  className={`w-full text-left px-5 py-3.5 border-b border-slate-800/40 transition-colors group ${
+                    selected?.id === item.id
+                      ? 'bg-amber-500/8 border-l-2 border-l-amber-500/70'
+                      : 'hover:bg-slate-800/30 border-l-2 border-l-transparent'
+                  }`}
+                >
+                  <p className={`text-sm font-medium leading-snug ${selected?.id === item.id ? 'text-slate-100' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                    {item.name}
+                  </p>
+                  <p className="text-[11px] text-slate-600 mt-0.5 capitalize">
+                    {[item.glassware, item.ingredients?.length ? `${item.ingredients.length} ing.` : null]
+                      .filter(Boolean).join(' · ')}
+                  </p>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right: detail panel */}
+        <div className="flex-1 overflow-y-auto px-8 py-8">
+          {selected ? (
+            <DrinkDetail item={selected} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-slate-700 text-sm">Select a drink to view its recipe.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   )
 }
 
@@ -91,75 +225,77 @@ function DrinkDetail({ item }: { item: DrinkLibraryItem }) {
     const cpo = ing.inventory_item?.cost_per_oz
     return sum + (cpo != null ? ing.quantity_oz * cpo : 0)
   }, 0) ?? 0
-  const hasFullCost = item.ingredients?.every((ing) => ing.inventory_item?.cost_per_oz != null) ?? false
+  const hasFullCost = (item.ingredients?.length ?? 0) > 0 &&
+    item.ingredients!.every((ing) => ing.inventory_item?.cost_per_oz != null)
 
   return (
-    <div className="space-y-6 max-w-lg">
-      {/* Header */}
+    <div className="space-y-7 max-w-lg">
+      {/* Name + meta */}
       <div>
         <div className="flex items-start gap-3 flex-wrap">
-          <h2 className="text-2xl font-bold text-gray-100">{item.name}</h2>
+          <h2 className="text-2xl font-bold text-slate-100 leading-tight">{item.name}</h2>
           {item.category && (
-            <span className="mt-1 text-xs px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 capitalize">
+            <span className="mt-1.5 text-xs px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 capitalize font-medium">
               {item.category}
             </span>
           )}
         </div>
         {item.aliases && item.aliases.length > 0 && (
-          <p className="text-xs text-gray-600 mt-1">
-            Also known as: {item.aliases.map((a) => a.alias).join(', ')}
+          <p className="text-xs text-slate-600 mt-1.5">
+            Also known as:{' '}
+            <span className="text-slate-500">{item.aliases.map((a) => a.alias).join(', ')}</span>
           </p>
         )}
       </div>
 
-      {/* Quick stats */}
-      <div className="flex gap-4 flex-wrap">
-        {item.glassware && (
-          <div className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2">
-            <p className="text-[10px] text-gray-600 uppercase tracking-wider">Glass</p>
-            <p className="text-sm text-gray-300 mt-0.5 capitalize">{item.glassware}</p>
-          </div>
-        )}
-        {item.garnish && (
-          <div className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2">
-            <p className="text-[10px] text-gray-600 uppercase tracking-wider">Garnish</p>
-            <p className="text-sm text-gray-300 mt-0.5">{item.garnish}</p>
-          </div>
-        )}
-        {(hasFullCost || totalCost > 0) && (
-          <div className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2">
-            <p className="text-[10px] text-gray-600 uppercase tracking-wider">Est. Cost</p>
-            <p className="text-sm text-emerald-400 mt-0.5 font-medium">
-              ${totalCost.toFixed(2)}{!hasFullCost && <span className="text-gray-600"> (partial)</span>}
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Quick spec strip */}
+      {(item.glassware || item.garnish) && (
+        <div className="flex gap-2 flex-wrap">
+          {item.glassware && (
+            <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
+              <span className="text-slate-600 text-xs">◻</span>
+              <span className="text-xs text-slate-400 capitalize">{item.glassware}</span>
+            </div>
+          )}
+          {item.garnish && (
+            <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
+              <span className="text-slate-600 text-xs">✦</span>
+              <span className="text-xs text-slate-400">{item.garnish}</span>
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Ingredients */}
+      {/* Ingredients — the hero section */}
       {item.ingredients && item.ingredients.length > 0 && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Ingredients</h3>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            {item.ingredients.map((ing, i) => (
-              <div
-                key={ing.id}
-                className={`flex items-center justify-between px-4 py-3 ${
-                  i < item.ingredients!.length - 1 ? 'border-b border-gray-800/50' : ''
-                }`}
-              >
-                <div>
-                  <p className="text-sm text-gray-200">{ing.ingredient_name}</p>
-                  {ing.notes && <p className="text-xs text-gray-600 mt-0.5">{ing.notes}</p>}
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.12em] mb-2">Ingredients</p>
+          <div className="rounded-xl border border-slate-800 overflow-hidden divide-y divide-slate-800/60">
+            {item.ingredients.map((ing) => (
+              <div key={ing.id} className="flex items-center justify-between px-4 py-3.5 bg-slate-900/40">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-200">{ing.ingredient_name}</p>
+                  {ing.notes && <p className="text-xs text-slate-600 mt-0.5">{ing.notes}</p>}
                 </div>
-                <div className="text-right shrink-0 ml-4">
-                  <p className="text-sm font-medium text-amber-400">{ing.quantity_oz} oz</p>
+                <div className="text-right shrink-0 ml-6">
+                  <p className="text-base font-bold text-amber-400 tabular-nums">{ing.quantity_oz}<span className="text-xs font-normal text-amber-400/60 ml-0.5">oz</span></p>
                   {ing.inventory_item?.cost_per_oz != null && (
-                    <p className="text-xs text-gray-600">${(ing.quantity_oz * ing.inventory_item.cost_per_oz).toFixed(2)}</p>
+                    <p className="text-[10px] text-slate-700 mt-0.5 tabular-nums">
+                      ${(ing.quantity_oz * ing.inventory_item.cost_per_oz).toFixed(2)}
+                    </p>
                   )}
                 </div>
               </div>
             ))}
+            {/* Cost footer */}
+            {(hasFullCost || totalCost > 0) && (
+              <div className="flex items-center justify-between px-4 py-2.5 bg-slate-800/30">
+                <p className="text-[10px] text-slate-600 uppercase tracking-wider">
+                  Est. cost{!hasFullCost ? ' (partial)' : ''}
+                </p>
+                <p className="text-xs font-semibold text-slate-500 tabular-nums">${totalCost.toFixed(2)}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -167,9 +303,9 @@ function DrinkDetail({ item }: { item: DrinkLibraryItem }) {
       {/* Instructions */}
       {item.instructions && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Instructions</h3>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3">
-            <p className="text-sm text-gray-300 leading-relaxed">{item.instructions}</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.12em] mb-2">Instructions</p>
+          <div className="bg-slate-900/40 border border-slate-800 rounded-xl px-4 py-4">
+            <p className="text-sm text-slate-400 leading-relaxed">{item.instructions}</p>
           </div>
         </div>
       )}
@@ -177,8 +313,8 @@ function DrinkDetail({ item }: { item: DrinkLibraryItem }) {
       {/* Notes */}
       {item.notes && (
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Notes</h3>
-          <p className="text-sm text-gray-500">{item.notes}</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-[0.12em] mb-2">Notes</p>
+          <p className="text-sm text-slate-500 leading-relaxed">{item.notes}</p>
         </div>
       )}
     </div>
