@@ -667,28 +667,26 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
         )}
       </div>
 
-      {/* Row 4: package type + units per package */}
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Package type</label>
+      {/* Packaging row — formula: type × per-pack */}
+      <div>
+        <label className="text-[10px] text-slate-500 uppercase tracking-wider">Packaging</label>
+        <div className="mt-1 flex items-center gap-1.5">
           <select value={line.package_type} onChange={(e) => {
             const pt = e.target.value as PackageType
             onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
           }}
-            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
-            <option value="">—</option>
+            className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
+            <option value="">no package type</option>
             {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Units/pack</label>
+          <span className="text-slate-600 text-sm font-medium shrink-0">×</span>
           <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
-            placeholder="e.g. 6"
-            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
+            placeholder="per pack"
+            className="w-24 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 placeholder-slate-600" />
         </div>
       </div>
 
-      {/* Row 5: qty / unit / cost */}
+      {/* Qty / unit / cost */}
       <div className="grid grid-cols-3 gap-2">
         <div>
           <label className="text-[10px] text-slate-500 uppercase tracking-wider">
@@ -714,17 +712,26 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
         </div>
       </div>
 
-      {/* Total units calculated */}
-      {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 && (
-        <p className="text-xs text-amber-400/80 bg-amber-500/5 border border-amber-500/15 rounded-lg px-3 py-2">
-          {line.quantity} × {line.package_type || `${line.units_per_package}-pack`} = <strong>{parseFloat(line.quantity) * parseInt(line.units_per_package)} individual units</strong> will be saved
-        </p>
-      )}
-
-      {/* Warning: qty missing */}
-      {!line.quantity && line.is_approved && (
-        <p className="text-xs text-amber-500/80">⚠ Quantity not detected — please enter manually</p>
-      )}
+      {/* Total units pill — shown when packing data is complete */}
+      {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 ? (
+        <div className="flex items-center gap-2.5 rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2">
+          <span className="text-amber-400/70 text-xs shrink-0">saves</span>
+          <span className="text-amber-300 font-bold text-base tabular-nums leading-none">
+            {parseFloat(line.quantity) * parseInt(line.units_per_package)}
+          </span>
+          <span className="text-amber-400/70 text-xs">
+            individual {line.unit_type || 'units'}
+            <span className="text-amber-400/40 ml-1.5">
+              ({line.quantity} × {line.package_type || `${line.units_per_package}-pack`})
+            </span>
+          </span>
+        </div>
+      ) : !line.quantity && line.is_approved ? (
+        <div className="flex items-center gap-2 rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2">
+          <span className="text-amber-400 text-xs">⚠</span>
+          <span className="text-amber-400/80 text-xs">Quantity not detected — enter manually</span>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -806,14 +813,16 @@ function DesktopLineRow({ line, inventoryItems, onChange, onRemove, onNewInvento
           <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
             placeholder="0"
             className={`w-full bg-slate-800/60 border rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
-          {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 && (
-            <p className="text-[10px] text-amber-400/80 whitespace-nowrap">
-              = {parseFloat(line.quantity) * parseInt(line.units_per_package)} units
-            </p>
-          )}
-          {!line.quantity && line.is_approved && (
+          {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 ? (
+            <div className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">
+              <span className="text-amber-300 font-bold text-[11px] tabular-nums leading-none">
+                {parseFloat(line.quantity) * parseInt(line.units_per_package)}
+              </span>
+              <span className="text-amber-400/60 text-[10px]">units</span>
+            </div>
+          ) : !line.quantity && line.is_approved ? (
             <p className="text-[10px] text-amber-500/80 whitespace-nowrap">⚠ enter qty</p>
-          )}
+          ) : null}
         </div>
       </td>
       <td className="px-2 py-2">

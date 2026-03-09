@@ -320,25 +320,29 @@ function StockCard({ item, allCategories, onUpdate }: {
         </div>
       </div>
 
-      {/* Big quantity */}
+      {/* Quantity + pack breakdown */}
       <div>
         <p className={`text-3xl font-bold tabular-nums leading-none ${qtyColor}`}>
           {item.quantity_on_hand !== null ? item.quantity_on_hand : '—'}
         </p>
-        <p className="text-xs text-slate-500 mt-1">{item.unit}</p>
-        {item.pack_size && item.pack_size > 1 && item.quantity_on_hand !== null && item.quantity_on_hand > 0 && (
-          <p className="text-xs text-amber-500/70 mt-1.5 leading-snug">
-            {formatPackBreakdown(item.quantity_on_hand, item.pack_size, item.package_type).split(' · ')[1]}
-          </p>
+        {item.pack_size && item.pack_size > 1 && item.quantity_on_hand !== null && item.quantity_on_hand > 0 ? (
+          <div className="mt-1.5 space-y-1">
+            <p className="text-xs text-slate-500">{item.unit}</p>
+            <p className="text-xs font-medium text-amber-400/80 leading-snug">
+              {formatPackBreakdown(item.quantity_on_hand, item.pack_size, item.package_type).split(' · ')[1]}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <p className="text-xs text-slate-500">{item.unit}</p>
+            {item.package_type && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500/60 font-medium leading-tight">
+                {item.package_type}
+              </span>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Package type badge */}
-      {item.package_type && (
-        <span className="inline-block text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500/70 font-medium w-fit">
-          {item.package_type}
-        </span>
-      )}
 
       {/* Last counted */}
       <p className="text-[11px] text-slate-600 mt-auto">
