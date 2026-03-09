@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { extractPackagingFromName, normalizeUnitType } from './beer-packaging'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -74,16 +75,33 @@ function parseResponse(text: string): ParsedPurchaseDocument {
     return {
       vendor_name: parsed.vendor_name ?? null,
       purchase_date: parsed.purchase_date ?? null,
-      line_items: Array.isArray(parsed.line_items) ? parsed.line_items.map((item: ParsedLineItem) => ({
-        raw_item_name: item.raw_item_name ?? 'Unknown item',
-        quantity: item.quantity ?? null,
-        unit_type: item.unit_type ?? null,
-        unit_cost: item.unit_cost ?? null,
-        line_total: item.line_total ?? null,
-        confidence: item.confidence ?? 'medium',
-        package_type: item.package_type ?? null,
-        units_per_package: item.units_per_package ?? null,
-      })) : [],
+      line_items: Array.isArray(parsed.line_items) ? parsed.line_items.map((item: ParsedLineItem) => {
+        // Normalize unit_type if present
+        const rawUnit = item.unit_type ?? null
+        const normalizedUnit = rawUnit ? normalizeUnitType(rawUnit) : null
+
+        // If AI didn't detect package info, try extracting it from the item name
+        let packageType = item.package_type ?? normalizedUnit?.packageType ?? null
+        let unitsPerPackage = item.units_per_package ?? normalizedUnit?.unitsPerPackage ?? null
+        if (!packageType) {
+          const fromName = extractPackagingFromName(item.raw_item_name ?? '')
+          if (fromName.packageType) {
+            packageType = fromName.packageType
+            unitsPerPackage = fromName.unitsPerPackage
+          }
+        }
+
+        return {
+          raw_item_name: item.raw_item_name ?? 'Unknown item',
+          quantity: item.quantity ?? null,
+          unit_type: normalizedUnit?.unit ?? rawUnit,
+          unit_cost: item.unit_cost ?? null,
+          line_total: item.line_total ?? null,
+          confidence: item.confidence ?? 'medium',
+          package_type: packageType,
+          units_per_package: unitsPerPackage,
+        }
+      }) : [],
       raw_text: parsed.raw_text ?? stripped,
       overall_confidence: parsed.overall_confidence ?? 'medium',
       warning_message: parsed.warning_message ?? null,

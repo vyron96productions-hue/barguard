@@ -3,6 +3,7 @@ import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
 import { parseCsvText } from '@/lib/csv'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
+import { parseQuantityString, normalizeUnitType } from '@/lib/beer-packaging'
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData()
@@ -32,10 +33,17 @@ export async function POST(req: NextRequest) {
 
     if (!countDate || !isValidDate(countDate)) { rowErrors.push(`Row ${i + 2}: invalid date`); continue }
     if (!itemName) { rowErrors.push(`Row ${i + 2}: missing item_name`); continue }
-    const quantity = parseFloatSafe(qtyStr)
-    if (quantity === null || quantity < 0) { rowErrors.push(`Row ${i + 2}: invalid quantity`); continue }
 
-    const unitType = mapping.unit_type ? row[mapping.unit_type] || null : null
+    // parseQuantityString handles combined cells like "24 units", "6 bottles", "12"
+    // Inventory counts are already in individual units — do NOT multiply by pack size
+    const parsed = parseQuantityString(qtyStr)
+    const quantity = parsed.quantity ?? parseFloatSafe(qtyStr)
+    if (quantity === null || quantity < 0) { rowErrors.push(`Row ${i + 2}: invalid quantity "${qtyStr}"`); continue }
+
+    // Normalize unit_type if provided
+    const rawUnitType = mapping.unit_type ? row[mapping.unit_type] || null : null
+    const unitType = rawUnitType ? normalizeUnitType(rawUnitType).unit : null
+
     validRows.push({ count_date: countDate, item_name: itemName, quantity, unit_type: unitType })
   }
 

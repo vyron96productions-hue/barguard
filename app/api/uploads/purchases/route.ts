@@ -3,6 +3,7 @@ import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
 import { parseCsvText } from '@/lib/csv'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
+import { parseQuantityString, normalizeUnitType, computeEffectiveQuantity } from '@/lib/beer-packaging'
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData()
@@ -32,16 +33,29 @@ export async function POST(req: NextRequest) {
 
     if (!purchaseDate || !isValidDate(purchaseDate)) { rowErrors.push(`Row ${i + 2}: invalid date`); continue }
     if (!itemName) { rowErrors.push(`Row ${i + 2}: missing item_name`); continue }
-    const quantity = parseFloatSafe(qtyStr)
-    if (quantity === null || quantity <= 0) { rowErrors.push(`Row ${i + 2}: invalid quantity`); continue }
+
+    // parseQuantityString handles combined cells like "2 cs", "6 bt", "2 24pk"
+    // as well as plain numbers. Falls back to parseFloatSafe for plain floats.
+    const parsed = parseQuantityString(qtyStr)
+    const rawQty = parsed.quantity ?? parseFloatSafe(qtyStr)
+    if (rawQty === null || rawQty <= 0) { rowErrors.push(`Row ${i + 2}: invalid quantity "${qtyStr}"`); continue }
+
+    // Normalize the unit_type column if present, merging with packaging detected in qty string
+    const rawUnitType = mapping.unit_type ? row[mapping.unit_type] || null : null
+    const normalizedUnit = rawUnitType ? normalizeUnitType(rawUnitType) : null
+    const unitsPerPackage = parsed.unitsPerPackage ?? normalizedUnit?.unitsPerPackage ?? null
+    const canonicalUnit = normalizedUnit?.unit ?? rawUnitType
+
+    // Store individual units (packs × units_per_pack) to match purchase-scan import behaviour
+    const effectiveQty = computeEffectiveQuantity(rawQty, unitsPerPackage)
 
     validRows.push({
       purchase_date: purchaseDate,
       item_name: itemName,
-      quantity,
+      quantity: effectiveQty,
       vendor: mapping.vendor_name ? row[mapping.vendor_name] || null : null,
       unit_cost: mapping.unit_cost ? parseFloatSafe(row[mapping.unit_cost]) : null,
-      unit_type: mapping.unit_type ? row[mapping.unit_type] || null : null,
+      unit_type: canonicalUnit,
     })
   }
 
