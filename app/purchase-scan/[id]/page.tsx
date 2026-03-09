@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { PurchaseImportDraftWithLines, PurchaseImportDraftLine, InventoryItem } from '@/types'
 
 const UNIT_OPTIONS = ['oz', 'ml', 'l', 'bottle', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
-const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
+const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
 
 interface EditableLine {
   id: string

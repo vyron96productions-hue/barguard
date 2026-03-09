@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 
-const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
+const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
 
 interface StockItem {
   id: string
