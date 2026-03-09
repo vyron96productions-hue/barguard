@@ -7,6 +7,13 @@ import type { InventoryItem } from '@/types'
 
 const UNITS = ['oz', 'ml', 'bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'pint', 'l']
 
+const PRESET_CATEGORIES = [
+  'spirits', 'beer', 'wine', 'keg',
+  'mixer', 'non-alcoholic', 'supply',
+  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
+  'other',
+]
+
 export default function InventoryItemsPage() {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,7 +78,10 @@ export default function InventoryItemsPage() {
     return acc
   }, {})
 
-  const allCategories = [...new Set(items.map((i) => i.category).filter(Boolean) as string[])].sort()
+  const allCategories = [...new Set([
+    ...PRESET_CATEGORIES,
+    ...items.map((i) => i.category).filter(Boolean) as string[],
+  ])].sort()
 
   return (
     <div className="space-y-5 max-w-2xl">
