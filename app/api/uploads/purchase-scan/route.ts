@@ -95,6 +95,8 @@ export async function POST(req: NextRequest) {
           confidence: item.confidence,
           is_approved: true,
           sort_order: idx,
+          package_type: item.package_type ?? null,
+          units_per_package: item.units_per_package ?? null,
         }
       })
     )

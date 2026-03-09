@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-
-const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
+import CategoryCombobox from '@/components/CategoryCombobox'
+import { formatPackBreakdown } from '@/lib/beer-packaging'
 
 interface StockItem {
   id: string
@@ -10,6 +10,7 @@ interface StockItem {
   unit: string
   category: string | null
   pack_size: number | null
+  package_type: string | null
   quantity_on_hand: number | null
   count_date: string | null
 }
@@ -43,6 +44,7 @@ export default function StockPage() {
   }, [])
 
   const categories = ['all', ...Array.from(new Set(items.map((i) => i.category ?? 'Uncategorized'))).sort()]
+  const allCategories = [...new Set(items.map((i) => i.category).filter(Boolean) as string[])].sort()
 
   const visible = items.filter((item) => {
     const matchesCat = filter === 'all' || (item.category ?? 'Uncategorized') === filter
@@ -149,6 +151,7 @@ export default function StockPage() {
                 <StockCard
                   key={item.id}
                   item={item}
+                  allCategories={allCategories}
                   onUpdate={(updated) =>
                     setItems((prev) => prev.map((i) => (i.id === updated.id ? { ...i, ...updated } : i)))
                   }
@@ -162,7 +165,11 @@ export default function StockPage() {
   )
 }
 
-function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Partial<StockItem> & { id: string }) => void }) {
+function StockCard({ item, allCategories, onUpdate }: {
+  item: StockItem
+  allCategories: string[]
+  onUpdate: (updated: Partial<StockItem> & { id: string }) => void
+}) {
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(item.name)
   const [category, setCategory] = useState(item.category ?? '')
@@ -196,6 +203,8 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
         category: category || null,
         unit,
         quantity_on_hand: quantity !== '' ? parseFloat(quantity) : null,
+        package_type: item.package_type ?? null,
+        pack_size: item.pack_size ?? null,
       }),
     })
     const data = await res.json()
@@ -233,16 +242,14 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
           </div>
           <div>
             <label className="text-[10px] text-slate-500 uppercase tracking-wider">Category</label>
-            <input
-              list={`cat-options-${item.id}`}
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. rum, cognac, beer"
-              className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
-            />
-            <datalist id={`cat-options-${item.id}`}>
-              {CATEGORY_OPTIONS.map((c) => <option key={c} value={c} />)}
-            </datalist>
+            <div className="mt-1">
+              <CategoryCombobox
+                value={category}
+                onChange={setCategory}
+                categories={allCategories}
+                placeholder="Select or create…"
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -319,13 +326,19 @@ function StockCard({ item, onUpdate }: { item: StockItem; onUpdate: (updated: Pa
           {item.quantity_on_hand !== null ? item.quantity_on_hand : '—'}
         </p>
         <p className="text-xs text-slate-500 mt-1">{item.unit}</p>
-        {item.pack_size && item.quantity_on_hand !== null && (
-          <p className="text-xs text-amber-500/70 mt-1">
-            {Math.floor(item.quantity_on_hand / item.pack_size)} × {item.pack_size}-pack
-            {item.quantity_on_hand % item.pack_size > 0 && ` + ${item.quantity_on_hand % item.pack_size}`}
+        {item.pack_size && item.pack_size > 1 && item.quantity_on_hand !== null && item.quantity_on_hand > 0 && (
+          <p className="text-xs text-amber-500/70 mt-1.5 leading-snug">
+            {formatPackBreakdown(item.quantity_on_hand, item.pack_size, item.package_type).split(' · ')[1]}
           </p>
         )}
       </div>
+
+      {/* Package type badge */}
+      {item.package_type && (
+        <span className="inline-block text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500/70 font-medium w-fit">
+          {item.package_type}
+        </span>
+      )}
 
       {/* Last counted */}
       <p className="text-[11px] text-slate-600 mt-auto">

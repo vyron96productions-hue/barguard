@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import CategoryCombobox from '@/components/CategoryCombobox'
+import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 import type { InventoryItem } from '@/types'
 
-const UNITS = ['oz', 'ml', 'bottle', 'case', 'keg', 'halfkeg', 'quarterkeg', 'pint', 'l']
+const UNITS = ['oz', 'ml', 'bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'pint', 'l']
 
 export default function InventoryItemsPage() {
   const [items, setItems] = useState<InventoryItem[]>([])
@@ -11,6 +13,7 @@ export default function InventoryItemsPage() {
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('oz')
   const [category, setCategory] = useState('')
+  const [packageType, setPackageType] = useState('')
   const [packSize, setPackSize] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,11 +36,17 @@ export default function InventoryItemsPage() {
     const res = await fetch('/api/inventory-items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, unit, category, pack_size: packSize || null }),
+      body: JSON.stringify({
+        name,
+        unit,
+        category,
+        package_type: packageType || null,
+        pack_size: packSize || null,
+      }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
-    setName(''); setCategory(''); setPackSize('')
+    setName(''); setCategory(''); setPackageType(''); setPackSize('')
     fetchItems()
     setSaving(false)
   }
@@ -48,6 +57,13 @@ export default function InventoryItemsPage() {
     fetchItems()
   }
 
+  function handlePackageTypeChange(pt: string) {
+    setPackageType(pt)
+    if (pt && pt in PACKAGE_TYPE_SIZES) {
+      setPackSize(String(PACKAGE_TYPE_SIZES[pt as PackageType]))
+    }
+  }
+
   const grouped = items.reduce<Record<string, InventoryItem[]>>((acc, item) => {
     const cat = item.category ?? 'Uncategorized'
     if (!acc[cat]) acc[cat] = []
@@ -55,11 +71,13 @@ export default function InventoryItemsPage() {
     return acc
   }, {})
 
+  const allCategories = [...new Set(items.map((i) => i.category).filter(Boolean) as string[])].sort()
+
   return (
     <div className="space-y-5 max-w-2xl">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Inventory Items</h1>
-        <p className="text-gray-500 mt-1 text-sm">Physical items you track — bottles, kegs, cases.</p>
+        <p className="text-gray-500 mt-1 text-sm">Physical items you track — bottles, kegs, cases, beer packs.</p>
       </div>
 
       {/* Add form */}
@@ -69,7 +87,7 @@ export default function InventoryItemsPage() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Item name (e.g. Tito's Vodka)"
+            placeholder="Item name (e.g. Corona Extra, Tito's Vodka)"
             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
           />
           <div className="grid grid-cols-2 gap-3">
@@ -84,27 +102,49 @@ export default function InventoryItemsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Category (optional)</label>
-              <input
+              <label className="block text-xs text-gray-500 mb-1">Category</label>
+              <CategoryCombobox
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. beer"
+                onChange={setCategory}
+                categories={allCategories}
+                placeholder="Select or create…"
+              />
+            </div>
+          </div>
+
+          {/* Package type — beer/pack items */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Package type <span className="text-gray-600">(optional)</span></label>
+              <select
+                value={packageType}
+                onChange={(e) => handlePackageTypeChange(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200"
+              >
+                <option value="">None</option>
+                {PACKAGE_TYPE_OPTIONS.map((pt) => (
+                  <option key={pt} value={pt}>{pt}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Units per pack <span className="text-gray-600">(optional)</span></label>
+              <input
+                type="number"
+                min="1"
+                value={packSize}
+                onChange={(e) => setPackSize(e.target.value)}
+                placeholder="e.g. 6"
                 className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
               />
             </div>
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Pack size (optional)</label>
-            <input
-              type="number"
-              min="1"
-              value={packSize}
-              onChange={(e) => setPackSize(e.target.value)}
-              placeholder="e.g. 24 for a 24-pack"
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600"
-            />
-            <p className="text-[10px] text-gray-600 mt-1">Units per pack. Stock will display both individual count and pack count.</p>
-          </div>
+          {(packageType || packSize) && (
+            <p className="text-[10px] text-gray-600">
+              Stock counts will show individual units and pack breakdown. e.g. 30 cans · 5 × {packageType || `${packSize}-pack`}
+            </p>
+          )}
+
           <button
             type="submit"
             disabled={saving}
@@ -125,7 +165,7 @@ export default function InventoryItemsPage() {
           <p className="text-sm">No inventory items yet. Add your first item above.</p>
         </div>
       ) : (
-        Object.entries(grouped).map(([cat, catItems]) => (
+        Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([cat, catItems]) => (
           <div key={cat} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <div className="px-4 sm:px-5 py-3 border-b border-gray-800 bg-gray-800/50">
               <h3 className="text-sm font-medium text-gray-400">{cat}</h3>
@@ -133,11 +173,18 @@ export default function InventoryItemsPage() {
             <div className="divide-y divide-gray-800/50">
               {catItems.map((item) => (
                 <div key={item.id} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-gray-800/30 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
                     <p className="font-medium text-sm text-gray-200 truncate">{item.name}</p>
                     <span className="text-xs text-gray-500 shrink-0 bg-gray-800 px-2 py-0.5 rounded">{item.unit}</span>
-                    {item.pack_size && (
-                      <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">{item.pack_size}/pack</span>
+                    {item.package_type && (
+                      <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                        {item.package_type}
+                      </span>
+                    )}
+                    {item.pack_size && !item.package_type && (
+                      <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                        {item.pack_size}/pack
+                      </span>
                     )}
                   </div>
                   <button

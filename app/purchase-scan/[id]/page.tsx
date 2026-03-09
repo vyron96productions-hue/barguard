@@ -4,7 +4,10 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import type { PurchaseImportDraftWithLines, PurchaseImportDraftLine, InventoryItem } from '@/types'
 
-const UNIT_OPTIONS = ['oz', 'ml', 'l', 'bottle', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
+import CategoryCombobox from '@/components/CategoryCombobox'
+import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
+
+const UNIT_OPTIONS = ['oz', 'ml', 'l', 'bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
 const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
 
 interface EditableLine {
@@ -18,9 +21,14 @@ interface EditableLine {
   confidence: 'high' | 'medium' | 'low'
   is_approved: boolean
   save_alias: boolean
+  package_type: string
+  units_per_package: string
 }
 
 function toEditableLine(line: PurchaseImportDraftLine): EditableLine {
+  // If inventory item has pack info, prefer that over the draft line's
+  const invPackSize = line.inventory_item?.pack_size
+  const invPackType = line.inventory_item?.package_type
   return {
     id: line.id,
     raw_item_name: line.raw_item_name,
@@ -32,6 +40,8 @@ function toEditableLine(line: PurchaseImportDraftLine): EditableLine {
     confidence: line.confidence,
     is_approved: line.is_approved,
     save_alias: false,
+    package_type: line.package_type ?? invPackType ?? '',
+    units_per_package: line.units_per_package?.toString() ?? invPackSize?.toString() ?? '',
   }
 }
 
@@ -107,6 +117,8 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
         confidence: 'high',
         is_approved: true,
         save_alias: false,
+        package_type: '',
+        units_per_package: '',
       },
     ])
   }
@@ -126,16 +138,22 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
         body: JSON.stringify({
           vendor_name: vendorName || null,
           purchase_date: purchaseDate || null,
-          lines: lines.map((l) => ({
-            id: l.id,
-            raw_item_name: l.raw_item_name,
-            inventory_item_id: l.inventory_item_id,
-            quantity: parseFloat(l.quantity) || null,
-            unit_type: l.unit_type || null,
-            unit_cost: parseFloat(l.unit_cost) || null,
-            is_approved: l.is_approved,
-            save_alias: l.save_alias,
-          })),
+          lines: lines.map((l) => {
+            const qty = parseFloat(l.quantity) || null
+            const upp = parseInt(l.units_per_package, 10) || null
+            // If packaging info present, save individual unit count (qty × units_per_package)
+            const effectiveQty = qty !== null && upp !== null && upp > 1 ? qty * upp : qty
+            return {
+              id: l.id,
+              raw_item_name: l.raw_item_name,
+              inventory_item_id: l.inventory_item_id,
+              quantity: effectiveQty,
+              unit_type: l.unit_type || null,
+              unit_cost: parseFloat(l.unit_cost) || null,
+              is_approved: l.is_approved,
+              save_alias: l.save_alias,
+            }
+          }),
         }),
       })
       const data = await res.json()
@@ -331,8 +349,10 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
             <thead>
               <tr className="border-b border-gray-800 text-slate-500">
                 <th className="text-left px-4 py-2.5 font-medium w-6">✓</th>
-                <th className="text-left px-4 py-2.5 font-medium min-w-[160px]">Item Name (from doc)</th>
-                <th className="text-left px-4 py-2.5 font-medium min-w-[160px]">Inventory Item</th>
+                <th className="text-left px-4 py-2.5 font-medium min-w-[140px]">Item Name (from doc)</th>
+                <th className="text-left px-4 py-2.5 font-medium min-w-[140px]">Inventory Item</th>
+                <th className="text-left px-4 py-2.5 font-medium w-24">Pkg Type</th>
+                <th className="text-left px-4 py-2.5 font-medium w-20">Units/Pk</th>
                 <th className="text-left px-4 py-2.5 font-medium w-20">Qty</th>
                 <th className="text-left px-4 py-2.5 font-medium w-24">Unit</th>
                 <th className="text-left px-4 py-2.5 font-medium w-24">Unit Cost</th>
@@ -465,8 +485,30 @@ function AddToInventoryForm({ rawName, onSave, onCancel }: {
   const [name, setName] = useState(rawName)
   const [unit, setUnit] = useState('bottle')
   const [category, setCategory] = useState('')
+  const [packageType, setPackageType] = useState('')
+  const [packSize, setPackSize] = useState('')
+  const [existingCategories, setExistingCategories] = useState<string[]>(CATEGORY_OPTIONS)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/inventory-items')
+      .then(r => r.json())
+      .then((items: InventoryItem[]) => {
+        if (Array.isArray(items)) {
+          const cats = [...new Set(items.map(i => i.category).filter(Boolean) as string[])].sort()
+          if (cats.length > 0) setExistingCategories(cats)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  function handlePackageTypeChange(pt: string) {
+    setPackageType(pt)
+    if (pt && pt in PACKAGE_TYPE_SIZES) {
+      setPackSize(String(PACKAGE_TYPE_SIZES[pt as PackageType]))
+    }
+  }
 
   async function handleSave() {
     if (!name.trim() || !unit) { setErr('Name and unit are required'); return }
@@ -476,7 +518,13 @@ function AddToInventoryForm({ rawName, onSave, onCancel }: {
       const res = await fetch('/api/inventory-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), unit, category: category || null }),
+        body: JSON.stringify({
+          name: name.trim(),
+          unit,
+          category: category || null,
+          package_type: packageType || null,
+          pack_size: packSize || null,
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setErr(data.error ?? 'Failed to create'); return }
@@ -504,11 +552,23 @@ function AddToInventoryForm({ rawName, onSave, onCancel }: {
             className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
             {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
           </select>
-          <select value={category} onChange={(e) => setCategory(e.target.value)}
+          <CategoryCombobox
+            value={category}
+            onChange={setCategory}
+            categories={existingCategories}
+            placeholder="Category…"
+            className="text-xs"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <select value={packageType} onChange={(e) => handlePackageTypeChange(e.target.value)}
             className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
-            <option value="">category (opt)</option>
-            {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value="">package type…</option>
+            {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
           </select>
+          <input type="number" min="1" value={packSize} onChange={(e) => setPackSize(e.target.value)}
+            placeholder="units/pack"
+            className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60" />
         </div>
       </div>
       {err && <p className="text-red-400 text-[10px]">{err}</p>}
@@ -607,13 +667,36 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
         )}
       </div>
 
-      {/* Row 4: qty / unit / cost */}
+      {/* Row 4: package type + units per package */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Package type</label>
+          <select value={line.package_type} onChange={(e) => {
+            const pt = e.target.value as PackageType
+            onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
+          }}
+            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
+            <option value="">—</option>
+            {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Units/pack</label>
+          <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
+            placeholder="e.g. 6"
+            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
+        </div>
+      </div>
+
+      {/* Row 5: qty / unit / cost */}
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Qty</label>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider">
+            {line.units_per_package && parseInt(line.units_per_package) > 1 ? 'Packs' : 'Qty'}
+          </label>
           <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
             placeholder="0"
-            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
+            className={`mt-1 w-full bg-slate-800/60 border rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
         </div>
         <div>
           <label className="text-[10px] text-slate-500 uppercase tracking-wider">Unit</label>
@@ -630,6 +713,18 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
             className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
         </div>
       </div>
+
+      {/* Total units calculated */}
+      {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 && (
+        <p className="text-xs text-amber-400/80 bg-amber-500/5 border border-amber-500/15 rounded-lg px-3 py-2">
+          {line.quantity} × {line.package_type || `${line.units_per_package}-pack`} = <strong>{parseFloat(line.quantity) * parseInt(line.units_per_package)} individual units</strong> will be saved
+        </p>
+      )}
+
+      {/* Warning: qty missing */}
+      {!line.quantity && line.is_approved && (
+        <p className="text-xs text-amber-500/80">⚠ Quantity not detected — please enter manually</p>
+      )}
     </div>
   )
 }
@@ -692,9 +787,34 @@ function DesktopLineRow({ line, inventoryItems, onChange, onRemove, onNewInvento
         </div>
       </td>
       <td className="px-2 py-2">
-        <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
-          placeholder="0"
+        <select value={line.package_type} onChange={(e) => {
+          const pt = e.target.value as PackageType
+          onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
+        }}
+          className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+          <option value="">—</option>
+          {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+        </select>
+      </td>
+      <td className="px-2 py-2">
+        <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
+          placeholder="—"
           className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60" />
+      </td>
+      <td className="px-2 py-2">
+        <div className="space-y-1">
+          <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
+            placeholder="0"
+            className={`w-full bg-slate-800/60 border rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
+          {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 && (
+            <p className="text-[10px] text-amber-400/80 whitespace-nowrap">
+              = {parseFloat(line.quantity) * parseInt(line.units_per_package)} units
+            </p>
+          )}
+          {!line.quantity && line.is_approved && (
+            <p className="text-[10px] text-amber-500/80 whitespace-nowrap">⚠ enter qty</p>
+          )}
+        </div>
       </td>
       <td className="px-2 py-2">
         <select value={line.unit_type} onChange={(e) => onChange({ unit_type: e.target.value })}

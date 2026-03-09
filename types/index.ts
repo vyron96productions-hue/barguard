@@ -10,7 +10,8 @@ export interface InventoryItem {
   name: string
   unit: string // oz, ml, bottle, case, keg, etc.
   category: string | null
-  pack_size: number | null // units per pack (e.g. 24 for a 24-pack); null = no pack tracking
+  pack_size: number | null    // units per package (e.g. 6 for a 6-pack)
+  package_type: string | null // label for package format (e.g. '6-pack', 'case', 'keg')
   created_at: string
 }
 
@@ -187,7 +188,9 @@ export interface PurchaseImportDraftLine {
   confidence: 'high' | 'medium' | 'low'
   is_approved: boolean
   sort_order: number
-  inventory_item?: Pick<InventoryItem, 'id' | 'name' | 'unit' | 'category'>
+  package_type: string | null       // e.g. '6-pack', 'case'
+  units_per_package: number | null  // individual units per package
+  inventory_item?: Pick<InventoryItem, 'id' | 'name' | 'unit' | 'category' | 'pack_size' | 'package_type'>
 }
 
 export interface PurchaseImportDraftWithLines extends PurchaseImportDraft {

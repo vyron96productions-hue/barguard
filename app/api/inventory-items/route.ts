@@ -15,7 +15,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { name, unit, category, pack_size } = body
+  const { name, unit, category, pack_size, package_type } = body
 
   if (!name || !unit) {
     return NextResponse.json({ error: 'name and unit are required' }, { status: 400 })
@@ -28,7 +28,14 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from('inventory_items')
-    .insert({ business_id: DEMO_BUSINESS_ID, name: name.trim(), unit, category: category || null, pack_size: packSizeVal })
+    .insert({
+      business_id: DEMO_BUSINESS_ID,
+      name: name.trim(),
+      unit,
+      category: category || null,
+      pack_size: packSizeVal,
+      package_type: package_type || null,
+    })
     .select()
     .single()
 
@@ -38,13 +45,15 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json()
-  const { id, name, category } = body
+  const { id, name, category, package_type } = body
 
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  const updates: Record<string, string | null> = {}
+  const updates: Record<string, string | number | null> = {}
   if (name !== undefined) updates.name = name.trim()
   if (category !== undefined) updates.category = category || null
+  if (package_type !== undefined) updates.package_type = package_type || null
+  if (body.pack_size !== undefined) updates.pack_size = body.pack_size ? parseInt(body.pack_size, 10) : null
 
   const { data, error } = await supabase
     .from('inventory_items')

@@ -22,7 +22,8 @@ create table if not exists inventory_items (
   name text not null,
   unit text not null default 'oz',
   category text,
-  pack_size integer check (pack_size > 0), -- units per pack (e.g. 24 for a 24-pack)
+  pack_size integer check (pack_size > 0), -- units per package (e.g. 6 for a 6-pack)
+  package_type text,                       -- label, e.g. 'single', '6-pack', 'case', 'keg'
   created_at timestamptz not null default now(),
   unique (business_id, name)
 );
