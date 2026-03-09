@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,6 +16,11 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    // Accept username or email — username gets converted to username@barguard.app
+    const email = identifier.includes('@')
+      ? identifier
+      : `${identifier.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '')}@barguard.app`
 
     const supabase = createSupabaseBrowserClient()
     const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
@@ -61,14 +66,14 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Email</label>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Username or Email</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
-                autoComplete="email"
-                placeholder="you@yourbar.com"
+                autoComplete="username"
+                placeholder="rustytap"
                 className="w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
               />
             </div>

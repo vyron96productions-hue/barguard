@@ -11,8 +11,15 @@ export async function GET() {
       .eq('id', businessId)
       .single()
 
+    // Prefer stored username from metadata; fall back to email
+    const username = (user.user_metadata?.username as string | undefined)
+      ?? user.email?.replace('@barguard.app', '')
+      ?? user.email
+      ?? null
+
     return NextResponse.json({
       user_email: user.email,
+      username,
       business_id: businessId,
       business_name: biz?.name ?? null,
     })

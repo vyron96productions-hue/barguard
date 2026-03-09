@@ -7,7 +7,7 @@ import Link from 'next/link'
 export default function SignupPage() {
   const router = useRouter()
   const [barName, setBarName] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,7 +20,7 @@ export default function SignupPage() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bar_name: barName, email, password }),
+      body: JSON.stringify({ bar_name: barName, username, password }),
     })
 
     const data = await res.json()
@@ -78,16 +78,19 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Email</label>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Username</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                autoComplete="email"
-                placeholder="you@yourbar.com"
+                autoComplete="username"
+                placeholder="rustytap"
+                pattern="[a-zA-Z0-9_-]+"
+                title="Letters, numbers, underscores, and hyphens only"
                 className="w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
               />
+              <p className="mt-1.5 text-xs text-slate-700">No email needed. Letters, numbers, _ and - only.</p>
             </div>
 
             <div>
