@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
 interface ConfirmLine {
   id: string
@@ -20,15 +20,15 @@ interface ConfirmBody {
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { supabase, businessId } = await getAuthContext()
     const { id } = await params
     const body: ConfirmBody = await req.json()
 
-    // Verify draft belongs to this business and is still pending
     const { data: draft, error: draftError } = await supabase
       .from('purchase_import_drafts')
       .select('id, document_upload_id, status')
       .eq('id', id)
-      .eq('business_id', DEMO_BUSINESS_ID)
+      .eq('business_id', businessId)
       .single()
 
     if (draftError) return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
@@ -43,26 +43,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const purchaseDate = body.purchase_date ?? new Date().toISOString().slice(0, 10)
 
-    // Save alias mappings for lines that have save_alias set
     const aliasLines = body.lines.filter((l) => l.save_alias && l.inventory_item_id && l.raw_item_name)
     for (const line of aliasLines) {
       await supabase
         .from('inventory_item_aliases')
         .upsert(
-          {
-            business_id: DEMO_BUSINESS_ID,
-            raw_name: line.raw_item_name,
-            inventory_item_id: line.inventory_item_id,
-          },
+          { business_id: businessId, raw_name: line.raw_item_name, inventory_item_id: line.inventory_item_id },
           { onConflict: 'business_id,raw_name' }
         )
     }
 
-    // Create a purchase_uploads record for this scan import
     const { data: upload, error: uploadError } = await supabase
       .from('purchase_uploads')
       .insert({
-        business_id: DEMO_BUSINESS_ID,
+        business_id: businessId,
         filename: `scan-import-${id.slice(0, 8)}`,
         period_start: purchaseDate,
         period_end: purchaseDate,
@@ -74,10 +68,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-    // Insert purchase records for approved lines
     const purchases = approvedLines.map((line) => ({
       upload_id: upload.id,
-      business_id: DEMO_BUSINESS_ID,
+      business_id: businessId,
       purchase_date: purchaseDate,
       raw_item_name: line.raw_item_name,
       inventory_item_id: line.inventory_item_id,
@@ -90,24 +83,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { error: purchasesError } = await supabase.from('purchases').insert(purchases)
     if (purchasesError) return NextResponse.json({ error: purchasesError.message }, { status: 500 })
 
-    // Mark draft as confirmed
     await supabase
       .from('purchase_import_drafts')
-      .update({
-        status: 'confirmed',
-        vendor_name: body.vendor_name,
-        purchase_date: purchaseDate,
-        confirmed_at: new Date().toISOString(),
-      })
+      .update({ status: 'confirmed', vendor_name: body.vendor_name, purchase_date: purchaseDate, confirmed_at: new Date().toISOString() })
       .eq('id', id)
 
-    return NextResponse.json({
-      upload_id: upload.id,
-      rows_imported: approvedLines.length,
-      aliases_saved: aliasLines.length,
-    })
+    return NextResponse.json({ upload_id: upload.id, rows_imported: approvedLines.length, aliases_saved: aliasLines.length })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Confirmation failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return authErrorResponse(err)
   }
 }

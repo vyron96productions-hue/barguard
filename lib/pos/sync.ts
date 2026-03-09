@@ -1,4 +1,4 @@
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { adminSupabase } from '@/lib/supabase/admin'
 import type { NormalizedSaleItem, PosProvider } from './types'
 
 /**
@@ -10,15 +10,15 @@ export async function importPosItemsToSupabase(
   provider: PosProvider,
   periodStart: string,
   periodEnd: string,
-  items: NormalizedSaleItem[]
+  items: NormalizedSaleItem[],
+  businessId: string
 ): Promise<number> {
   if (items.length === 0) return 0
 
-  // Create a synthetic upload record
-  const { data: upload, error: uploadErr } = await supabase
+  const { data: upload, error: uploadErr } = await adminSupabase
     .from('sales_uploads')
     .insert({
-      business_id: DEMO_BUSINESS_ID,
+      business_id: businessId,
       filename: `${provider}_sync_${periodStart}_${periodEnd}`,
       period_start: periodStart,
       period_end: periodEnd,
@@ -29,22 +29,20 @@ export async function importPosItemsToSupabase(
 
   if (uploadErr || !upload) throw new Error(`Failed to create upload record: ${uploadErr?.message}`)
 
-  // Load menu item aliases for matching
-  const { data: aliases } = await supabase
+  const { data: aliases } = await adminSupabase
     .from('menu_item_aliases')
     .select('raw_name, menu_item_id')
-    .eq('business_id', DEMO_BUSINESS_ID)
+    .eq('business_id', businessId)
 
   const aliasMap = new Map<string, string>()
   for (const a of aliases ?? []) {
     aliasMap.set(a.raw_name.toLowerCase().trim(), a.menu_item_id)
   }
 
-  // Also load menu items for direct name matching
-  const { data: menuItems } = await supabase
+  const { data: menuItems } = await adminSupabase
     .from('menu_items')
     .select('id, name')
-    .eq('business_id', DEMO_BUSINESS_ID)
+    .eq('business_id', businessId)
 
   const menuMap = new Map<string, string>()
   for (const m of menuItems ?? []) {
@@ -56,14 +54,13 @@ export async function importPosItemsToSupabase(
     return aliasMap.get(key) ?? menuMap.get(key) ?? null
   }
 
-  // Insert transactions in batches of 200
   const BATCH = 200
   let totalInserted = 0
 
   for (let i = 0; i < items.length; i += BATCH) {
     const batch = items.slice(i, i + BATCH).map((item) => ({
       upload_id: upload.id,
-      business_id: DEMO_BUSINESS_ID,
+      business_id: businessId,
       sale_date: item.sale_date,
       raw_item_name: item.raw_item_name,
       menu_item_id: resolveMenuItemId(item.raw_item_name),
@@ -71,7 +68,7 @@ export async function importPosItemsToSupabase(
       gross_sales: item.gross_sales,
     }))
 
-    const { error } = await supabase.from('sales_transactions').insert(batch)
+    const { error } = await adminSupabase.from('sales_transactions').insert(batch)
     if (error) throw new Error(`Failed to insert transactions: ${error.message}`)
     totalInserted += batch.length
   }
@@ -85,10 +82,11 @@ export async function logPosSync(
   periodEnd: string,
   status: 'success' | 'error',
   transactionsImported: number,
+  businessId: string,
   errorMessage?: string
 ) {
-  await supabase.from('pos_sync_logs').insert({
-    business_id: DEMO_BUSINESS_ID,
+  await adminSupabase.from('pos_sync_logs').insert({
+    business_id: businessId,
     pos_type: provider,
     period_start: periodStart,
     period_end: periodEnd,
@@ -98,10 +96,10 @@ export async function logPosSync(
   })
 
   if (status === 'success') {
-    await supabase
+    await adminSupabase
       .from('pos_connections')
       .update({ last_synced_at: new Date().toISOString() })
-      .eq('business_id', DEMO_BUSINESS_ID)
+      .eq('business_id', businessId)
       .eq('pos_type', provider)
   }
 }

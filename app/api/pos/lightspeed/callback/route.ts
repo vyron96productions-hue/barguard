@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { exchangeLightspeedCode } from '@/lib/pos/lightspeed'
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { getAuthContext } from '@/lib/auth'
+import { adminSupabase } from '@/lib/supabase/admin'
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -21,12 +22,20 @@ export async function GET(req: Request) {
   }
   cookieStore.delete('pos_oauth_state')
 
+  let businessId: string
+  try {
+    const ctx = await getAuthContext()
+    businessId = ctx.businessId
+  } catch {
+    return NextResponse.redirect(`${baseUrl}/connections?error=lightspeed_auth_required`)
+  }
+
   try {
     const redirectUri = `${baseUrl}/api/pos/lightspeed/callback`
     const token = await exchangeLightspeedCode(code, redirectUri)
 
-    await supabase.from('pos_connections').upsert({
-      business_id: DEMO_BUSINESS_ID,
+    await adminSupabase.from('pos_connections').upsert({
+      business_id: businessId,
       pos_type: 'lightspeed',
       access_token: token.access_token,
       refresh_token: token.refresh_token ?? null,
@@ -40,7 +49,8 @@ export async function GET(req: Request) {
     }, { onConflict: 'business_id,pos_type' })
 
     return NextResponse.redirect(`${baseUrl}/connections?success=lightspeed`)
-  } catch (e: any) {
-    return NextResponse.redirect(`${baseUrl}/connections?error=${encodeURIComponent(e.message)}`)
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'unknown'
+    return NextResponse.redirect(`${baseUrl}/connections?error=${encodeURIComponent(msg)}`)
   }
 }

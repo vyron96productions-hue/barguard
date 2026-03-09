@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const periodStart = searchParams.get('period_start')
-  const periodEnd   = searchParams.get('period_end')
-  // When present, filter to a specific shift; when absent, return all rows for the period.
-  const shiftLabel  = searchParams.get('shift_label')
+  try {
+    const { supabase, businessId } = await getAuthContext()
+    const { searchParams } = new URL(req.url)
+    const periodStart = searchParams.get('period_start')
+    const periodEnd   = searchParams.get('period_end')
+    const shiftLabel  = searchParams.get('shift_label')
 
-  let query = supabase
-    .from('inventory_usage_summaries')
-    .select('*, inventory_item:inventory_items(id, name, unit, category)')
-    .eq('business_id', DEMO_BUSINESS_ID)
-    .order('status', { ascending: false }) // critical first
-    .order('variance_percent', { ascending: false })
+    let query = supabase
+      .from('inventory_usage_summaries')
+      .select('*, inventory_item:inventory_items(id, name, unit, category)')
+      .eq('business_id', businessId)
+      .order('status', { ascending: false })
+      .order('variance_percent', { ascending: false })
 
-  if (periodStart) query = query.gte('period_start', periodStart)
-  if (periodEnd)   query = query.lte('period_end', periodEnd)
-  if (shiftLabel !== null) query = query.eq('shift_label', shiftLabel)
+    if (periodStart) query = query.gte('period_start', periodStart)
+    if (periodEnd)   query = query.lte('period_end', periodEnd)
+    if (shiftLabel !== null) query = query.eq('shift_label', shiftLabel)
 
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const { data, error } = await query
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json(data)
+    return NextResponse.json(data)
+  } catch (e) { return authErrorResponse(e) }
 }

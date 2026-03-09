@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { extractFromImage, extractFromPdf } from '@/lib/document-extraction'
 import { resolveInventoryItemId } from '@/lib/aliases'
 
@@ -10,6 +10,8 @@ type SupportedMimeType = (typeof SUPPORTED_TYPES)[number]
 
 export async function POST(req: NextRequest) {
   try {
+    const { supabase, businessId } = await getAuthContext()
+
     const formData = await req.formData()
     const file = formData.get('file') as File | null
 
@@ -28,7 +30,6 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     const base64 = buffer.toString('base64')
 
-    // Extract structured data using Claude
     let parsed
     try {
       if (mimeType === 'application/pdf') {
@@ -41,11 +42,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `AI extraction failed: ${claudeErr instanceof Error ? claudeErr.message : String(claudeErr)}` }, { status: 500 })
     }
 
-    // Store the document upload record
     const { data: docUpload, error: docError } = await supabase
       .from('document_uploads')
       .insert({
-        business_id: DEMO_BUSINESS_ID,
+        business_id: businessId,
         filename: file.name,
         file_type: mimeType,
         file_data: base64,
@@ -59,11 +59,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `DB error (document_uploads): ${docError.message}` }, { status: 500 })
     }
 
-    // Create the draft header
     const { data: draft, error: draftError } = await supabase
       .from('purchase_import_drafts')
       .insert({
-        business_id: DEMO_BUSINESS_ID,
+        business_id: businessId,
         document_upload_id: docUpload.id,
         vendor_name: parsed.vendor_name,
         purchase_date: parsed.purchase_date,
@@ -79,10 +78,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `DB error (purchase_import_drafts): ${draftError.message}` }, { status: 500 })
     }
 
-    // Resolve each line item against inventory
     const draftLines = await Promise.all(
-      parsed.line_items.map(async (item, idx) => {
-        const inventoryItemId = await resolveInventoryItemId(item.raw_item_name)
+      parsed.line_items.map(async (item: { raw_item_name: string; quantity: number; unit_type: string | null; unit_cost: number | null; line_total: number | null; confidence: number; package_type?: string; units_per_package?: number }, idx: number) => {
+        const inventoryItemId = await resolveInventoryItemId(item.raw_item_name, supabase, businessId)
         return {
           draft_id: draft.id,
           raw_item_name: item.raw_item_name,
@@ -118,8 +116,6 @@ export async function POST(req: NextRequest) {
       line_count: draftLines.length,
     })
   } catch (err: unknown) {
-    console.error('[purchase-scan] Unhandled error:', err)
-    const message = err instanceof Error ? err.message : 'Processing failed'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return authErrorResponse(err)
   }
 }

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { generateVarianceSummary } from '@/lib/ai'
 
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   try {
+    const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
     const { period_start, period_end, shift_label, total_revenue, total_covers } = body
 
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     let summaryQuery = supabase
       .from('inventory_usage_summaries')
       .select('*, inventory_item:inventory_items(id, name, unit, category)')
-      .eq('business_id', DEMO_BUSINESS_ID)
+      .eq('business_id', businessId)
       .gte('period_start', period_start)
       .lte('period_end', period_end)
 
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     const { data: saved, error: saveError } = await supabase
       .from('ai_summaries')
       .insert({
-        business_id: DEMO_BUSINESS_ID,
+        business_id: businessId,
         period_start,
         period_end,
         summary_text: summaryText,
@@ -53,30 +54,31 @@ export async function POST(req: NextRequest) {
     if (saveError) return NextResponse.json({ error: saveError.message }, { status: 500 })
 
     return NextResponse.json(saved)
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? 'Unknown server error' }, { status: 500 })
-  }
+  } catch (e) { return authErrorResponse(e) }
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const periodStart = searchParams.get('period_start')
-  const periodEnd   = searchParams.get('period_end')
-  const shiftLabel  = searchParams.get('shift_label')
+  try {
+    const { supabase, businessId } = await getAuthContext()
+    const { searchParams } = new URL(req.url)
+    const periodStart = searchParams.get('period_start')
+    const periodEnd   = searchParams.get('period_end')
+    const shiftLabel  = searchParams.get('shift_label')
 
-  let query = supabase
-    .from('ai_summaries')
-    .select('*')
-    .eq('business_id', DEMO_BUSINESS_ID)
-    .order('created_at', { ascending: false })
-    .limit(1)
+    let query = supabase
+      .from('ai_summaries')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-  if (periodStart) query = query.gte('period_start', periodStart)
-  if (periodEnd)   query = query.lte('period_end', periodEnd)
-  if (shiftLabel !== null) query = query.eq('shift_label', shiftLabel)
+    if (periodStart) query = query.gte('period_start', periodStart)
+    if (periodEnd)   query = query.lte('period_end', periodEnd)
+    if (shiftLabel !== null) query = query.eq('shift_label', shiftLabel)
 
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const { data, error } = await query
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json(data?.[0] ?? null)
+    return NextResponse.json(data?.[0] ?? null)
+  } catch (e) { return authErrorResponse(e) }
 }

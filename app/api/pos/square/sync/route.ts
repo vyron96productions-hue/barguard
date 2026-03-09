@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { supabase, DEMO_BUSINESS_ID } from '@/lib/db'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { fetchSquareSales } from '@/lib/pos/square'
 import { importPosItemsToSupabase, logPosSync } from '@/lib/pos/sync'
 
 export async function POST(req: Request) {
   try {
+    const { supabase, businessId } = await getAuthContext()
     const { period_start, period_end } = await req.json()
     if (!period_start || !period_end) {
       return NextResponse.json({ error: 'period_start and period_end required' }, { status: 400 })
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
     const { data: conn } = await supabase
       .from('pos_connections')
       .select('*')
-      .eq('business_id', DEMO_BUSINESS_ID)
+      .eq('business_id', businessId)
       .eq('pos_type', 'square')
       .eq('is_active', true)
       .single()
@@ -21,12 +22,12 @@ export async function POST(req: Request) {
     if (!conn) return NextResponse.json({ error: 'Square not connected' }, { status: 400 })
 
     const items = await fetchSquareSales(conn.access_token, conn.location_id, period_start, period_end)
-    const count = await importPosItemsToSupabase('square', period_start, period_end, items)
-    await logPosSync('square', period_start, period_end, 'success', count)
+    const count = await importPosItemsToSupabase('square', period_start, period_end, items, businessId)
+    await logPosSync('square', period_start, period_end, 'success', count, businessId)
 
     return NextResponse.json({ imported: count })
-  } catch (e: any) {
-    await logPosSync('square', '', '', 'error', 0, e.message).catch(() => {})
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'unknown'
+    return authErrorResponse(e) || NextResponse.json({ error: msg }, { status: 500 })
   }
 }

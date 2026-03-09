@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const sections = [
   {
@@ -38,6 +39,22 @@ const sections = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [businessName, setBusinessName] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => { if (d.business_name) setBusinessName(d.business_name) })
+      .catch(() => {})
+  }, [])
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+    router.refresh()
+  }
+
   return (
     <aside className="hidden md:flex w-56 bg-slate-950 border-r border-slate-800/60 flex-col shrink-0">
       {/* Logo */}
@@ -87,11 +104,18 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-slate-800/60">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <p className="text-xs text-slate-500">The Rusty Tap</p>
+      <div className="px-4 py-4 border-t border-slate-800/60 space-y-2">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+          <p className="text-xs text-slate-500 truncate">{businessName ?? '…'}</p>
         </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 transition-colors border border-transparent"
+        >
+          <span className="font-mono text-[10px]">⊗</span>
+          <span>Sign out</span>
+        </button>
       </div>
     </aside>
   )
