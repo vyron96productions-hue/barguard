@@ -28,7 +28,7 @@ export default function VarianceReportsPage() {
   const filtered = summaries.filter((s) => {
     if (statusFilter !== 'all' && s.status !== statusFilter) return false
     if (typeFilter !== 'all') {
-      const itemType = (s.inventory_item as any)?.item_type ?? 'beverage'
+      const itemType = s.inventory_item?.item_type ?? 'beverage'
       if (itemType !== typeFilter) return false
     }
     return true
@@ -36,10 +36,10 @@ export default function VarianceReportsPage() {
 
   // KPIs from the filtered set
   const totalEstLoss = filtered.reduce((acc, s) => {
-    const cost = (s.inventory_item as any)?.cost_per_unit ?? 0
+    const cost = s.inventory_item?.cost_per_unit ?? 0
     return acc + Math.max(0, s.variance) * cost
   }, 0)
-  const hasCostData = filtered.some(s => (s.inventory_item as any)?.cost_per_unit != null)
+  const hasCostData = filtered.some(s => s.inventory_item?.cost_per_unit != null)
   const criticalCount = filtered.filter((s) => s.status === 'critical').length
   const warningCount = filtered.filter((s) => s.status === 'warning').length
 
@@ -151,7 +151,7 @@ export default function VarianceReportsPage() {
           <div className="lg:hidden space-y-3">
             {filtered.map((s) => {
               const unit = s.inventory_item?.unit ?? 'units'
-              const costPerUnit = (s.inventory_item as any)?.cost_per_unit ?? 0
+              const costPerUnit = s.inventory_item?.cost_per_unit ?? 0
               const estLoss = Math.max(0, s.variance) * costPerUnit
               return (
                 <div key={s.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">

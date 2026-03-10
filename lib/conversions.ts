@@ -19,6 +19,7 @@ export const UNIT_TO_OZ: Record<string, number> = {
   quarterkeg: 992,
   sixthkeg: 661,
   pint: 16,
+  can: 12,          // 12oz standard can
   case: 304.32,     // 12 x 750ml
 }
 
@@ -26,9 +27,9 @@ export const UNIT_TO_OZ: Record<string, number> = {
 export const FOOD_UNITS = new Set([
   'each', 'piece', 'portion', 'serving', 'slice',
   'lb', 'lbs', 'pound', 'kg', 'g', 'gram',
-  'bag', 'tray', 'box', 'case', 'flat',
+  'bag', 'tray', 'box', 'flat',
   'cup', 'tbsp', 'tsp',
-  'can', 'jar', 'packet',
+  'jar', 'packet',
 ])
 
 export function isLiquidUnit(unit: string): boolean {
