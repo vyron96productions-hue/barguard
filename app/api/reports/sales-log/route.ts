@@ -31,7 +31,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'date_start and date_end are required' }, { status: 400 })
     }
 
-    const { data: rows, error } = await supabase
+    type MenuItemJoin = { id: string; name: string; category: string | null; item_type: string | null }
+
+    const { data: rawRows, error } = await supabase
       .from('sales_transactions')
       .select('sale_date, menu_item_id, raw_item_name, quantity_sold, gross_sales, menu_item:menu_items(id, name, category, item_type)')
       .eq('business_id', businessId)
@@ -41,17 +43,26 @@ export async function GET(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+    const rows = (rawRows ?? []) as unknown as Array<{
+      sale_date: string
+      menu_item_id: string | null
+      raw_item_name: string
+      quantity_sold: number
+      gross_sales: number | null
+      menu_item: MenuItemJoin | null
+    }>
+
     // Aggregate: group by date → by menu_item_id (or raw_item_name for unmatched)
     const dayMap = new Map<string, Map<string, SalesLogItem>>()
 
-    for (const row of rows ?? []) {
+    for (const row of rows) {
       const date = row.sale_date
       if (!dayMap.has(date)) dayMap.set(date, new Map())
       const itemMap = dayMap.get(date)!
 
       // Key: menu_item_id if matched, else raw_item_name
       const key = row.menu_item_id ?? `raw::${row.raw_item_name}`
-      const mi = row.menu_item as { id: string; name: string; category: string | null; item_type: string | null } | null
+      const mi = row.menu_item
 
       if (!itemMap.has(key)) {
         itemMap.set(key, {
