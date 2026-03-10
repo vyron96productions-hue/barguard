@@ -4,18 +4,26 @@ import { useEffect, useState, useRef } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
 
-const PRESET_CATEGORIES = [
+const BEVERAGE_CATEGORIES = [
   'spirits', 'beer', 'wine', 'keg',
-  'mixer', 'non-alcoholic', 'supply',
+  'mixer', 'non-alcoholic',
   'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
-  'other',
 ]
+const FOOD_CATEGORIES = [
+  'food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods',
+  'sauces', 'condiments', 'dessert', 'supply',
+]
+const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
+
+const BEVERAGE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
+const FOOD_UNITS_LIST = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet']
 
 interface StockItem {
   id: string
   name: string
   unit: string
   category: string | null
+  item_type: string | null
   pack_size: number | null
   package_type: string | null
   quantity_on_hand: number | null
@@ -23,6 +31,7 @@ interface StockItem {
 }
 
 type FilterCategory = 'all' | string
+type TypeFilter = 'all' | 'beverage' | 'food'
 
 function daysAgo(dateStr: string): number {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -37,9 +46,12 @@ function staleness(item: StockItem): 'fresh' | 'aging' | 'stale' | 'never' {
   return 'stale'
 }
 
+function isFood(item: StockItem) { return item.item_type === 'food' }
+
 export default function StockPage() {
   const [items, setItems] = useState<StockItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [filter, setFilter] = useState<FilterCategory>('all')
   const [search, setSearch] = useState('')
 
@@ -50,13 +62,23 @@ export default function StockPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const categories = ['all', ...Array.from(new Set(items.map((i) => i.category ?? 'Uncategorized'))).sort()]
+  const beverageCount = items.filter((i) => !isFood(i)).length
+  const foodCount = items.filter(isFood).length
+  const hasBoth = beverageCount > 0 && foodCount > 0
+
+  const typeFiltered = items.filter((i) => {
+    if (typeFilter === 'beverage') return !isFood(i)
+    if (typeFilter === 'food') return isFood(i)
+    return true
+  })
+
+  const categories = ['all', ...Array.from(new Set(typeFiltered.map((i) => i.category ?? 'Uncategorized'))).sort()]
   const allCategories = [...new Set([
     ...PRESET_CATEGORIES,
     ...items.map((i) => i.category).filter(Boolean) as string[],
   ])].sort()
 
-  const visible = items.filter((item) => {
+  const visible = typeFiltered.filter((item) => {
     const matchesCat = filter === 'all' || (item.category ?? 'Uncategorized') === filter
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase())
     return matchesCat && matchesSearch
@@ -84,13 +106,53 @@ export default function StockPage() {
     )
   }
 
+  function renderSection(sectionItems: StockItem[], label?: string) {
+    const sGrouped = sectionItems.reduce<Record<string, StockItem[]>>((acc, item) => {
+      const cat = item.category ?? 'Uncategorized'
+      if (!acc[cat]) acc[cat] = []
+      acc[cat].push(item)
+      return acc
+    }, {})
+    return (
+      <>
+        {label && (
+          <div className="flex items-center gap-3 mt-2 mb-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">{label}</span>
+            <span className="flex-1 h-px bg-slate-800" />
+            <span className="text-[11px] text-slate-600">{sectionItems.length}</span>
+          </div>
+        )}
+        {Object.entries(sGrouped).sort(([a], [b]) => a.localeCompare(b)).map(([cat, catItems]) => (
+          <div key={cat}>
+            <div className="flex items-center gap-3 mb-3 px-1">
+              <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{cat}</h2>
+              <span className="text-xs text-slate-600">{catItems.length} item{catItems.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {catItems.map((item) => (
+                <StockCard
+                  key={item.id}
+                  item={item}
+                  allCategories={allCategories}
+                  onUpdate={(updated) =>
+                    setItems((prev) => prev.map((i) => (i.id === updated.id ? { ...i, ...updated } : i)))
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </>
+    )
+  }
+
   return (
     <div className="space-y-5 max-w-5xl">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Current Stock Levels</h1>
-          <p className="text-gray-500 mt-1 text-sm">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Current Stock Levels</h1>
+          <p className="text-slate-500 mt-1 text-sm">
             {countedCount} of {items.length} items counted
             {lastCountDate && ` · last count ${new Date(lastCountDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
           </p>
@@ -111,32 +173,54 @@ export default function StockPage() {
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-slate-600" />Never counted</span>
       </div>
 
-      {/* Search + category filter */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search items…"
-          className="flex-1 bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/60"
-        />
-        <div className="flex gap-1 bg-gray-900 border border-gray-800 rounded-lg p-1 overflow-x-auto">
-          {categories.map((cat) => (
+      {/* Type filter + Search + category filter */}
+      <div className="space-y-3">
+        {/* Type tab strip */}
+        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1 w-fit">
+          {([
+            { key: 'all',      label: `All Items${hasBoth ? ` (${items.length})` : ''}` },
+            { key: 'beverage', label: `Beverages${hasBoth ? ` (${beverageCount})` : ''}` },
+            { key: 'food',     label: `Food${hasBoth ? ` (${foodCount})` : ''}` },
+          ] as const).map(({ key, label }) => (
             <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className={`px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition-colors ${
-                filter === cat ? 'bg-amber-500 text-gray-900' : 'text-gray-400 hover:text-gray-200'
+              key={key}
+              onClick={() => { setTypeFilter(key); setFilter('all') }}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                typeFilter === key ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              {cat === 'all' ? 'All' : cat}
+              {label}
             </button>
           ))}
+        </div>
+
+        {/* Search + category filter */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search items…"
+            className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+          />
+          <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-lg p-1 overflow-x-auto">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`px-3 py-1.5 rounded text-xs font-medium whitespace-nowrap transition-colors ${
+                  filter === cat ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {cat === 'all' ? 'All' : cat}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center">
           <p className="text-4xl mb-3">🍾</p>
           <p className="text-slate-300 font-medium">No inventory items yet</p>
           <p className="text-slate-500 text-sm mt-1">Add items in Inventory, then upload a count CSV.</p>
@@ -146,30 +230,19 @@ export default function StockPage() {
           </div>
         </div>
       ) : visible.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center">
           <p className="text-slate-500 text-sm">No items match your search.</p>
         </div>
+      ) : typeFilter === 'all' && hasBoth && filter === 'all' && !search ? (
+        // Sectioned view: Beverages then Food
+        <div className="space-y-5">
+          {renderSection(visible.filter((i) => !isFood(i)), 'Beverages')}
+          {renderSection(visible.filter(isFood), 'Food & Kitchen')}
+        </div>
       ) : (
-        Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([cat, catItems]) => (
-          <div key={cat}>
-            <div className="flex items-center gap-3 mb-3 px-1">
-              <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{cat}</h2>
-              <span className="text-xs text-slate-600">{catItems.length} item{catItems.length !== 1 ? 's' : ''}</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {catItems.map((item) => (
-                <StockCard
-                  key={item.id}
-                  item={item}
-                  allCategories={allCategories}
-                  onUpdate={(updated) =>
-                    setItems((prev) => prev.map((i) => (i.id === updated.id ? { ...i, ...updated } : i)))
-                  }
-                />
-              ))}
-            </div>
-          </div>
-        ))
+        <div className="space-y-5">
+          {renderSection(visible)}
+        </div>
       )}
     </div>
   )
@@ -188,6 +261,9 @@ function StockCard({ item, allCategories, onUpdate }: {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
+
+  const itemIsFood = item.item_type === 'food'
+  const unitOptions = itemIsFood ? FOOD_UNITS_LIST : BEVERAGE_UNITS
 
   function openEdit() {
     setName(item.name)
@@ -233,11 +309,11 @@ function StockCard({ item, allCategories, onUpdate }: {
 
   const status = staleness(item)
   const dotColor = { fresh: 'bg-emerald-400', aging: 'bg-amber-400', stale: 'bg-red-400', never: 'bg-slate-600' }[status]
-  const qtyColor = item.quantity_on_hand === null ? 'text-slate-600' : item.quantity_on_hand === 0 ? 'text-red-400' : 'text-gray-100'
+  const qtyColor = item.quantity_on_hand === null ? 'text-slate-600' : item.quantity_on_hand === 0 ? 'text-red-400' : 'text-slate-100'
 
   if (editing) {
     return (
-      <div className="bg-gray-900 border border-amber-500/40 rounded-xl p-4 flex flex-col gap-3">
+      <div className="bg-slate-900 border border-amber-500/40 rounded-xl p-4 flex flex-col gap-3">
         <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Edit Item</p>
         <div className="space-y-2">
           <div>
@@ -269,9 +345,13 @@ function StockCard({ item, allCategories, onUpdate }: {
                 onChange={(e) => setUnit(e.target.value)}
                 className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
               >
-                {['oz', 'ml', 'l', 'bottle', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint'].map((u) => (
+                {unitOptions.map((u) => (
                   <option key={u} value={u}>{u}</option>
                 ))}
+                {/* Allow keeping current unit even if it's from a different type */}
+                {!unitOptions.includes(unit) && (
+                  <option value={unit}>{unit}</option>
+                )}
               </select>
             </div>
             <div>
@@ -310,7 +390,7 @@ function StockCard({ item, allCategories, onUpdate }: {
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col gap-3 hover:border-gray-700 transition-colors group">
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 hover:border-slate-700 transition-colors group">
       {/* Name + dot + edit button */}
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-slate-200 leading-snug">{item.name}</p>
