@@ -43,6 +43,7 @@ export default function InventoryItemsPage() {
   const [costPerUnit, setCostPerUnit] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [autoLinked, setAutoLinked] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'all' | ItemType>('all')
 
   useEffect(() => { fetchItems() }, [])
@@ -76,6 +77,10 @@ export default function InventoryItemsPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
     setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setItemType('beverage')
+    if (data.auto_menu_item) {
+      setAutoLinked(data.auto_menu_item)
+      setTimeout(() => setAutoLinked(null), 5000)
+    }
     fetchItems()
     setSaving(false)
   }
@@ -289,6 +294,17 @@ export default function InventoryItemsPage() {
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
       </form>
+
+      {/* Auto-link confirmation */}
+      {autoLinked && (
+        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+          <span className="text-emerald-400 text-sm">✓</span>
+          <p className="text-sm text-emerald-400 font-medium">
+            <span className="font-bold">{autoLinked}</span> was also added to Recipe Mapping with a default recipe.
+            <a href="/menu-items" className="ml-2 underline underline-offset-2 text-emerald-300 hover:text-emerald-200">View →</a>
+          </p>
+        </div>
+      )}
 
       {/* Type filter */}
       {items.length > 0 && (

@@ -50,7 +50,46 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json(data, { status: 201 })
+
+    // Auto-create a menu item + recipe for simple beverage units
+    const autoRecipeUnit: Record<string, { qty: number; unit: string; category: string }> = {
+      'bottle': { qty: 1.5, unit: 'oz', category: 'shot' },
+      '1l':     { qty: 1.5, unit: 'oz', category: 'shot' },
+      '1.75l':  { qty: 1.5, unit: 'oz', category: 'shot' },
+      'can':    { qty: 1,   unit: 'can', category: 'beer' },
+      'pint':   { qty: 1,   unit: 'pint', category: 'beer' },
+    }
+
+    const resolvedType = (item_type || 'beverage') as string
+    const recipeDefaults = autoRecipeUnit[unit?.toLowerCase?.() ?? '']
+    let autoMenuItemName: string | null = null
+
+    if (resolvedType === 'beverage' && recipeDefaults && data) {
+      // Create menu item with same name
+      const { data: menuItem } = await supabase
+        .from('menu_items')
+        .insert({
+          business_id: businessId,
+          name: name.trim(),
+          category: recipeDefaults.category,
+          item_type: 'drink',
+        })
+        .select('id')
+        .single()
+
+      if (menuItem) {
+        // Create recipe linking them
+        await supabase.from('menu_item_recipes').insert({
+          menu_item_id: menuItem.id,
+          inventory_item_id: data.id,
+          quantity: recipeDefaults.qty,
+          unit: recipeDefaults.unit,
+        })
+        autoMenuItemName = name.trim()
+      }
+    }
+
+    return NextResponse.json({ ...data, auto_menu_item: autoMenuItemName }, { status: 201 })
   } catch (e) { return authErrorResponse(e) }
 }
 
