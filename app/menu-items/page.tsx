@@ -20,7 +20,7 @@ interface WizardRow extends RecipeSuggestion {
 
 const DRINK_CATEGORIES = ['cocktail', 'shot', 'beer', 'wine', 'non-alcoholic', 'spirits']
 const FOOD_CATEGORIES  = ['entree', 'appetizer', 'side', 'dessert', 'salad', 'soup', 'sandwich', 'pizza', 'breakfast', 'kids']
-const RECIPE_UNITS = ['oz', 'ml', 'cl', 'l', 'each', 'piece', 'portion', 'slice', 'lb', 'g', 'cup', 'tbsp', 'tsp']
+const RECIPE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'pint', 'each', 'piece', 'portion', 'slice', 'lb', 'g', 'cup', 'tbsp', 'tsp']
 
 // Treat 'drink', 'beer', 'other', and undefined as drinks; only 'food' is food
 function isFood(item_type: string | undefined | null) { return item_type === 'food' }
@@ -144,7 +144,12 @@ export default function RecipeMappingPage() {
 
   async function handleDeleteMenuItem(id: string) {
     if (!confirm('Delete this menu item and all its recipes?')) return
-    await fetch(`/api/menu-items?id=${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/menu-items?id=${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json()
+      setError(JSON.stringify(data))
+      return
+    }
     fetchAll()
   }
 

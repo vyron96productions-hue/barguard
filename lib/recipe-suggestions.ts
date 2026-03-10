@@ -39,14 +39,26 @@ function cleanWords(name: string): string[] {
     .filter((w) => w.length > 1 && !STRIP_WORDS.has(w))
 }
 
-function detectPour(menuItemName: string): { quantity: number; unit: string } {
+const FOOD_UNITS = new Set(['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat'])
+
+function detectPour(menuItemName: string, inventoryUnit?: string): { quantity: number; unit: string } {
   const n = menuItemName.toLowerCase()
+  // Check menu item name first for explicit size keywords
   if (n.includes('bottle'))                      return { quantity: 1,   unit: 'bottle' }
   if (n.includes('pint') || n.includes('draft')) return { quantity: 1,   unit: 'pint'   }
   if (n.includes('can'))                         return { quantity: 1,   unit: 'can'    }
   if (n.includes('double') || n.includes('dbl')) return { quantity: 3,   unit: 'oz'     }
   if (n.includes('triple'))                      return { quantity: 4.5, unit: 'oz'     }
   if (n.includes('glass'))                       return { quantity: 5,   unit: 'oz'     } // wine glass
+  // Fall back to inventory item's unit to handle beer cans, pints, food items
+  if (inventoryUnit) {
+    const u = inventoryUnit.toLowerCase()
+    if (u === 'can')    return { quantity: 1, unit: 'can'    }
+    if (u === 'pint')   return { quantity: 1, unit: 'pint'   }
+    if (u === 'bottle') return { quantity: 1, unit: 'bottle' }
+    if (u === 'each')   return { quantity: 1, unit: 'each'   }
+    if (FOOD_UNITS.has(u)) return { quantity: 1, unit: u }
+  }
   return { quantity: 1.5, unit: 'oz' }  // standard shot default
 }
 
@@ -87,7 +99,7 @@ export function generateSuggestions(
     }
 
     if (bestScore >= 0.5 && bestInv) {
-      const { quantity, unit } = detectPour(mi.name)
+      const { quantity, unit } = detectPour(mi.name, bestInv.unit)
       suggestions.push({
         menu_item_id: mi.id,
         menu_item_name: mi.name,
