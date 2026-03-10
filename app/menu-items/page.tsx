@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import type { MenuItem, InventoryItem } from '@/types'
+import type { RecipeSuggestion } from '@/lib/recipe-suggestions'
 
 type MenuItemWithRecipes = MenuItem & {
   sell_price: number | null
   item_type: 'drink' | 'food' | 'beer' | 'other'
   subcategory: string | null
   menu_item_recipes: { id: string; quantity: number; unit: string; inventory_item: InventoryItem }[]
+}
+
+interface WizardRow extends RecipeSuggestion {
+  included: boolean
+  edited_qty: string
+  edited_unit: string
+  edited_inv_id: string
 }
 
 const DRINK_CATEGORIES = ['cocktail', 'shot', 'beer', 'wine', 'non-alcoholic', 'spirits']
@@ -55,6 +63,14 @@ export default function RecipeMappingPage() {
   const [editPriceVal, setEditPriceVal] = useState('')
   const [priceSaving, setPriceSaving]   = useState(false)
 
+  // Auto-match wizard
+  const [showWizard, setShowWizard]           = useState(false)
+  const [suggestions, setSuggestions]         = useState<RecipeSuggestion[]>([])
+  const [wizardRows, setWizardRows]           = useState<WizardRow[]>([])
+  const [wizardSaving, setWizardSaving]       = useState(false)
+  const [wizardDone, setWizardDone]           = useState(false)
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
@@ -66,6 +82,48 @@ export default function RecipeMappingPage() {
     setMenuItems(Array.isArray(menu) ? menu : [])
     setInventoryItems(Array.isArray(inv) ? inv : [])
     setLoading(false)
+  }
+
+  async function openWizard() {
+    setShowWizard(true)
+    setSuggestionsLoading(true)
+    const res = await fetch('/api/recipes/suggestions')
+    const data = await res.json()
+    const sugs: RecipeSuggestion[] = Array.isArray(data) ? data : []
+    setSuggestions(sugs)
+    setWizardRows(sugs.map((s) => ({
+      ...s,
+      included: true,
+      edited_qty: s.suggested_quantity.toString(),
+      edited_unit: s.suggested_unit,
+      edited_inv_id: s.inventory_item_id,
+    })))
+    setSuggestionsLoading(false)
+  }
+
+  async function confirmWizard() {
+    const selected = wizardRows.filter((r) => r.included && r.edited_inv_id && r.edited_qty)
+    if (selected.length === 0) return
+    setWizardSaving(true)
+    await fetch('/api/recipes/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipes: selected.map((r) => ({
+          menu_item_id: r.menu_item_id,
+          inventory_item_id: r.edited_inv_id,
+          quantity: parseFloat(r.edited_qty),
+          unit: r.edited_unit,
+        })),
+      }),
+    })
+    setWizardSaving(false)
+    setWizardDone(true)
+    setTimeout(() => {
+      setShowWizard(false)
+      setWizardDone(false)
+      fetchAll()
+    }, 1500)
   }
 
   async function handleAddMenuItem(e: React.FormEvent) {
@@ -146,6 +204,9 @@ export default function RecipeMappingPage() {
       : drinkItems
 
   const showTypeSections = typeFilter === 'all' && drinkItems.length > 0 && foodItems.length > 0
+
+  // suppress unused variable warning — suggestions state is used for wizard reset
+  void suggestions
 
   function renderItemCard(item: MenuItemWithRecipes) {
     const isOpen = expandedId === item.id
@@ -401,6 +462,24 @@ export default function RecipeMappingPage() {
         {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
       </form>
 
+      {/* Auto-match banner */}
+      {menuItems.length > 0 && inventoryItems.length > 0 && (
+        <div className="flex items-center justify-between gap-3 bg-amber-500/5 border border-amber-500/20 rounded-2xl px-4 sm:px-5 py-3.5">
+          <div>
+            <p className="text-sm font-semibold text-amber-400">Auto-Match Recipes</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              BarGuard can automatically link your menu items to inventory — no manual setup needed.
+            </p>
+          </div>
+          <button
+            onClick={openWizard}
+            className="shrink-0 px-4 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors"
+          >
+            Auto-Match
+          </button>
+        </div>
+      )}
+
       {/* Type filter — only shown when items exist */}
       {menuItems.length > 0 && (
         <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
@@ -456,6 +535,167 @@ export default function RecipeMappingPage() {
           <a href="/profit-intelligence" className="text-slate-600 hover:text-slate-400 underline underline-offset-2">Profit Intelligence</a>
           {' '}pages.
         </p>
+      )}
+
+      {/* Auto-match wizard overlay */}
+      {showWizard && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+              {/* Wizard header */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-100">Auto-Match Recipes</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Review the suggested links below. Edit any row before confirming.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowWizard(false)}
+                  className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1 mt-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {suggestionsLoading ? (
+                <p className="text-slate-500 text-sm py-8 text-center">Finding matches…</p>
+              ) : wizardDone ? (
+                <div className="text-center py-16 space-y-2">
+                  <p className="text-4xl">✓</p>
+                  <p className="text-lg font-semibold text-emerald-400">Recipes saved!</p>
+                </div>
+              ) : wizardRows.length === 0 ? (
+                <div className="text-center py-16 border border-slate-800 border-dashed rounded-2xl text-slate-600">
+                  <p className="text-3xl mb-3">◉</p>
+                  <p className="text-sm">No automatic matches found.</p>
+                  <p className="text-xs mt-1 text-slate-700">Make sure inventory items are named similarly to your menu items.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {wizardRows.map((row, idx) => (
+                      <div
+                        key={row.menu_item_id}
+                        className={`bg-slate-900 border rounded-xl p-3 sm:p-4 transition-colors ${
+                          row.included ? 'border-slate-700' : 'border-slate-800 opacity-50'
+                        }`}
+                      >
+                        {/* Mobile layout */}
+                        <div className="space-y-2 sm:hidden">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-semibold text-slate-200">{row.menu_item_name}</p>
+                            <input
+                              type="checkbox"
+                              checked={row.included}
+                              onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, included: e.target.checked } : r))}
+                              className="w-4 h-4 accent-amber-500 shrink-0"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>→</span>
+                            <select
+                              value={row.edited_inv_id}
+                              onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_inv_id: e.target.value } : r))}
+                              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                            >
+                              {inventoryItems.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              step="0.5"
+                              value={row.edited_qty}
+                              onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_qty: e.target.value } : r))}
+                              className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                            />
+                            <select
+                              value={row.edited_unit}
+                              onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_unit: e.target.value } : r))}
+                              className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                            >
+                              {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                            </select>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                              row.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                              row.confidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                              'bg-slate-800 text-slate-500 border border-slate-700'
+                            }`}>{row.confidence}</span>
+                          </div>
+                        </div>
+
+                        {/* Desktop layout */}
+                        <div className="hidden sm:flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={row.included}
+                            onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, included: e.target.checked } : r))}
+                            className="w-4 h-4 accent-amber-500 shrink-0"
+                          />
+                          <p className="w-44 text-sm font-medium text-slate-200 truncate shrink-0">{row.menu_item_name}</p>
+                          <span className="text-slate-600 shrink-0">→</span>
+                          <select
+                            value={row.edited_inv_id}
+                            onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_inv_id: e.target.value } : r))}
+                            className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                          >
+                            {inventoryItems.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                          </select>
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={row.edited_qty}
+                            onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_qty: e.target.value } : r))}
+                            className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 shrink-0"
+                          />
+                          <select
+                            value={row.edited_unit}
+                            onChange={(e) => setWizardRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_unit: e.target.value } : r))}
+                            className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 shrink-0"
+                          >
+                            {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${
+                            row.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                            row.confidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                            'bg-slate-800 text-slate-500 border border-slate-700'
+                          }`}>{row.confidence}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Sticky footer */}
+          {!suggestionsLoading && !wizardDone && wizardRows.length > 0 && (
+            <div className="border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-4">
+              <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+                <p className="text-xs text-slate-500">
+                  {wizardRows.filter((r) => r.included).length} of {wizardRows.length} selected
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowWizard(false)}
+                    className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmWizard}
+                    disabled={wizardSaving || wizardRows.filter((r) => r.included).length === 0}
+                    className="px-6 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg text-sm hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {wizardSaving ? 'Saving…' : `Confirm ${wizardRows.filter((r) => r.included).length} Matches`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   )

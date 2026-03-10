@@ -37,6 +37,8 @@ interface StockItem {
   package_type: string | null
   quantity_on_hand: number | null
   count_date: string | null
+  estimated_qty: number | null
+  has_estimate: boolean
 }
 
 type FilterCategory = 'all' | string
@@ -354,7 +356,14 @@ function StockCard({ item, allCategories, onUpdate }: {
 
   const status = staleness(item)
   const dotColor = { fresh: 'bg-emerald-400', aging: 'bg-amber-400', stale: 'bg-red-400', never: 'bg-slate-600' }[status]
-  const qtyColor = item.quantity_on_hand === null ? 'text-slate-600' : item.quantity_on_hand === 0 ? 'text-red-400' : 'text-slate-100'
+  const effectiveQty = item.has_estimate ? item.estimated_qty : item.quantity_on_hand
+  const qtyColor = effectiveQty === null
+    ? 'text-slate-600'
+    : effectiveQty === 0
+      ? 'text-red-400'
+      : item.has_estimate
+        ? 'text-sky-400'
+        : 'text-slate-100'
   const bottleSizeOz = BOTTLE_SIZE_OZ[item.unit] ?? null
 
   if (editing) {
@@ -458,14 +467,19 @@ function StockCard({ item, allCategories, onUpdate }: {
 
       {/* Quantity + breakdown */}
       <div className="space-y-1.5">
-        <p className={`text-3xl font-bold tabular-nums leading-none ${qtyColor}`}>
-          {item.quantity_on_hand !== null ? item.quantity_on_hand : '—'}
-        </p>
-        {item.pack_size && item.pack_size > 1 && item.quantity_on_hand !== null && item.quantity_on_hand > 0 ? (
+        <div className="flex items-baseline gap-1.5">
+          <p className={`text-3xl font-bold tabular-nums leading-none ${qtyColor}`}>
+            {effectiveQty !== null ? Number(effectiveQty.toFixed(2)).toString() : '—'}
+          </p>
+          {item.has_estimate && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-semibold leading-tight">Est.</span>
+          )}
+        </div>
+        {item.pack_size && item.pack_size > 1 && effectiveQty !== null && effectiveQty > 0 ? (
           <div className="space-y-1">
             <p className="text-xs text-slate-500">{item.unit}</p>
             <p className="text-xs font-medium text-amber-400/80 leading-snug">
-              {formatPackBreakdown(item.quantity_on_hand, item.pack_size, item.package_type).split(' · ')[1]}
+              {formatPackBreakdown(effectiveQty, item.pack_size, item.package_type).split(' · ')[1]}
             </p>
           </div>
         ) : (
@@ -478,18 +492,23 @@ function StockCard({ item, allCategories, onUpdate }: {
             )}
           </div>
         )}
+        {item.has_estimate && item.quantity_on_hand !== null && (
+          <p className="text-[10px] text-slate-700">Count: {item.quantity_on_hand} · {daysAgo(item.count_date!)}d ago</p>
+        )}
 
         {/* Partial bottle display for bottle-tracked spirits */}
-        {bottleSizeOz !== null && item.quantity_on_hand !== null && item.quantity_on_hand > 0 && (
-          <PartialBottleDisplay qty={item.quantity_on_hand} bottleSizeOz={bottleSizeOz} />
+        {bottleSizeOz !== null && effectiveQty !== null && effectiveQty > 0 && (
+          <PartialBottleDisplay qty={effectiveQty} bottleSizeOz={bottleSizeOz} />
         )}
       </div>
 
       {/* Last counted */}
       <p className="text-[11px] text-slate-600 mt-auto">
-        {item.count_date
-          ? `Counted ${daysAgo(item.count_date) === 0 ? 'today' : `${daysAgo(item.count_date)}d ago`}`
-          : 'Never counted'}
+        {item.has_estimate
+          ? 'Live estimate'
+          : item.count_date
+            ? `Counted ${daysAgo(item.count_date) === 0 ? 'today' : `${daysAgo(item.count_date)}d ago`}`
+            : 'Never counted'}
       </p>
     </div>
   )
