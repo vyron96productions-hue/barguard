@@ -66,12 +66,60 @@ export default function StockPage() {
   const [filter, setFilter] = useState<FilterCategory>('all')
   const [search, setSearch] = useState('')
 
+  // Count mode
+  const [countMode, setCountMode] = useState(false)
+  const [countValues, setCountValues] = useState<Record<string, string>>({})
+  const [countSearch, setCountSearch] = useState('')
+  const [countTypeFilter, setCountTypeFilter] = useState<TypeFilter>('all')
+  const [countSaving, setCountSaving] = useState(false)
+  const [countDone, setCountDone] = useState(false)
+
+  function reload() {
+    fetch('/api/stock-levels')
+      .then((r) => r.json())
+      .then((data) => setItems(Array.isArray(data) ? data : []))
+  }
+
   useEffect(() => {
     fetch('/api/stock-levels')
       .then((r) => r.json())
       .then((data) => { setItems(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
+
+  function openCountMode() {
+    setCountValues({})
+    setCountSearch('')
+    setCountTypeFilter('all')
+    setCountDone(false)
+    setCountMode(true)
+  }
+
+  async function saveCount() {
+    const counts = Object.entries(countValues)
+      .filter(([, v]) => v !== '' && !isNaN(parseFloat(v)))
+      .map(([id, v]) => ({ id, quantity: parseFloat(v) }))
+    if (counts.length === 0) return
+    setCountSaving(true)
+    await fetch('/api/inventory-counts/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ counts }),
+    })
+    setCountSaving(false)
+    setCountDone(true)
+    reload()
+    setTimeout(() => { setCountMode(false); setCountDone(false) }, 1200)
+  }
+
+  const countFiltered = items.filter((i) => {
+    if (countTypeFilter === 'beverage' && isFood(i)) return false
+    if (countTypeFilter === 'food' && !isFood(i)) return false
+    if (countSearch && !i.name.toLowerCase().includes(countSearch.toLowerCase())) return false
+    return true
+  })
+
+  const countEntered = Object.values(countValues).filter((v) => v !== '').length
 
   const beverageCount = items.filter((i) => !isFood(i)).length
   const foodCount = items.filter(isFood).length
@@ -158,6 +206,7 @@ export default function StockPage() {
   }
 
   return (
+    <>
     <div className="space-y-5 max-w-5xl">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -168,12 +217,20 @@ export default function StockPage() {
             {lastCountDate && ` · last count ${new Date(lastCountDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
           </p>
         </div>
-        <a
-          href="/uploads"
-          className="text-xs px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
-        >
-          + Upload Count
-        </a>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={openCountMode}
+            className="text-sm px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-bold hover:bg-amber-400 active:bg-amber-300 transition-colors"
+          >
+            Count Now
+          </button>
+          <a
+            href="/uploads"
+            className="text-xs px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            Upload CSV
+          </a>
+        </div>
       </div>
 
       {/* Legend */}
@@ -256,6 +313,131 @@ export default function StockPage() {
         </div>
       )}
     </div>
+
+    {/* ── Count Mode Overlay ── */}
+
+    {countMode && (
+      <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+        {/* Header */}
+        <div className="border-b border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0">
+          <div>
+            <h2 className="text-lg font-bold text-slate-100">Count Inventory</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Enter what you see on the shelf. Leave blank to skip.</p>
+          </div>
+          <button
+            onClick={() => setCountMode(false)}
+            className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Search + type filter */}
+        <div className="px-4 py-3 border-b border-slate-800 space-y-2 shrink-0">
+          <input
+            type="text"
+            value={countSearch}
+            onChange={(e) => setCountSearch(e.target.value)}
+            placeholder="Search items…"
+            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+          />
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
+            {(['all', 'beverage', 'food'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setCountTypeFilter(t)}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors capitalize ${
+                  countTypeFilter === t ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {t === 'all' ? 'All' : t === 'beverage' ? 'Beverages' : 'Food'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Item list */}
+        <div className="flex-1 overflow-y-auto">
+          {countDone ? (
+            <div className="flex flex-col items-center justify-center h-full gap-3">
+              <p className="text-4xl">✓</p>
+              <p className="text-lg font-semibold text-emerald-400">Count saved!</p>
+            </div>
+          ) : countFiltered.length === 0 ? (
+            <div className="flex items-center justify-center h-32">
+              <p className="text-slate-600 text-sm">No items match.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-800/60">
+              {countFiltered.map((item) => {
+                const val = countValues[item.id] ?? ''
+                const hasVal = val !== ''
+                const effectiveQty = item.has_estimate ? item.estimated_qty : item.quantity_on_hand
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${hasVal ? 'bg-amber-500/5' : ''}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-200 truncate">{item.name}</p>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        {item.category && <span className="mr-2">{item.category}</span>}
+                        {effectiveQty !== null
+                          ? `Current: ${Number(effectiveQty.toFixed(2))} ${item.unit}`
+                          : 'Never counted'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        value={val}
+                        onChange={(e) => setCountValues((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        placeholder="—"
+                        className={`w-20 text-right bg-slate-900 border rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none transition-colors ${
+                          hasVal
+                            ? 'border-amber-500/50 focus:border-amber-500'
+                            : 'border-slate-700 focus:border-amber-500/60'
+                        }`}
+                      />
+                      <span className="text-xs text-slate-500 w-12 truncate">{item.unit}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {!countDone && (
+          <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
+            <p className="text-xs text-slate-500">
+              {countEntered > 0
+                ? `${countEntered} item${countEntered !== 1 ? 's' : ''} entered`
+                : 'No quantities entered yet'}
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCountMode(false)}
+                className="text-sm text-slate-500 hover:text-slate-300 transition-colors px-3 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveCount}
+                disabled={countSaving || countEntered === 0}
+                className="px-5 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg text-sm hover:bg-amber-400 disabled:opacity-40 transition-colors"
+              >
+                {countSaving ? 'Saving…' : `Save ${countEntered > 0 ? countEntered : ''} Count${countEntered !== 1 ? 's' : ''}`}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+    </>
   )
 }
 
