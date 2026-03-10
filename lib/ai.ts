@@ -62,7 +62,8 @@ export async function generateVarianceSummary(input: AiSummaryInput): Promise<st
   const prompt = `You are an operational advisor for a bar or restaurant.
 ${shiftContext}
 ${revenueContext ? `Context: ${revenueContext}` : ''}
-All usage quantities are in ounces unless otherwise stated.
+Usage quantities are in ounces for beverages, or in native units (each, lb, portion, etc.) for food items.
+This data may include both beverage variance and kitchen/food ingredient variance.
 
 Variance data:
 ${JSON.stringify(structured, null, 2)}
@@ -73,15 +74,16 @@ Warning items (10–19% variance): ${warning.length}
 Write a structured operational summary using EXACTLY these markdown sections in order.
 Keep each section concise (2–4 sentences or bullet points). Professional, direct tone.
 Do not repeat raw numbers excessively — focus on meaning and action.
+Where relevant, distinguish between beverage loss and kitchen/food waste.
 
 ## Overall Assessment
-One or two sentences describing the overall health of the period.
+One or two sentences describing the overall health of the period across both bar and kitchen.
 
 ## Critical Items
-Call out the highest-risk items and why they matter operationally. Short bullet list if multiple.
+Call out the highest-risk items (drinks or food) and why they matter operationally. Short bullet list if multiple.
 
 ## Possible Causes
-Brief list of likely root causes (over-pouring, theft, measurement errors, recipe mismatches, etc.) based on the data.
+Brief list of likely root causes. For beverages: over-pouring, theft, measurement errors, recipe mismatches. For food: over-portioning, prep waste, untracked remakes, spoilage.
 
 ## Recommended Actions
 2–4 practical, prioritized next steps for the owner or manager. Numbered list.
@@ -130,23 +132,25 @@ export async function generateProfitInsights(input: ProfitInsightsInput): Promis
     full_cost_data: r.has_full_cost,
   }))
 
-  const prompt = `You are a bar profitability advisor reviewing drink-level performance data for a manager.
+  const prompt = `You are a bar and restaurant profitability advisor reviewing menu-level performance data for a manager.
+This data may include both drinks (cocktails, beer, shots) and food items (entrees, appetizers, sides, desserts).
 
 Period: ${input.periodStart} to ${input.periodEnd}
 Total revenue: $${totalRevenue.toFixed(2)}
 Total estimated profit: $${totalProfit.toFixed(2)}
 Average margin: ${avgMargin != null ? `${avgMargin.toFixed(1)}%` : 'N/A'}
 
-Drink performance data:
+Menu item performance data:
 ${JSON.stringify(rows, null, 2)}
 
-Write a concise profit intelligence briefing using EXACTLY these sections. Each section: 2–4 lines max. Be specific — reference actual drink names and numbers. No filler, no obvious advice.
+Write a concise profit intelligence briefing using EXACTLY these sections. Each section: 2–4 lines max. Be specific — reference actual item names and numbers. No filler, no obvious advice.
+Where relevant, distinguish between drink performance and food performance.
 
 ## What's Working
-The 1–2 drinks delivering the best margin or profit. Why they matter to the bottom line.
+The 1–2 items (drink or food) delivering the best margin or profit. Why they matter to the bottom line.
 
 ## Watch List
-The 1–2 drinks with weak margin, high cost, or volume that isn't converting to profit. Be specific.
+The 1–2 items with weak margin, high cost, or volume that isn't converting to profit. Be specific about whether the issue is a food or beverage item.
 
 ## Opportunities
 1–2 concrete actions to improve profit: pricing adjustments, recipe cost changes, promotion of high-margin items, or menu decisions. Prioritize by impact.

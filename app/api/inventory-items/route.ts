@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
-    const { name, unit, category, pack_size, package_type } = body
+    const { name, unit, category, pack_size, package_type, item_type } = body
 
     if (!name || !unit) {
       return NextResponse.json({ error: 'name and unit are required' }, { status: 400 })
@@ -31,6 +31,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'pack_size must be a positive integer' }, { status: 400 })
     }
 
+    const costPerUnit = body.cost_per_unit !== undefined && body.cost_per_unit !== ''
+      ? parseFloat(body.cost_per_unit) : null
+
     const { data, error } = await supabase
       .from('inventory_items')
       .insert({
@@ -40,6 +43,8 @@ export async function POST(req: NextRequest) {
         category: category || null,
         pack_size: packSizeVal,
         package_type: package_type || null,
+        cost_per_unit: costPerUnit !== null && !isNaN(costPerUnit) ? costPerUnit : null,
+        item_type: item_type || 'beverage',
       })
       .select()
       .single()
@@ -66,6 +71,11 @@ export async function PATCH(req: NextRequest) {
       const v = body.cost_per_oz !== '' ? parseFloat(body.cost_per_oz) : null
       updates.cost_per_oz = v !== null && !isNaN(v) ? v : null
     }
+    if (body.cost_per_unit !== undefined) {
+      const v = body.cost_per_unit !== '' ? parseFloat(body.cost_per_unit) : null
+      updates.cost_per_unit = v !== null && !isNaN(v) ? v : null
+    }
+    if (body.item_type !== undefined) updates.item_type = body.item_type || 'beverage'
 
     const { data, error } = await supabase
       .from('inventory_items')
@@ -86,6 +96,21 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    // Verify item belongs to this business
+    const { data: item } = await supabase
+      .from('inventory_items')
+      .select('id')
+      .eq('id', id)
+      .eq('business_id', businessId)
+      .single()
+    if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 })
+
+    // Delete all related records first to avoid FK constraint errors
+    await supabase.from('inventory_counts').delete().eq('inventory_item_id', id).eq('business_id', businessId)
+    await supabase.from('inventory_item_aliases').delete().eq('inventory_item_id', id).eq('business_id', businessId)
+    await supabase.from('purchases').update({ inventory_item_id: null }).eq('inventory_item_id', id).eq('business_id', businessId)
+    await supabase.from('purchase_import_draft_lines').update({ inventory_item_id: null }).eq('inventory_item_id', id)
 
     const { error } = await supabase
       .from('inventory_items')

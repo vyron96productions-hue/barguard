@@ -3,13 +3,17 @@ import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
   try {
-    const { supabase } = await getAuthContext()
+    const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
     const { menu_item_id, inventory_item_id, quantity, unit } = body
 
     if (!menu_item_id || !inventory_item_id || quantity == null || !unit) {
       return NextResponse.json({ error: 'menu_item_id, inventory_item_id, quantity, and unit are required' }, { status: 400 })
     }
+
+    // Verify menu item belongs to this business
+    const { data: menuItem } = await supabase.from('menu_items').select('id').eq('id', menu_item_id).eq('business_id', businessId).single()
+    if (!menuItem) return NextResponse.json({ error: 'Menu item not found' }, { status: 404 })
 
     const { data, error } = await supabase
       .from('menu_item_recipes')
@@ -24,10 +28,18 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { supabase } = await getAuthContext()
+    const { supabase, businessId } = await getAuthContext()
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    // Verify recipe belongs to this business via the menu item
+    const { data: recipe } = await supabase
+      .from('menu_item_recipes')
+      .select('id, menu_items!inner(business_id)')
+      .eq('id', id)
+      .single()
+    if (!recipe) return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
 
     const { error } = await supabase.from('menu_item_recipes').delete().eq('id', id)
 

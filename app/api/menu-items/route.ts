@@ -20,18 +20,58 @@ export async function POST(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
-    const { name, category } = body
+    const { name, category, item_type, subcategory } = body
 
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
 
+    const sellPrice = body.sell_price !== undefined && body.sell_price !== ''
+      ? parseFloat(body.sell_price) : null
+
     const { data, error } = await supabase
       .from('menu_items')
-      .insert({ business_id: businessId, name: name.trim(), category: category || null })
+      .insert({
+        business_id: businessId,
+        name: name.trim(),
+        category: category || null,
+        subcategory: subcategory || null,
+        item_type: item_type || 'drink',
+        sell_price: sellPrice !== null && !isNaN(sellPrice) ? sellPrice : null,
+      })
       .select()
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data, { status: 201 })
+  } catch (e) { return authErrorResponse(e) }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { supabase, businessId } = await getAuthContext()
+    const body = await req.json()
+    const { id } = body
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    const updates: Record<string, string | number | null> = {}
+    if (body.name !== undefined) updates.name = body.name.trim()
+    if (body.category !== undefined) updates.category = body.category || null
+    if (body.sell_price !== undefined) {
+      const v = body.sell_price !== '' ? parseFloat(body.sell_price) : null
+      updates.sell_price = v !== null && !isNaN(v) ? v : null
+    }
+    if (body.item_type !== undefined) updates.item_type = body.item_type || 'drink'
+    if (body.subcategory !== undefined) updates.subcategory = body.subcategory || null
+
+    const { data, error } = await supabase
+      .from('menu_items')
+      .update(updates)
+      .eq('id', id)
+      .eq('business_id', businessId)
+      .select()
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
   } catch (e) { return authErrorResponse(e) }
 }
 

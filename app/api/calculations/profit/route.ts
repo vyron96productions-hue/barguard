@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
-import { calculateDrinkCostFromRecipe, profitMarginPct } from '@/lib/drink-costing'
+import { calculateDrinkCostFromRecipe, profitMarginPct, type ItemCostInfo } from '@/lib/drink-costing'
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,17 +51,18 @@ export async function POST(req: NextRequest) {
         .in('menu_item_id', menuItemIds),
       supabase
         .from('inventory_items')
-        .select('id, cost_per_oz')
-        .eq('business_id', businessId)
-        .not('cost_per_oz', 'is', null),
+        .select('id, cost_per_oz, cost_per_unit')
+        .eq('business_id', businessId),
     ])
 
     if (recipesRes.error) return NextResponse.json({ error: recipesRes.error.message }, { status: 500 })
     if (costsRes.error) return NextResponse.json({ error: costsRes.error.message }, { status: 500 })
 
-    const costPerOzById: Record<string, number> = {}
+    const costById: Record<string, ItemCostInfo> = {}
     for (const item of costsRes.data ?? []) {
-      if (item.cost_per_oz != null) costPerOzById[item.id] = item.cost_per_oz
+      if (item.cost_per_oz != null || item.cost_per_unit != null) {
+        costById[item.id] = { cost_per_oz: item.cost_per_oz, cost_per_unit: item.cost_per_unit }
+      }
     }
 
     const recipesByItem = new Map<string, Array<{ inventory_item_id: string; quantity: number; unit: string }>>()
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      const { estimated_cost: costPerDrink, has_full_cost } = calculateDrinkCostFromRecipe(recipes, costPerOzById)
+      const { estimated_cost: costPerDrink, has_full_cost } = calculateDrinkCostFromRecipe(recipes, costById)
       const totalCost = costPerDrink * qty
       const profit = revenue - totalCost
       const margin = profitMarginPct(revenue, totalCost)
@@ -113,9 +114,11 @@ export async function POST(req: NextRequest) {
       calculated_at: new Date().toISOString(),
     }))
 
-    await supabase
+    const { error: upsertError } = await supabase
       .from('drink_profit_summaries')
       .upsert(upsertRows, { onConflict: 'business_id,menu_item_id,period_start,period_end,shift_label' })
+
+    if (upsertError) console.error('[profit] upsert failed:', upsertError.message)
 
     return NextResponse.json(results)
   } catch (e) { return authErrorResponse(e) }

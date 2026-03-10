@@ -143,10 +143,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     }
 
-    await supabase
+    const { error: draftUpdateError } = await supabase
       .from('purchase_import_drafts')
       .update({ status: 'confirmed', vendor_name: body.vendor_name, purchase_date: purchaseDate, confirmed_at: new Date().toISOString() })
       .eq('id', id)
+
+    if (draftUpdateError) return NextResponse.json({ error: draftUpdateError.message }, { status: 500 })
 
     return NextResponse.json({ upload_id: upload.id, rows_imported: approvedLines.length, aliases_saved: aliasLines.length })
   } catch (err: unknown) {

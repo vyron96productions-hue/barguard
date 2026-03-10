@@ -13,9 +13,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'period_start and period_end are required' }, { status: 400 })
     }
 
+    const itemType = searchParams.get('item_type') // 'drink' | 'food' | null for all
+
     let query = supabase
       .from('drink_profit_summaries')
-      .select(`*, menu_item:menu_items(id, name, category)`)
+      .select(`*, menu_item:menu_items(id, name, category, item_type)`)
       .eq('business_id', businessId)
       .eq('period_start', periodStart)
       .eq('period_end', periodEnd)
@@ -25,6 +27,7 @@ export async function GET(req: NextRequest) {
     } else {
       query = query.is('shift_label', null)
     }
+    if (itemType) query = query.eq('menu_item.item_type', itemType)
 
     const { data, error } = await query.order('estimated_profit', { ascending: false, nullsFirst: false })
 

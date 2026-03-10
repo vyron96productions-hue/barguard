@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { extractPackagingFromName, normalizeUnitType } from './beer-packaging'
+import { extractPackagingFromName, normalizeUnitType, PACKAGE_TYPE_SIZES } from './beer-packaging'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -49,12 +49,13 @@ Required JSON shape:
 }
 
 Rules:
+- ONE line item per physical line on the invoice. NEVER split a single invoice line into multiple entries.
 - Only include actual product line items (spirits, beer, wine, mixers, bar supplies).
 - Skip fees, taxes, deposits, delivery charges, and subtotals/totals.
-- raw_item_name must be the product name exactly as printed on the document.
+- raw_item_name must be the product name exactly as printed on the document (keep the full name including any pack size, e.g. "Budweiser 12 Pack", "Corona 6pk").
 - unit_type: normalise to one of the listed options where possible; leave null if unclear.
-- quantity: ALWAYS try to extract quantity. Look for numbers before product names, in quantity columns, or after "x" symbols. Do not leave null if a number is visible.
-- package_type: detect from product names or descriptions. Common patterns to recognize:
+- quantity: ALWAYS try to extract quantity. This is the NUMBER OF PACKAGES ordered (the value in the QTY column). If an invoice shows "2  Bud Light 24pk", quantity is 2 (not 24). If it shows "1  Corona 6-pack", quantity is 1. Look for numbers in the quantity column, before product names, or after "x" symbols. Do not leave null if a number is visible.
+- package_type: detect from the product name or description. Common patterns:
   - "6 pk", "6pk", "6-pack", "six pack" → "6-pack", units_per_package: 6
   - "12 pk", "12pk", "12-pack", "twelve pack" → "12-pack", units_per_package: 12
   - "24 pk", "24pk", "24-pack", "twenty four pack" → "24-pack", units_per_package: 24
@@ -62,7 +63,7 @@ Rules:
   - "keg", "half keg", "1/2 bbl" → "keg", units_per_package: 165
   - "single", "bottle", "bt", "btl", "can", "ea" → "single", units_per_package: 1
   - "4 pk", "4-pack" → "4-pack", units_per_package: 4
-- units_per_package: the number of individual units in each package (e.g. 6 for a 6-pack). Null for spirits/wine where the unit IS the bottle.
+- units_per_package: the number of individual cans/bottles inside each package. Examples: 24-pack → 24, 6-pack → 6, case → 24, keg → 165, single bottle → 1. ALWAYS set this when package_type is detected. Null only for spirits/wine sold as individual bottles with no pack size in the name.
 - Set item confidence to "low" if the quantity, name, or price is unclear or partially obscured.
 - Set overall_confidence to "low" if the document is blurry, incomplete, or hard to read.
 - raw_text must contain ALL text visible in the document.
@@ -83,12 +84,20 @@ function parseResponse(text: string): ParsedPurchaseDocument {
         // If AI didn't detect package info, try extracting it from the item name
         let packageType = item.package_type ?? normalizedUnit?.packageType ?? null
         let unitsPerPackage = item.units_per_package ?? normalizedUnit?.unitsPerPackage ?? null
-        if (!packageType) {
+
+        // Always try name-based extraction when unitsPerPackage is still missing —
+        // the AI often sets package_type without filling in units_per_package
+        if (!unitsPerPackage || unitsPerPackage <= 0) {
           const fromName = extractPackagingFromName(item.raw_item_name ?? '')
           if (fromName.packageType) {
-            packageType = fromName.packageType
+            packageType = packageType ?? fromName.packageType
             unitsPerPackage = fromName.unitsPerPackage
           }
+        }
+        // Last resort: derive units_per_package from packageType alone
+        if ((!unitsPerPackage || unitsPerPackage <= 0) && packageType) {
+          const size = PACKAGE_TYPE_SIZES[packageType as keyof typeof PACKAGE_TYPE_SIZES]
+          if (size) unitsPerPackage = size
         }
 
         return {

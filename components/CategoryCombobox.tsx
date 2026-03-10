@@ -31,8 +31,17 @@ export default function CategoryCombobox({
         close()
       }
     }
+    // Close when the page is scrolled so the dropdown doesn't block mobile page scroll
+    function onTouchmove(e: TouchEvent) {
+      if (listRef.current && listRef.current.contains(e.target as Node)) return
+      close()
+    }
     document.addEventListener('pointerdown', onPointerdown)
-    return () => document.removeEventListener('pointerdown', onPointerdown)
+    document.addEventListener('touchmove', onTouchmove, { passive: true })
+    return () => {
+      document.removeEventListener('pointerdown', onPointerdown)
+      document.removeEventListener('touchmove', onTouchmove)
+    }
   }, [])
 
   const filtered = query
@@ -136,7 +145,7 @@ export default function CategoryCombobox({
       {/* Dropdown list */}
       {open && (
         <div className="absolute z-50 top-full mt-1.5 left-0 right-0 min-w-[160px] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden">
-          <div ref={listRef} className="max-h-52 overflow-y-auto py-1">
+          <div ref={listRef} className="max-h-52 overflow-y-auto overscroll-contain py-1">
             {filtered.length === 0 && !canCreate && (
               <p className="px-3 py-3 text-xs text-gray-600 text-center">
                 {query ? 'No matches' : 'No categories yet — type to create one'}

@@ -8,11 +8,13 @@ export interface InventoryItem {
   id: string
   business_id: string
   name: string
-  unit: string // oz, ml, bottle, case, keg, etc.
+  unit: string // oz, ml, bottle, case, keg, each, lb, portion, etc.
   category: string | null
+  item_type: 'beverage' | 'food' | 'other' // used for filtering
   pack_size: number | null    // units per package (e.g. 6 for a 6-pack)
   package_type: string | null // label for package format (e.g. '6-pack', 'case', 'keg')
-  cost_per_oz: number | null  // cost in USD per oz for profit calculations
+  cost_per_oz: number | null  // cost in USD per oz (beverages)
+  cost_per_unit: number | null // cost in USD per unit (beverages by bottle/keg, food by each/lb/etc.)
   created_at: string
 }
 
@@ -66,7 +68,7 @@ export interface DrinkProfitSummary {
   profit_margin_pct: number | null
   has_full_cost: boolean
   calculated_at: string
-  menu_item?: Pick<MenuItem, 'id' | 'name' | 'category'>
+  menu_item?: Pick<MenuItem, 'id' | 'name' | 'category' | 'item_type'>
 }
 
 export interface MenuItem {
@@ -74,6 +76,9 @@ export interface MenuItem {
   business_id: string
   name: string
   category: string | null
+  subcategory: string | null
+  item_type: 'drink' | 'food' | 'beer' | 'other' // used for filtering
+  sell_price: number | null // what you charge per item
   created_at: string
 }
 

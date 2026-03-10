@@ -202,9 +202,9 @@ export default function DashboardPage() {
     if (shiftEnd)   perfParams.set('shift_end',   shiftEnd)
 
     const [rpt, ai, perf] = await Promise.all([
-      fetch(`/api/reports/variance?${rptParams}`).then((r) => r.json()),
-      fetch(`/api/ai/summary?${rptParams}`).then((r) => r.json()),
-      fetch(`/api/reports/performance?${perfParams}`).then((r) => r.json()),
+      fetch(`/api/reports/variance?${rptParams}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/ai/summary?${rptParams}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/reports/performance?${perfParams}`).then((r) => r.ok ? r.json() : null).catch(() => null),
     ])
     setSummaries(Array.isArray(rpt) ? rpt : [])
     setAiSummary(ai ?? null)

@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react'
 import StatusBadge from '@/components/StatusBadge'
 import type { InventoryUsageSummary } from '@/types'
 
-const AVG_COST_PER_OZ = 0.85
-
 export default function VarianceReportsPage() {
   const [summaries, setSummaries] = useState<InventoryUsageSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [periodStart, setPeriodStart] = useState('')
   const [periodEnd, setPeriodEnd] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'beverage' | 'food'>('all')
 
   useEffect(() => { fetchReports() }, [])
 
@@ -26,48 +25,60 @@ export default function VarianceReportsPage() {
     setLoading(false)
   }
 
-  const filtered = statusFilter === 'all' ? summaries : summaries.filter((s) => s.status === statusFilter)
+  const filtered = summaries.filter((s) => {
+    if (statusFilter !== 'all' && s.status !== statusFilter) return false
+    if (typeFilter !== 'all') {
+      const itemType = (s.inventory_item as any)?.item_type ?? 'beverage'
+      if (itemType !== typeFilter) return false
+    }
+    return true
+  })
 
-  const totalVariance = summaries.reduce((acc, s) => acc + s.variance, 0)
-  const criticalCount = summaries.filter((s) => s.status === 'critical').length
-  const warningCount = summaries.filter((s) => s.status === 'warning').length
+  // KPIs from the filtered set
+  const totalEstLoss = filtered.reduce((acc, s) => {
+    const cost = (s.inventory_item as any)?.cost_per_unit ?? 0
+    return acc + Math.max(0, s.variance) * cost
+  }, 0)
+  const hasCostData = filtered.some(s => (s.inventory_item as any)?.cost_per_unit != null)
+  const criticalCount = filtered.filter((s) => s.status === 'critical').length
+  const warningCount = filtered.filter((s) => s.status === 'warning').length
 
   return (
     <div className="space-y-5 max-w-[1400px]">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Variance Reports</h1>
-        <p className="text-gray-500 mt-1 text-sm">Compare expected vs actual liquor usage by item.</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Loss Reports</h1>
+        <p className="text-slate-500 mt-1 text-sm">Compare expected vs actual usage — catch over-pouring, theft, and waste.</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5 space-y-3">
+      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
         <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Period Start</label>
+            <label className="block text-xs text-slate-500 mb-1">Period Start</label>
             <input
               type="date"
               value={periodStart}
               onChange={(e) => setPeriodStart(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Period End</label>
+            <label className="block text-xs text-slate-500 mb-1">Period End</label>
             <input
               type="date"
               value={periodEnd}
               onChange={(e) => setPeriodEnd(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Status</label>
+            <label className="block text-xs text-slate-500 mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
             >
-              <option value="all">All</option>
+              <option value="all">All statuses</option>
               <option value="critical">Critical</option>
               <option value="warning">Warning</option>
               <option value="normal">Normal</option>
@@ -75,100 +86,119 @@ export default function VarianceReportsPage() {
           </div>
           <button
             onClick={fetchReports}
-            className="col-span-2 sm:col-auto sm:self-end px-4 py-2 bg-amber-500 text-gray-900 font-medium rounded text-sm hover:bg-amber-400 active:bg-amber-300 transition-colors"
+            className="col-span-2 sm:col-auto sm:self-end px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg text-sm hover:bg-amber-400 active:bg-amber-300 transition-colors"
           >
             Apply Filters
           </button>
+        </div>
+
+        {/* Category filter */}
+        <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-0.5 w-fit">
+          {([
+            { key: 'all',      label: 'All Items' },
+            { key: 'beverage', label: 'Beverages' },
+            { key: 'food',     label: 'Kitchen / Food' },
+          ] as const).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTypeFilter(key)}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                typeFilter === key ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Summary KPIs */}
       {summaries.length > 0 && (
         <div className="grid grid-cols-3 gap-3 sm:gap-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-5">
-            <p className="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider leading-tight">Total Variance</p>
-            <p className={`text-xl sm:text-3xl font-bold mt-1 ${totalVariance > 0 ? 'text-red-400' : 'text-green-400'}`}>
-              {totalVariance > 0 ? '+' : ''}{totalVariance.toFixed(1)}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3 sm:p-5">
+            <p className="text-[9px] sm:text-xs text-slate-500 uppercase tracking-wider leading-tight">Est. Loss</p>
+            <p className={`text-xl sm:text-3xl font-bold mt-1 tabular-nums ${totalEstLoss > 0 ? 'text-red-400' : 'text-slate-400'}`}>
+              {hasCostData ? `$${totalEstLoss.toFixed(2)}` : '—'}
             </p>
-            <p className="text-[10px] text-gray-600 mt-0.5">oz</p>
+            {!hasCostData && (
+              <p className="text-[10px] text-slate-700 mt-0.5">set item costs to track</p>
+            )}
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-5">
-            <p className="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider leading-tight">Critical</p>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3 sm:p-5">
+            <p className="text-[9px] sm:text-xs text-slate-500 uppercase tracking-wider leading-tight">Critical</p>
             <p className="text-xl sm:text-3xl font-bold mt-1 text-red-400">{criticalCount}</p>
-            <p className="text-[10px] text-gray-600 mt-0.5">items</p>
+            <p className="text-[10px] text-slate-600 mt-0.5">items</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 sm:p-5">
-            <p className="text-[9px] sm:text-xs text-gray-500 uppercase tracking-wider leading-tight">Warning</p>
-            <p className="text-xl sm:text-3xl font-bold mt-1 text-yellow-400">{warningCount}</p>
-            <p className="text-[10px] text-gray-600 mt-0.5">items</p>
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-3 sm:p-5">
+            <p className="text-[9px] sm:text-xs text-slate-500 uppercase tracking-wider leading-tight">Warning</p>
+            <p className="text-xl sm:text-3xl font-bold mt-1 text-amber-400">{warningCount}</p>
+            <p className="text-[10px] text-slate-600 mt-0.5">items</p>
           </div>
         </div>
       )}
 
       {/* Data */}
       {loading ? (
-        <p className="text-gray-500 text-sm">Loading…</p>
+        <p className="text-slate-500 text-sm">Loading…</p>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-600">
-          <p className="text-4xl mb-3">📉</p>
-          <p className="text-sm">No variance data found. Upload CSVs and run calculations from the dashboard.</p>
+        <div className="text-center py-16 text-slate-700 border border-slate-800 border-dashed rounded-2xl">
+          <p className="text-3xl mb-3">◉</p>
+          <p className="text-sm">No variance data found. Upload reports and run calculations from the dashboard.</p>
         </div>
       ) : (
         <>
           {/* Mobile card layout */}
           <div className="lg:hidden space-y-3">
             {filtered.map((s) => {
-              const estLoss = Math.max(0, s.variance) * AVG_COST_PER_OZ
+              const unit = s.inventory_item?.unit ?? 'units'
+              const costPerUnit = (s.inventory_item as any)?.cost_per_unit ?? 0
+              const estLoss = Math.max(0, s.variance) * costPerUnit
               return (
-                <div key={s.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-                  {/* Item + status */}
+                <div key={s.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-gray-100 text-sm">{s.inventory_item?.name ?? '—'}</p>
+                      <p className="font-semibold text-slate-100 text-sm">{s.inventory_item?.name ?? '—'}</p>
                       {s.inventory_item?.category && (
-                        <p className="text-xs text-gray-500">{s.inventory_item.category}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{s.inventory_item.category}</p>
                       )}
                     </div>
                     <StatusBadge status={s.status} />
                   </div>
 
-                  {/* Period */}
-                  <p className="text-[11px] text-gray-600">
+                  <p className="text-[11px] text-slate-600">
                     {s.period_start} – {s.period_end}
                   </p>
 
-                  {/* Key metrics grid */}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-gray-800/50 rounded-lg p-2.5">
-                      <p className="text-gray-600 text-[10px] uppercase tracking-wider mb-0.5">Expected</p>
-                      <p className="text-gray-300 font-medium">{s.expected_usage.toFixed(1)} oz</p>
+                    <div className="bg-slate-800/50 rounded-xl p-2.5">
+                      <p className="text-slate-600 text-[10px] uppercase tracking-wider mb-0.5">Expected</p>
+                      <p className="text-slate-300 font-medium">{s.expected_usage.toFixed(1)} {unit}</p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-2.5">
-                      <p className="text-gray-600 text-[10px] uppercase tracking-wider mb-0.5">Actual</p>
-                      <p className="text-gray-300 font-medium">{s.actual_usage.toFixed(1)} oz</p>
+                    <div className="bg-slate-800/50 rounded-xl p-2.5">
+                      <p className="text-slate-600 text-[10px] uppercase tracking-wider mb-0.5">Actual</p>
+                      <p className="text-slate-300 font-medium">{s.actual_usage.toFixed(1)} {unit}</p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-2.5">
-                      <p className="text-gray-600 text-[10px] uppercase tracking-wider mb-0.5">Variance</p>
-                      <p className={`font-semibold ${s.variance > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                        {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} oz
+                    <div className="bg-slate-800/50 rounded-xl p-2.5">
+                      <p className="text-slate-600 text-[10px] uppercase tracking-wider mb-0.5">Variance</p>
+                      <p className={`font-semibold ${s.variance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                        {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} {unit}
                         {s.variance_percent !== null && (
-                          <span className="text-gray-500 font-normal ml-1">({s.variance_percent.toFixed(1)}%)</span>
+                          <span className="text-slate-500 font-normal ml-1">({s.variance_percent.toFixed(1)}%)</span>
                         )}
                       </p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-2.5">
-                      <p className="text-gray-600 text-[10px] uppercase tracking-wider mb-0.5">Est. Loss</p>
-                      <p className={`font-semibold ${estLoss > 0 ? 'text-red-400' : 'text-gray-500'}`}>
-                        {estLoss > 0 ? `~$${estLoss.toFixed(2)}` : '—'}
+                    <div className="bg-slate-800/50 rounded-xl p-2.5">
+                      <p className="text-slate-600 text-[10px] uppercase tracking-wider mb-0.5">Est. Loss</p>
+                      <p className={`font-semibold ${costPerUnit > 0 && estLoss > 0 ? 'text-red-400' : 'text-slate-600'}`}>
+                        {costPerUnit > 0 && estLoss > 0 ? `~$${estLoss.toFixed(2)}` : '—'}
                       </p>
                     </div>
                   </div>
 
-                  {/* Secondary metrics */}
-                  <div className="flex items-center gap-4 text-[11px] text-gray-600 border-t border-gray-800 pt-2">
-                    <span>Beginning: {s.beginning_inventory.toFixed(1)}</span>
-                    <span>Purchased: {s.purchased.toFixed(1)}</span>
-                    <span>Ending: {s.ending_inventory.toFixed(1)}</span>
+                  <div className="flex items-center gap-4 text-[11px] text-slate-600 border-t border-slate-800 pt-2 flex-wrap">
+                    <span>Beginning: {s.beginning_inventory.toFixed(1)} {unit}</span>
+                    <span>Purchased: {s.purchased.toFixed(1)} {unit}</span>
+                    <span>Ending: {s.ending_inventory.toFixed(1)} {unit}</span>
                   </div>
                 </div>
               )
@@ -176,43 +206,39 @@ export default function VarianceReportsPage() {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden lg:block bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div className="hidden lg:block bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-800 text-gray-500 text-left">
-                    <th className="px-5 py-3">Item</th>
-                    <th className="px-5 py-3">Category</th>
-                    <th className="px-5 py-3">Period</th>
-                    <th className="px-5 py-3">Beginning</th>
-                    <th className="px-5 py-3">Purchased</th>
-                    <th className="px-5 py-3">Ending</th>
-                    <th className="px-5 py-3">Actual</th>
-                    <th className="px-5 py-3">Expected</th>
-                    <th className="px-5 py-3">Variance</th>
-                    <th className="px-5 py-3">Status</th>
+                  <tr className="border-b border-slate-800 bg-slate-800/30 text-left">
+                    {['Item', 'Category', 'Period', 'Beginning', 'Purchased', 'Ending', 'Actual', 'Expected', 'Variance', 'Status'].map((h) => (
+                      <th key={h} className="px-5 py-3 text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{h}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((s) => (
-                    <tr key={s.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                      <td className="px-5 py-3 font-medium">{s.inventory_item?.name ?? '—'}</td>
-                      <td className="px-5 py-3 text-gray-400">{s.inventory_item?.category ?? '—'}</td>
-                      <td className="px-5 py-3 text-gray-400 text-xs whitespace-nowrap">{s.period_start} – {s.period_end}</td>
-                      <td className="px-5 py-3 text-gray-400">{s.beginning_inventory.toFixed(1)}</td>
-                      <td className="px-5 py-3 text-gray-400">{s.purchased.toFixed(1)}</td>
-                      <td className="px-5 py-3 text-gray-400">{s.ending_inventory.toFixed(1)}</td>
-                      <td className="px-5 py-3 text-gray-300">{s.actual_usage.toFixed(1)}</td>
-                      <td className="px-5 py-3 text-gray-300">{s.expected_usage.toFixed(1)}</td>
-                      <td className={`px-5 py-3 font-medium ${s.variance > 0 ? 'text-red-400' : 'text-green-400'}`}>
-                        {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)}
-                        {s.variance_percent !== null && (
-                          <span className="text-gray-500 text-xs ml-1">({s.variance_percent.toFixed(1)}%)</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3"><StatusBadge status={s.status} /></td>
-                    </tr>
-                  ))}
+                  {filtered.map((s) => {
+                    const unit = s.inventory_item?.unit ?? ''
+                    return (
+                      <tr key={s.id} className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors last:border-0">
+                        <td className="px-5 py-3 font-medium text-slate-200">{s.inventory_item?.name ?? '—'}</td>
+                        <td className="px-5 py-3 text-slate-500">{s.inventory_item?.category ?? '—'}</td>
+                        <td className="px-5 py-3 text-slate-500 text-xs whitespace-nowrap">{s.period_start} – {s.period_end}</td>
+                        <td className="px-5 py-3 text-slate-400 tabular-nums">{s.beginning_inventory.toFixed(1)} <span className="text-slate-700">{unit}</span></td>
+                        <td className="px-5 py-3 text-slate-400 tabular-nums">{s.purchased.toFixed(1)} <span className="text-slate-700">{unit}</span></td>
+                        <td className="px-5 py-3 text-slate-400 tabular-nums">{s.ending_inventory.toFixed(1)} <span className="text-slate-700">{unit}</span></td>
+                        <td className="px-5 py-3 text-slate-300 tabular-nums">{s.actual_usage.toFixed(1)} <span className="text-slate-700">{unit}</span></td>
+                        <td className="px-5 py-3 text-slate-300 tabular-nums">{s.expected_usage.toFixed(1)} <span className="text-slate-700">{unit}</span></td>
+                        <td className={`px-5 py-3 font-semibold tabular-nums ${s.variance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
+                          {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} <span className="font-normal text-xs text-slate-600">{unit}</span>
+                          {s.variance_percent !== null && (
+                            <span className="text-slate-600 text-xs font-normal ml-1">({s.variance_percent.toFixed(1)}%)</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-3"><StatusBadge status={s.status} /></td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

@@ -1,5 +1,5 @@
 // Unit conversion helpers
-// All conversions normalize to ounces as the base unit for liquor
+// Liquid units normalize to ounces. Food units (each, lb, portion, etc.) pass through as-is.
 
 export const UNIT_TO_OZ: Record<string, number> = {
   oz: 1,
@@ -22,13 +22,36 @@ export const UNIT_TO_OZ: Record<string, number> = {
   case: 304.32,     // 12 x 750ml
 }
 
+// Food / kitchen units that don't convert to oz — tracked in their native unit
+export const FOOD_UNITS = new Set([
+  'each', 'piece', 'portion', 'serving', 'slice',
+  'lb', 'lbs', 'pound', 'kg', 'g', 'gram',
+  'bag', 'tray', 'box', 'case', 'flat',
+  'cup', 'tbsp', 'tsp',
+  'can', 'jar', 'packet',
+])
+
+export function isLiquidUnit(unit: string): boolean {
+  return unit.toLowerCase().trim() in UNIT_TO_OZ
+}
+
 export function convertToOz(quantity: number, unit: string): number {
   const normalized = unit.toLowerCase().trim()
   const factor = UNIT_TO_OZ[normalized]
-  if (!factor) return quantity // assume already in oz if unit unknown
+  if (!factor) return quantity // food/unknown units pass through unchanged
   return quantity * factor
 }
 
 export function isSupportedUnit(unit: string): boolean {
-  return unit.toLowerCase().trim() in UNIT_TO_OZ
+  const n = unit.toLowerCase().trim()
+  return n in UNIT_TO_OZ || FOOD_UNITS.has(n)
 }
+
+/** All units available for inventory items and recipe mappings */
+export const ALL_UNITS = [
+  // Liquid / beverage
+  'oz', 'ml', 'cl', 'l', 'bottle', 'can', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint', 'case',
+  // Food / kitchen
+  'each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g',
+  'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet',
+]

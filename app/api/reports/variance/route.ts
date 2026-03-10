@@ -9,9 +9,11 @@ export async function GET(req: NextRequest) {
     const periodEnd   = searchParams.get('period_end')
     const shiftLabel  = searchParams.get('shift_label')
 
+    const itemType = searchParams.get('item_type') // 'beverage' | 'food' | null for all
+
     let query = supabase
       .from('inventory_usage_summaries')
-      .select('*, inventory_item:inventory_items(id, name, unit, category)')
+      .select('*, inventory_item:inventory_items(id, name, unit, category, item_type, cost_per_unit)')
       .eq('business_id', businessId)
       .order('status', { ascending: false })
       .order('variance_percent', { ascending: false })
@@ -19,6 +21,7 @@ export async function GET(req: NextRequest) {
     if (periodStart) query = query.gte('period_start', periodStart)
     if (periodEnd)   query = query.lte('period_end', periodEnd)
     if (shiftLabel !== null) query = query.eq('shift_label', shiftLabel)
+    if (itemType) query = query.eq('inventory_item.item_type', itemType)
 
     const { data, error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
