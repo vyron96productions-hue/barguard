@@ -5,7 +5,7 @@ import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 import type { InventoryItem } from '@/types'
 
-const BEVERAGE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat']
 
 type ItemType = 'beverage' | 'food'
@@ -35,7 +35,7 @@ export default function InventoryItemsPage() {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
-  const [unit, setUnit] = useState('oz')
+  const [unit, setUnit] = useState('bottle')
   const [category, setCategory] = useState('')
   const [itemType, setItemType] = useState<ItemType>('beverage')
   const [packageType, setPackageType] = useState('')
@@ -178,7 +178,7 @@ export default function InventoryItemsPage() {
                 type="button"
                 onClick={() => {
                   setItemType(t)
-                  setUnit(t === 'food' ? 'each' : 'oz')
+                  setUnit(t === 'food' ? 'each' : 'bottle')
                   setPackageType(''); setPackSize('')
                 }}
                 className={`px-3 py-1 rounded text-xs font-medium transition-colors capitalize ${

@@ -48,10 +48,17 @@ export function isSupportedUnit(unit: string): boolean {
   return n in UNIT_TO_OZ || FOOD_UNITS.has(n)
 }
 
-/** All units available for inventory items and recipe mappings */
+/** Units used for counting inventory (shown in UI dropdowns) */
+export const INVENTORY_BEVERAGE_UNITS = [
+  'bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg',
+]
+
+/** All units (inventory + recipe pour units) */
 export const ALL_UNITS = [
-  // Liquid / beverage
-  'oz', 'ml', 'cl', 'l', 'bottle', 'can', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint', 'case',
+  // Beverage — counting units
+  'bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg',
+  // Beverage — pour / recipe units (not used for inventory counting)
+  'oz', 'ml', 'cl', 'l',
   // Food / kitchen
   'each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g',
   'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet',

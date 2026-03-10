@@ -15,8 +15,17 @@ const FOOD_CATEGORIES = [
 ]
 const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
 
-const BEVERAGE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
+const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS_LIST = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet']
+
+// Bottle-type units and their oz size — used for partial bottle display
+const BOTTLE_SIZE_OZ: Record<string, number> = {
+  'bottle': 25.36,   // 750ml standard
+  '750ml':  25.36,
+  '1L':     33.814,
+  '1.75L':  59.1745,
+}
+const STANDARD_SHOT_OZ = 1.5
 
 interface StockItem {
   id: string
@@ -248,6 +257,42 @@ export default function StockPage() {
   )
 }
 
+function fractionLabel(f: number): string {
+  if (f >= 0.88) return 'almost full'
+  if (f >= 0.63) return '¾ full'
+  if (f >= 0.38) return '½ full'
+  if (f >= 0.13) return '¼ full'
+  return 'nearly empty'
+}
+
+function PartialBottleDisplay({ qty, bottleSizeOz }: { qty: number; bottleSizeOz: number }) {
+  const fraction = qty % 1
+  const hasFraction = fraction > 0.02
+  const totalShots = Math.floor((qty * bottleSizeOz) / STANDARD_SHOT_OZ)
+
+  return (
+    <div className="space-y-1.5 pt-0.5">
+      {hasFraction && (
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] text-slate-600 uppercase tracking-wider">Open bottle</span>
+            <span className="text-[10px] text-slate-500">{fractionLabel(fraction)}</span>
+          </div>
+          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-500/50 rounded-full"
+              style={{ width: `${Math.round(fraction * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {totalShots > 0 && (
+        <p className="text-[10px] text-slate-600">~{totalShots} shots</p>
+      )}
+    </div>
+  )
+}
+
 function StockCard({ item, allCategories, onUpdate }: {
   item: StockItem
   allCategories: string[]
@@ -310,6 +355,7 @@ function StockCard({ item, allCategories, onUpdate }: {
   const status = staleness(item)
   const dotColor = { fresh: 'bg-emerald-400', aging: 'bg-amber-400', stale: 'bg-red-400', never: 'bg-slate-600' }[status]
   const qtyColor = item.quantity_on_hand === null ? 'text-slate-600' : item.quantity_on_hand === 0 ? 'text-red-400' : 'text-slate-100'
+  const bottleSizeOz = BOTTLE_SIZE_OZ[item.unit] ?? null
 
   if (editing) {
     return (
@@ -410,20 +456,20 @@ function StockCard({ item, allCategories, onUpdate }: {
         </div>
       </div>
 
-      {/* Quantity + pack breakdown */}
-      <div>
+      {/* Quantity + breakdown */}
+      <div className="space-y-1.5">
         <p className={`text-3xl font-bold tabular-nums leading-none ${qtyColor}`}>
           {item.quantity_on_hand !== null ? item.quantity_on_hand : '—'}
         </p>
         {item.pack_size && item.pack_size > 1 && item.quantity_on_hand !== null && item.quantity_on_hand > 0 ? (
-          <div className="mt-1.5 space-y-1">
+          <div className="space-y-1">
             <p className="text-xs text-slate-500">{item.unit}</p>
             <p className="text-xs font-medium text-amber-400/80 leading-snug">
               {formatPackBreakdown(item.quantity_on_hand, item.pack_size, item.package_type).split(' · ')[1]}
             </p>
           </div>
         ) : (
-          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="text-xs text-slate-500">{item.unit}</p>
             {item.package_type && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500/60 font-medium leading-tight">
@@ -431,6 +477,11 @@ function StockCard({ item, allCategories, onUpdate }: {
               </span>
             )}
           </div>
+        )}
+
+        {/* Partial bottle display for bottle-tracked spirits */}
+        {bottleSizeOz !== null && item.quantity_on_hand !== null && item.quantity_on_hand > 0 && (
+          <PartialBottleDisplay qty={item.quantity_on_hand} bottleSizeOz={bottleSizeOz} />
         )}
       </div>
 
