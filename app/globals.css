@@ -1,6 +1,21 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Force dark mode — override slate palette with dark navy-blue tones */
+@theme {
+  --color-slate-50:  #eef3fa;
+  --color-slate-100: #dce8f4;
+  --color-slate-200: #b8cde6;
+  --color-slate-300: #8aaece;
+  --color-slate-400: #5d89ae;
+  --color-slate-500: #4a6d8c;
+  --color-slate-600: #3a5570;
+  --color-slate-700: #253b52;
+  --color-slate-800: #172a3e;
+  --color-slate-900: #0f1c2e;
+  --color-slate-950: #080e1a;
+}
+
 :root { color-scheme: dark; }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -30,28 +45,3 @@
 /* iPhone safe areas */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top    { padding-top: env(safe-area-inset-top); }
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}

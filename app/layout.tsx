@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" style={{ colorScheme: 'dark' }}>
-      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased overflow-x-hidden">
+      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased overflow-x-hidden" style={{ backgroundColor: '#080e1a' }}>
         <MobileNav />
         <div className="flex min-h-screen">
           <Sidebar />
