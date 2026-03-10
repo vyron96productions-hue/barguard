@@ -21,6 +21,7 @@ const sections = [
     label: 'Manager',
     items: [
       { href: '/stock', label: 'Stock Levels', icon: '◫' },
+      { href: '/sales', label: 'Sales Log', icon: '◎' },
       { href: '/uploads', label: 'Import Reports', icon: '⇪' },
       { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
       { href: '/profit-intelligence', label: 'Profit Intelligence', icon: '◑' },
