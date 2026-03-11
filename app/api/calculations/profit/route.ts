@@ -99,7 +99,23 @@ export async function POST(req: NextRequest) {
     }
 
     const shiftLabelVal = shift_label ?? null
-    const upsertRows = results.map((r) => ({
+
+    // Delete existing summaries for this period before inserting fresh ones.
+    // Upsert with onConflict is unreliable when shift_label is NULL because
+    // PostgreSQL unique constraints treat NULL != NULL, so rows accumulate.
+    let deleteQuery = supabase
+      .from('drink_profit_summaries')
+      .delete()
+      .eq('business_id', businessId)
+      .eq('period_start', period_start)
+      .eq('period_end', period_end)
+    deleteQuery = shiftLabelVal != null
+      ? deleteQuery.eq('shift_label', shiftLabelVal)
+      : deleteQuery.is('shift_label', null)
+    const { error: deleteError } = await deleteQuery
+    if (deleteError) console.error('[profit] delete failed:', deleteError.message)
+
+    const insertRows = results.map((r) => ({
       business_id: businessId,
       menu_item_id: r.menu_item_id,
       period_start,
@@ -114,11 +130,11 @@ export async function POST(req: NextRequest) {
       calculated_at: new Date().toISOString(),
     }))
 
-    const { error: upsertError } = await supabase
+    const { error: insertError } = await supabase
       .from('drink_profit_summaries')
-      .upsert(upsertRows, { onConflict: 'business_id,menu_item_id,period_start,period_end,shift_label' })
+      .insert(insertRows)
 
-    if (upsertError) console.error('[profit] upsert failed:', upsertError.message)
+    if (insertError) console.error('[profit] insert failed:', insertError.message)
 
     return NextResponse.json(results)
   } catch (e) { return authErrorResponse(e) }
