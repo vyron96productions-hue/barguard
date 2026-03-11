@@ -74,6 +74,19 @@ export function unitLabel(unit: string): string {
   return UNIT_LABELS[unit] ?? unit
 }
 
+/**
+ * Returns cost per oz for an inventory item.
+ * Uses cost_per_unit ÷ oz_per_unit when available, otherwise falls back to a
+ * generic $0.85/oz estimate so the UI always has something to show.
+ */
+export function itemCostPerOz(costPerUnit: number | null | undefined, unit: string): number {
+  const FALLBACK = 0.85
+  if (!costPerUnit || costPerUnit <= 0) return FALLBACK
+  const oz = convertToOz(1, unit)
+  if (!oz || oz <= 0) return FALLBACK
+  return costPerUnit / oz
+}
+
 /** All units (inventory + recipe pour units) */
 export const ALL_UNITS = [
   // Beverage — counting units

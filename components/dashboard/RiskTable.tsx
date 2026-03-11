@@ -1,7 +1,6 @@
 import StatusBadge from '@/components/StatusBadge'
+import { itemCostPerOz } from '@/lib/conversions'
 import type { InventoryUsageSummary } from '@/types'
-
-const AVG_COST_PER_OZ = 0.85
 
 interface Props {
   summaries: InventoryUsageSummary[]
@@ -41,7 +40,8 @@ export default function RiskTable({ summaries }: Props) {
           const isTopRisk = i < 3
           const expectedPct = (s.expected_usage / maxUsage) * 100
           const actualPct = (s.actual_usage / maxUsage) * 100
-          const estLoss = Math.max(0, s.variance) * AVG_COST_PER_OZ
+          const cpo = itemCostPerOz(s.inventory_item?.cost_per_unit, s.inventory_item?.unit ?? 'oz')
+          const estLoss = Math.max(0, s.variance) * cpo
 
           const actualBarColor =
             s.status === 'critical' ? 'bg-red-500' :

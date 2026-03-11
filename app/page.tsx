@@ -10,10 +10,10 @@ import ShiftSelector from '@/components/dashboard/ShiftSelector'
 import PerformanceSummaryCard from '@/components/dashboard/PerformanceSummaryCard'
 import DrinkProfitPreview from '@/components/dashboard/DrinkProfitPreview'
 import { SHIFT_PRESETS, resolveShiftWindow, type ResolvedShiftWindow } from '@/lib/shifts'
+import { itemCostPerOz } from '@/lib/conversions'
 import type { PerformanceData } from '@/app/api/reports/performance/route'
 import type { InventoryUsageSummary, AiSummary } from '@/types'
 
-const AVG_COST_PER_OZ = 0.85
 
 function todayIso(): string {
   const d = new Date()
@@ -41,7 +41,11 @@ function computeMetrics(summaries: InventoryUsageSummary[]) {
   const total    = summaries.length
 
   const totalVarianceOz = summaries.reduce((acc, s) => acc + Math.max(0, s.variance), 0)
-  const estimatedLoss   = totalVarianceOz * AVG_COST_PER_OZ
+  const estimatedLoss   = summaries.reduce((acc, s) => {
+    if (s.variance <= 0) return acc
+    const cpo = itemCostPerOz(s.inventory_item?.cost_per_unit, s.inventory_item?.unit ?? 'oz')
+    return acc + s.variance * cpo
+  }, 0)
 
   const healthScore = total === 0
     ? 100
@@ -511,7 +515,7 @@ export default function DashboardPage() {
               value={`$${estimatedLoss.toFixed(0)}`}
               sub={`${totalVarianceOz.toFixed(1)} oz over`}
               accent="red" icon="$"
-              note={`~$${AVG_COST_PER_OZ}/oz avg cost`}
+              note="Based on item cost prices"
             />
             <KpiCard
               label="Health Score"
@@ -560,7 +564,7 @@ export default function DashboardPage() {
           <div className="sm:ml-auto sm:text-right pl-12 sm:pl-0">
             <p className="text-[10px] text-slate-500 uppercase tracking-widest">Est. Loss</p>
             <p className="text-xl font-bold text-red-400">
-              ~${(Math.max(0, highestRisk.variance) * 0.85).toFixed(2)}
+              ~${(Math.max(0, highestRisk.variance) * itemCostPerOz(highestRisk.inventory_item?.cost_per_unit, highestRisk.inventory_item?.unit ?? 'oz')).toFixed(2)}
             </p>
           </div>
         </div>
