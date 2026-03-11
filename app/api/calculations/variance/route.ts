@@ -172,9 +172,18 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Always wipe previous results for this business before inserting fresh ones.
+    // This prevents stale rows from old date ranges from mixing into the display.
+    const { error: deleteError } = await supabase
+      .from('inventory_usage_summaries')
+      .delete()
+      .eq('business_id', businessId)
+
+    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
+
     const { error: upsertError } = await supabase
       .from('inventory_usage_summaries')
-      .upsert(summaries, { onConflict: 'business_id,inventory_item_id,period_start,period_end' })
+      .insert(summaries)
 
     if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 })
 

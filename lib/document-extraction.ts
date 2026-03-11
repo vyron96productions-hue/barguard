@@ -35,7 +35,7 @@ Required JSON shape:
     {
       "raw_item_name": "exact product name as written on the document",
       "quantity": number or null,
-      "unit_type": "bottle | case | keg | oz | ml | l | pint | sixthkeg | quarterkeg | halfkeg or null",
+      "unit_type": "bottle | beer_bottle | can | case | keg | pint | 1L | 1.75L | sixthkeg | quarterkeg | halfkeg or null",
       "unit_cost": number or null,
       "line_total": number or null,
       "confidence": "high" | "medium" | "low",
@@ -53,7 +53,12 @@ Rules:
 - Only include actual product line items (spirits, beer, wine, mixers, bar supplies).
 - Skip fees, taxes, deposits, delivery charges, and subtotals/totals.
 - raw_item_name must be the product name exactly as printed on the document (keep the full name including any pack size, e.g. "Budweiser 12 Pack", "Corona 6pk").
-- unit_type: normalise to one of the listed options where possible; leave null if unclear.
+- unit_type: normalise to one of the listed options where possible; leave null if unclear. IMPORTANT unit_type rules:
+  - For beer in CANS (Modelo, Budweiser, Coors, White Claw, truly, etc.): use "can" for individual cans, "case" only when the invoice explicitly shows a case purchase (e.g. "5 CS", "2 cases").
+  - For beer in BOTTLES (Corona, Heineken, Corona Extra, Stella Artois, etc.): use "beer_bottle" for individual bottles.
+  - When unsure if a beer product is a can or bottle, default to "can".
+  - For spirits (vodka, tequila, rum, whiskey, gin, etc.): use "bottle" for standard 750ml, "1L" for 1-liter bottles, "1.75L" for handles.
+  - Never guess "case" when the unit is ambiguous — default to "can" for beer, "bottle" for spirits.
 - quantity: ALWAYS try to extract quantity. This is the NUMBER OF PACKAGES ordered (the value in the QTY column). If an invoice shows "2  Bud Light 24pk", quantity is 2 (not 24). If it shows "1  Corona 6-pack", quantity is 1. Look for numbers in the quantity column, before product names, or after "x" symbols. Do not leave null if a number is visible.
 - package_type: detect from the product name or description. Common patterns:
   - "6 pk", "6pk", "6-pack", "six pack" → "6-pack", units_per_package: 6

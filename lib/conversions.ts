@@ -20,6 +20,7 @@ export const UNIT_TO_OZ: Record<string, number> = {
   sixthkeg: 661,
   pint: 16,
   can: 12,          // 12oz standard can
+  beer_bottle: 12,  // 12oz standard beer bottle
   case: 304.32,     // 12 x 750ml
 }
 
@@ -50,8 +51,28 @@ export function isSupportedUnit(unit: string): boolean {
 
 /** Units used for counting inventory (shown in UI dropdowns) */
 export const INVENTORY_BEVERAGE_UNITS = [
-  'bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg',
+  'bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg',
 ]
+
+/** Human-friendly labels for inventory unit values */
+export const UNIT_LABELS: Record<string, string> = {
+  bottle:      'Bottle (750ml)',
+  '1L':        'Bottle (1L)',
+  '1.75L':     'Handle (1.75L)',
+  can:         'Beer Can (12oz)',
+  beer_bottle: 'Beer Bottle (12oz)',
+  pint:        'Pint (16oz)',
+  case:        'Case (24 units)',
+  keg:         'Keg (½ bbl)',
+  halfkeg:     'Half Keg',
+  quarterkeg:  'Quarter Keg',
+  sixthkeg:    'Sixth Keg',
+}
+
+/** Returns the friendly label for a unit, falling back to the raw value */
+export function unitLabel(unit: string): string {
+  return UNIT_LABELS[unit] ?? unit
+}
 
 /** All units (inventory + recipe pour units) */
 export const ALL_UNITS = [

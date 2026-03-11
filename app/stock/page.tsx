@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
+import { UNIT_LABELS } from '@/lib/conversions'
 
 const BEVERAGE_CATEGORIES = [
   'spirits', 'beer', 'wine', 'keg',
@@ -15,7 +16,7 @@ const FOOD_CATEGORIES = [
 ]
 const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
 
-const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS_LIST = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet']
 
 // Bottle-type units and their oz size — used for partial bottle display
@@ -401,7 +402,7 @@ export default function StockPage() {
                             : 'border-slate-700 focus:border-amber-500/60'
                         }`}
                       />
-                      <span className="text-xs text-slate-500 w-12 truncate">{item.unit}</span>
+                      <span className="text-xs text-slate-500 w-20 truncate">{UNIT_LABELS[item.unit] ?? item.unit}</span>
                     </div>
                   </div>
                 )
@@ -583,11 +584,11 @@ function StockCard({ item, allCategories, onUpdate }: {
                 className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
               >
                 {unitOptions.map((u) => (
-                  <option key={u} value={u}>{u}</option>
+                  <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
                 ))}
                 {/* Allow keeping current unit even if it's from a different type */}
                 {!unitOptions.includes(unit) && (
-                  <option value={unit}>{unit}</option>
+                  <option value={unit}>{UNIT_LABELS[unit] ?? unit}</option>
                 )}
               </select>
             </div>
@@ -659,14 +660,14 @@ function StockCard({ item, allCategories, onUpdate }: {
         </div>
         {item.pack_size && item.pack_size > 1 && effectiveQty !== null && effectiveQty > 0 ? (
           <div className="space-y-1">
-            <p className="text-xs text-slate-500">{item.unit}</p>
+            <p className="text-xs text-slate-500">{UNIT_LABELS[item.unit] ?? item.unit}</p>
             <p className="text-xs font-medium text-amber-400/80 leading-snug">
               {formatPackBreakdown(effectiveQty, item.pack_size, item.package_type).split(' · ')[1]}
             </p>
           </div>
         ) : (
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-xs text-slate-500">{item.unit}</p>
+            <p className="text-xs text-slate-500">{UNIT_LABELS[item.unit] ?? item.unit}</p>
             {item.package_type && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500/60 font-medium leading-tight">
                 {item.package_type}

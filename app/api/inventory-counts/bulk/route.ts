@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     const { error: countError } = await supabase
       .from('inventory_counts')
-      .insert(rows)
+      .upsert(rows, { onConflict: 'business_id,inventory_item_id,count_date' })
 
     if (countError) return NextResponse.json({ error: countError.message }, { status: 500 })
 

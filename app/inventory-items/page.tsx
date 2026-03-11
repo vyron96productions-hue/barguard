@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
+import { UNIT_LABELS } from '@/lib/conversions'
 import type { InventoryItem } from '@/types'
 
-const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat']
 
 type ItemType = 'beverage' | 'food'
@@ -135,7 +136,7 @@ export default function InventoryItemsPage() {
             <div key={item.id} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-slate-800/20 transition-colors">
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
                 <p className="font-medium text-sm text-slate-200 truncate">{item.name}</p>
-                <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{item.unit}</span>
+                <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{UNIT_LABELS[item.unit] ?? item.unit}</span>
                 {item.package_type && (
                   <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
                     {item.package_type}
@@ -211,10 +212,10 @@ export default function InventoryItemsPage() {
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
               >
                 <optgroup label={itemType === 'food' ? 'Food units' : 'Beverage units'}>
-                  {(itemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => <option key={u} value={u}>{u}</option>)}
+                  {(itemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
                 </optgroup>
                 <optgroup label="Other">
-                  {(itemType === 'food' ? BEVERAGE_UNITS : FOOD_UNITS).map((u) => <option key={u} value={u}>{u}</option>)}
+                  {(itemType === 'food' ? BEVERAGE_UNITS : FOOD_UNITS).map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
                 </optgroup>
               </select>
             </div>

@@ -7,7 +7,20 @@ import type { PurchaseImportDraftWithLines, PurchaseImportDraftLine, InventoryIt
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 
-const UNIT_OPTIONS = ['oz', 'ml', 'l', 'bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', 'pint']
+const UNIT_OPTIONS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const UNIT_LABELS: Record<string, string> = {
+  bottle:      'Bottle (750ml)',
+  '1L':        'Bottle (1L)',
+  '1.75L':     'Handle (1.75L)',
+  can:         'Beer Can (12oz)',
+  beer_bottle: 'Beer Bottle (12oz)',
+  pint:        'Pint (16oz)',
+  case:        'Case (24 units)',
+  keg:         'Keg (½ bbl)',
+  halfkeg:     'Half Keg',
+  quarterkeg:  'Quarter Keg',
+  sixthkeg:    'Sixth Keg',
+}
 const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
 
 interface EditableLine {
@@ -550,7 +563,7 @@ function AddToInventoryForm({ rawName, onSave, onCancel }: {
         <div className="grid grid-cols-2 gap-2">
           <select value={unit} onChange={(e) => setUnit(e.target.value)}
             className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
-            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
           </select>
           <CategoryCombobox
             value={category}
@@ -701,7 +714,7 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
           <select value={line.unit_type} onChange={(e) => onChange({ unit_type: e.target.value })}
             className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
             <option value="">—</option>
-            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
           </select>
         </div>
         <div>
@@ -829,7 +842,7 @@ function DesktopLineRow({ line, inventoryItems, onChange, onRemove, onNewInvento
         <select value={line.unit_type} onChange={(e) => onChange({ unit_type: e.target.value })}
           className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
           <option value="">—</option>
-          {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+          {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
         </select>
       </td>
       <td className="px-2 py-2">
