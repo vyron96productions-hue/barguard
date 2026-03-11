@@ -199,7 +199,7 @@ export async function PATCH(req: NextRequest) {
 
       const { error: countError } = await supabase
         .from('inventory_counts')
-        .insert({
+        .upsert({
           upload_id: upload.id,
           business_id: businessId,
           count_date: today,
@@ -207,7 +207,7 @@ export async function PATCH(req: NextRequest) {
           inventory_item_id: id,
           quantity_on_hand: Number(quantity_on_hand),
           unit_type: item?.unit ?? null,
-        })
+        }, { onConflict: 'business_id,inventory_item_id,count_date' })
       if (countError) return NextResponse.json({ error: countError.message }, { status: 500 })
     }
 

@@ -139,7 +139,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             unit_type: line.unit_type ?? meta?.unit ?? null,
           }
         })
-        await supabase.from('inventory_counts').insert(countRecords)
+        await supabase.from('inventory_counts').upsert(countRecords, { onConflict: 'business_id,inventory_item_id,count_date' })
       }
     }
 
