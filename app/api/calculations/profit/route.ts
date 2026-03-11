@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     for (const [menuItemId, { qty, revenue: rawRevenue }] of byItem.entries()) {
       const sellPrice = sellPriceById.get(menuItemId)
-      const revenue = (rawRevenue > 0) ? rawRevenue : (sellPrice != null ? sellPrice * qty : rawRevenue)
+      const revenue = sellPrice != null ? sellPrice * qty : rawRevenue
 
       const recipes = recipesByItem.get(menuItemId) ?? []
 
