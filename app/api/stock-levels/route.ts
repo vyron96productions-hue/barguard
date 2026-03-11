@@ -101,8 +101,7 @@ export async function GET() {
 
       if (count && recipesByInvItem[item.id]?.length > 0) {
         const lastCountDate = count.count_date
-        const countUnit = count.unit_type ?? item.unit
-        const lastCountOz = convertToOz(count.quantity_on_hand, countUnit)
+        const lastCountOz = convertToOz(count.quantity_on_hand, item.unit)
 
         // Purchases since last count
         const purchasedOz = (purchasesMap[item.id] ?? [])
