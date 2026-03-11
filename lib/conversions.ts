@@ -74,6 +74,25 @@ export function unitLabel(unit: string): string {
   return UNIT_LABELS[unit] ?? unit
 }
 
+/** Short display label for use in tables/badges next to numbers */
+export const SHORT_UNIT_LABELS: Record<string, string> = {
+  bottle:      'btl',
+  '1L':        '1L btl',
+  '1.75L':     '1.75L',
+  can:         'can',
+  beer_bottle: 'beer btl',
+  pint:        'pint',
+  case:        'case',
+  keg:         'keg',
+  halfkeg:     '½ keg',
+  quarterkeg:  '¼ keg',
+  sixthkeg:    '⅙ keg',
+}
+
+export function shortUnitLabel(unit: string): string {
+  return SHORT_UNIT_LABELS[unit] ?? unit
+}
+
 /**
  * Returns cost per oz for an inventory item.
  * Uses cost_per_unit ÷ oz_per_unit when available, otherwise falls back to a

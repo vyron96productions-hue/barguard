@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import StatusBadge from '@/components/StatusBadge'
-import { itemCostPerOz } from '@/lib/conversions'
+import { itemCostPerOz, shortUnitLabel } from '@/lib/conversions'
 import type { InventoryUsageSummary } from '@/types'
 
 export default function VarianceReportsPage() {
@@ -152,7 +152,7 @@ export default function VarianceReportsPage() {
           {/* Mobile card layout */}
           <div className="lg:hidden space-y-3">
             {filtered.map((s) => {
-              const unit = s.inventory_item?.unit ?? 'units'
+              const unit = shortUnitLabel(s.inventory_item?.unit ?? 'units')
               const cpo = itemCostPerOz(s.inventory_item?.cost_per_unit, s.inventory_item?.unit ?? 'oz')
               const estLoss = Math.max(0, s.variance) * cpo
               return (
@@ -220,7 +220,7 @@ export default function VarianceReportsPage() {
                 </thead>
                 <tbody>
                   {filtered.map((s) => {
-                    const unit = s.inventory_item?.unit ?? ''
+                    const unit = shortUnitLabel(s.inventory_item?.unit ?? '')
                     return (
                       <tr key={s.id} className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors last:border-0">
                         <td className="px-5 py-3 font-medium text-slate-200">{s.inventory_item?.name ?? '—'}</td>

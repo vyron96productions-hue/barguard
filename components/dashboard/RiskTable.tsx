@@ -1,5 +1,5 @@
 import StatusBadge from '@/components/StatusBadge'
-import { itemCostPerOz } from '@/lib/conversions'
+import { itemCostPerOz, shortUnitLabel } from '@/lib/conversions'
 import type { InventoryUsageSummary } from '@/types'
 
 interface Props {
@@ -40,6 +40,7 @@ export default function RiskTable({ summaries }: Props) {
           const isTopRisk = i < 3
           const expectedPct = (s.expected_usage / maxUsage) * 100
           const actualPct = (s.actual_usage / maxUsage) * 100
+          const unit = shortUnitLabel(s.inventory_item?.unit ?? 'oz')
           const cpo = itemCostPerOz(s.inventory_item?.cost_per_unit, s.inventory_item?.unit ?? 'oz')
           const estLoss = Math.max(0, s.variance) * cpo
 
@@ -98,7 +99,7 @@ export default function RiskTable({ summaries }: Props) {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className={`text-sm font-bold ${s.variance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                      {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} oz
+                      {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} {unit}
                     </span>
                     {s.variance_percent !== null && (
                       <span className={`text-xs ml-1 ${Math.abs(s.variance_percent) >= 20 ? 'text-red-500/70' : Math.abs(s.variance_percent) >= 10 ? 'text-amber-500/70' : 'text-slate-600'}`}>
@@ -150,7 +151,7 @@ export default function RiskTable({ summaries }: Props) {
                 {/* Variance */}
                 <div className="col-span-2 text-right">
                   <p className={`text-sm font-bold ${s.variance > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} oz
+                    {s.variance > 0 ? '+' : ''}{s.variance.toFixed(1)} {unit}
                   </p>
                   {s.variance_percent !== null && (
                     <p className={`text-[10px] font-medium mt-0.5 ${
