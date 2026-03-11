@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
     const menuItemIds = [...byItem.keys()]
 
-    const [recipesRes, costsRes] = await Promise.all([
+    const [recipesRes, costsRes, menuRes] = await Promise.all([
       supabase
         .from('menu_item_recipes')
         .select('menu_item_id, inventory_item_id, quantity, unit')
@@ -53,10 +53,19 @@ export async function POST(req: NextRequest) {
         .from('inventory_items')
         .select('id, cost_per_oz, cost_per_unit')
         .eq('business_id', businessId),
+      supabase
+        .from('menu_items')
+        .select('id, sell_price')
+        .in('id', menuItemIds),
     ])
 
     if (recipesRes.error) return NextResponse.json({ error: recipesRes.error.message }, { status: 500 })
     if (costsRes.error) return NextResponse.json({ error: costsRes.error.message }, { status: 500 })
+
+    const sellPriceById = new Map<string, number>()
+    for (const m of menuRes.data ?? []) {
+      if (m.sell_price != null) sellPriceById.set(m.id, m.sell_price)
+    }
 
     const costById: Record<string, ItemCostInfo> = {}
     for (const item of costsRes.data ?? []) {
@@ -82,7 +91,10 @@ export async function POST(req: NextRequest) {
       has_full_cost: boolean
     }> = []
 
-    for (const [menuItemId, { qty, revenue }] of byItem.entries()) {
+    for (const [menuItemId, { qty, revenue: rawRevenue }] of byItem.entries()) {
+      const sellPrice = sellPriceById.get(menuItemId)
+      const revenue = (rawRevenue > 0) ? rawRevenue : (sellPrice != null ? sellPrice * qty : rawRevenue)
+
       const recipes = recipesByItem.get(menuItemId) ?? []
 
       if (recipes.length === 0) {
