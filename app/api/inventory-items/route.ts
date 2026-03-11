@@ -103,6 +103,7 @@ export async function PATCH(req: NextRequest) {
 
     const updates: Record<string, string | number | null> = {}
     if (name !== undefined) updates.name = name.trim()
+    if (body.unit !== undefined) updates.unit = body.unit
     if (category !== undefined) updates.category = category || null
     if (package_type !== undefined) updates.package_type = package_type || null
     if (body.pack_size !== undefined) updates.pack_size = body.pack_size ? parseInt(body.pack_size, 10) : null

@@ -46,6 +46,13 @@ export default function InventoryItemsPage() {
   const [error, setError] = useState<string | null>(null)
   const [autoLinked, setAutoLinked] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'all' | ItemType>('all')
+  const [editingId,   setEditingId]   = useState<string | null>(null)
+  const [editName,    setEditName]    = useState('')
+  const [editUnit,    setEditUnit]    = useState('')
+  const [editCat,     setEditCat]     = useState('')
+  const [editCost,    setEditCost]    = useState('')
+  const [editSaving,  setEditSaving]  = useState(false)
+  const [editError,   setEditError]   = useState<string | null>(null)
 
   useEffect(() => { fetchItems() }, [])
 
@@ -97,6 +104,37 @@ export default function InventoryItemsPage() {
     fetchItems()
   }
 
+  function openEdit(item: InventoryItem) {
+    setEditingId(item.id)
+    setEditName(item.name)
+    setEditUnit(item.unit)
+    setEditCat(item.category ?? '')
+    setEditCost(item.cost_per_unit != null ? String(item.cost_per_unit) : '')
+    setEditError(null)
+  }
+
+  async function saveEdit() {
+    if (!editingId) return
+    setEditSaving(true)
+    setEditError(null)
+    const res = await fetch('/api/inventory-items', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: editingId,
+        name: editName,
+        unit: editUnit,
+        category: editCat || null,
+        cost_per_unit: editCost !== '' ? editCost : null,
+      }),
+    })
+    const data = await res.json()
+    setEditSaving(false)
+    if (!res.ok) { setEditError(data.error ?? 'Save failed'); return }
+    setEditingId(null)
+    fetchItems()
+  }
+
   function handlePackageTypeChange(pt: string) {
     setPackageType(pt)
     if (pt && pt in PACKAGE_TYPE_SIZES) {
@@ -133,32 +171,110 @@ export default function InventoryItemsPage() {
         </div>
         <div className="divide-y divide-slate-800/50">
           {catItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-slate-800/20 transition-colors">
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <p className="font-medium text-sm text-slate-200 truncate">{item.name}</p>
-                <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{UNIT_LABELS[item.unit] ?? item.unit}</span>
-                {item.package_type && (
-                  <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                    {item.package_type}
-                  </span>
-                )}
-                {item.pack_size && !item.package_type && (
-                  <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                    {item.pack_size}/pack
-                  </span>
-                )}
-                {item.cost_per_unit != null && (
-                  <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                    ${item.cost_per_unit.toFixed(2)}/{item.unit}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="text-xs text-slate-700 hover:text-red-400 active:text-red-300 transition-colors ml-3 shrink-0 py-1 px-2"
-              >
-                Delete
-              </button>
+            <div key={item.id}>
+              {editingId === item.id ? (
+                <div className="px-4 sm:px-5 py-4 bg-slate-800/40 space-y-3">
+                  <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Edit Item</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-500 uppercase tracking-wider">Name</label>
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 uppercase tracking-wider">Unit</label>
+                      <select
+                        value={editUnit}
+                        onChange={(e) => setEditUnit(e.target.value)}
+                        className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                      >
+                        {BEVERAGE_UNITS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 uppercase tracking-wider">Category</label>
+                      <CategoryCombobox
+                        value={editCat}
+                        onChange={setEditCat}
+                        categories={allCategories}
+                        placeholder="Select or create…"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-500 uppercase tracking-wider">
+                        Cost per {UNIT_LABELS[editUnit] ?? editUnit} <span className="text-slate-700">(for loss tracking)</span>
+                      </label>
+                      <div className="relative mt-1">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={editCost}
+                          onChange={(e) => setEditCost(e.target.value)}
+                          placeholder="e.g. 24.99"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {editError && <p className="text-red-400 text-xs">{editError}</p>}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveEdit}
+                      disabled={editSaving}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold rounded-lg text-xs disabled:opacity-50 transition-colors"
+                    >
+                      {editSaving ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-slate-800/20 transition-colors">
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                    <p className="font-medium text-sm text-slate-200 truncate">{item.name}</p>
+                    <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{UNIT_LABELS[item.unit] ?? item.unit}</span>
+                    {item.package_type && (
+                      <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                        {item.package_type}
+                      </span>
+                    )}
+                    {item.pack_size && !item.package_type && (
+                      <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                        {item.pack_size}/pack
+                      </span>
+                    )}
+                    {item.cost_per_unit != null && (
+                      <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                        ${item.cost_per_unit.toFixed(2)}/{UNIT_LABELS[item.unit] ?? item.unit}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 ml-3 shrink-0">
+                    <button
+                      onClick={() => openEdit(item)}
+                      className="text-xs text-slate-500 hover:text-amber-400 transition-colors py-1 px-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-xs text-slate-700 hover:text-red-400 active:text-red-300 transition-colors py-1 px-2"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
