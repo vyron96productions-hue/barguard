@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import StatusBadge from '@/components/StatusBadge'
+import { itemCostPerOz } from '@/lib/conversions'
 import type { InventoryUsageSummary } from '@/types'
 
 export default function VarianceReportsPage() {
@@ -36,8 +37,9 @@ export default function VarianceReportsPage() {
 
   // KPIs from the filtered set
   const totalEstLoss = filtered.reduce((acc, s) => {
-    const cost = s.inventory_item?.cost_per_unit ?? 0
-    return acc + Math.max(0, s.variance) * cost
+    if (s.variance <= 0) return acc
+    const cpo = itemCostPerOz(s.inventory_item?.cost_per_unit, s.inventory_item?.unit ?? 'oz')
+    return acc + s.variance * cpo
   }, 0)
   const hasCostData = filtered.some(s => s.inventory_item?.cost_per_unit != null)
   const criticalCount = filtered.filter((s) => s.status === 'critical').length
@@ -151,8 +153,8 @@ export default function VarianceReportsPage() {
           <div className="lg:hidden space-y-3">
             {filtered.map((s) => {
               const unit = s.inventory_item?.unit ?? 'units'
-              const costPerUnit = s.inventory_item?.cost_per_unit ?? 0
-              const estLoss = Math.max(0, s.variance) * costPerUnit
+              const cpo = itemCostPerOz(s.inventory_item?.cost_per_unit, s.inventory_item?.unit ?? 'oz')
+              const estLoss = Math.max(0, s.variance) * cpo
               return (
                 <div key={s.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
@@ -189,8 +191,8 @@ export default function VarianceReportsPage() {
                     </div>
                     <div className="bg-slate-800/50 rounded-xl p-2.5">
                       <p className="text-slate-600 text-[10px] uppercase tracking-wider mb-0.5">Est. Loss</p>
-                      <p className={`font-semibold ${costPerUnit > 0 && estLoss > 0 ? 'text-red-400' : 'text-slate-600'}`}>
-                        {costPerUnit > 0 && estLoss > 0 ? `~$${estLoss.toFixed(2)}` : '—'}
+                      <p className={`font-semibold ${s.inventory_item?.cost_per_unit && estLoss > 0 ? 'text-red-400' : 'text-slate-600'}`}>
+                        {s.inventory_item?.cost_per_unit && estLoss > 0 ? `~$${estLoss.toFixed(2)}` : '—'}
                       </p>
                     </div>
                   </div>
