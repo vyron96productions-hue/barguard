@@ -96,14 +96,23 @@ export default function ProfitIntelligencePage() {
     setPeriodStart(start); setPeriodEnd(end)
   }, [activePeriod])
 
-  // Fetch stored profit summaries
+  // Calculate profit then fetch summaries — always runs fresh so it stays in sync with sales
   const loadSummaries = useCallback(async () => {
+    setCalculating(true)
     setLoading(true)
+    setInsight(null)
+    await fetch('/api/calculations/profit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
+    })
     const res = await fetch(`/api/reports/profit?period_start=${periodStart}&period_end=${periodEnd}`)
     const data = await res.json()
     const rows: DrinkProfitSummary[] = Array.isArray(data) ? data : []
     setAllSummaries(rows)
     setHasData(rows.length > 0)
+    setLastCalcAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+    setCalculating(false)
     setLoading(false)
   }, [periodStart, periodEnd])
 
@@ -133,16 +142,7 @@ export default function ProfitIntelligencePage() {
   useEffect(() => { if (hasData) loadInsight() }, [hasData, loadInsight])
 
   async function runCalculation() {
-    setCalculating(true)
-    setInsight(null)
-    await fetch('/api/calculations/profit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
-    })
     await loadSummaries()
-    setLastCalcAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
-    setCalculating(false)
   }
 
   async function generateInsight() {
