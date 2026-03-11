@@ -26,6 +26,36 @@ export async function POST(req: NextRequest) {
   } catch (e) { return authErrorResponse(e) }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const { supabase, businessId } = await getAuthContext()
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+    const body = await req.json()
+    const { inventory_item_id, quantity, unit } = body
+
+    // Verify recipe belongs to this business
+    const { data: recipe } = await supabase
+      .from('menu_item_recipes')
+      .select('id, menu_items!inner(business_id)')
+      .eq('id', id)
+      .single()
+    if (!recipe) return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
+
+    const { data, error } = await supabase
+      .from('menu_item_recipes')
+      .update({ inventory_item_id, quantity, unit })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  } catch (e) { return authErrorResponse(e) }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()

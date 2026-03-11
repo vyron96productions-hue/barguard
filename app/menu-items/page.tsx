@@ -58,6 +58,13 @@ export default function RecipeMappingPage() {
   const [inlineErr, setInlineErr]     = useState<string | null>(null)
   const [inlineSaving, setInlineSaving] = useState(false)
 
+  // Inline recipe editing
+  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
+  const [editRecipeInvId, setEditRecipeInvId] = useState('')
+  const [editRecipeQty, setEditRecipeQty]     = useState('')
+  const [editRecipeUnit, setEditRecipeUnit]   = useState('oz')
+  const [editRecipeSaving, setEditRecipeSaving] = useState(false)
+
   // Inline sell price editing
   const [editPriceId, setEditPriceId]   = useState<string | null>(null)
   const [editPriceVal, setEditPriceVal] = useState('')
@@ -180,6 +187,26 @@ export default function RecipeMappingPage() {
 
   async function handleDeleteRecipe(id: string) {
     await fetch(`/api/recipes?id=${id}`, { method: 'DELETE' })
+    fetchAll()
+  }
+
+  function startEditRecipe(r: { id: string; quantity: number; unit: string; inventory_item?: { id: string } }) {
+    setEditingRecipeId(r.id)
+    setEditRecipeInvId(r.inventory_item?.id ?? '')
+    setEditRecipeQty(r.quantity.toString())
+    setEditRecipeUnit(r.unit)
+  }
+
+  async function saveEditRecipe() {
+    if (!editingRecipeId) return
+    setEditRecipeSaving(true)
+    await fetch(`/api/recipes?id=${editingRecipeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inventory_item_id: editRecipeInvId, quantity: parseFloat(editRecipeQty), unit: editRecipeUnit }),
+    })
+    setEditingRecipeId(null)
+    setEditRecipeSaving(false)
     fetchAll()
   }
 
@@ -324,19 +351,68 @@ export default function RecipeMappingPage() {
         {item.menu_item_recipes.length > 0 && (
           <div className="border-t border-slate-800/60 divide-y divide-slate-800/40">
             {item.menu_item_recipes.map((r) => (
-              <div key={r.id} className="flex items-center justify-between px-4 sm:px-5 py-2.5 bg-slate-800/20">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs text-slate-600 font-mono tabular-nums shrink-0">
-                    {r.quantity}{r.unit}
-                  </span>
-                  <span className="text-sm text-slate-400 truncate">{r.inventory_item?.name ?? '—'}</span>
-                </div>
-                <button
-                  onClick={() => handleDeleteRecipe(r.id)}
-                  className="text-xs text-slate-700 hover:text-red-400 transition-colors ml-3 shrink-0 py-0.5 px-1.5"
-                >
-                  Remove
-                </button>
+              <div key={r.id} className="px-4 sm:px-5 py-2.5 bg-slate-800/20">
+                {editingRecipeId === r.id ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={editRecipeInvId}
+                      onChange={(e) => setEditRecipeInvId(e.target.value)}
+                      className="flex-1 min-w-0 bg-slate-800 border border-amber-500/40 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                    >
+                      {inventoryItems.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                    </select>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editRecipeQty}
+                      onChange={(e) => setEditRecipeQty(e.target.value)}
+                      className="w-16 bg-slate-800 border border-amber-500/40 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                    />
+                    <select
+                      value={editRecipeUnit}
+                      onChange={(e) => setEditRecipeUnit(e.target.value)}
+                      className="w-20 bg-slate-800 border border-amber-500/40 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                    >
+                      {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                    <button
+                      onClick={saveEditRecipe}
+                      disabled={editRecipeSaving}
+                      className="text-xs px-2.5 py-1.5 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 disabled:opacity-50 transition-colors shrink-0"
+                    >
+                      {editRecipeSaving ? '…' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setEditingRecipeId(null)}
+                      className="text-xs text-slate-500 hover:text-slate-300 transition-colors shrink-0"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-xs text-slate-600 font-mono tabular-nums shrink-0">
+                        {r.quantity}{r.unit}
+                      </span>
+                      <span className="text-sm text-slate-400 truncate">{r.inventory_item?.name ?? '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-1 ml-3 shrink-0">
+                      <button
+                        onClick={() => startEditRecipe(r)}
+                        className="text-xs text-slate-600 hover:text-amber-400 transition-colors py-0.5 px-1.5"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRecipe(r.id)}
+                        className="text-xs text-slate-700 hover:text-red-400 transition-colors py-0.5 px-1.5"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
