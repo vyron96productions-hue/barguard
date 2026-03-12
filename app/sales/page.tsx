@@ -33,25 +33,35 @@ export default function SalesLogPage() {
   const [rangeStart, setRangeStart] = useState('')
   const [rangeEnd, setRangeEnd] = useState('')
   const [days, setDays] = useState<SalesLogDay[]>([])
+  const [stations, setStations] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [stationFilter, setStationFilter] = useState<string>('all') // 'all' | 'none' | station name
 
-  const fetchData = useCallback(async (start: string, end: string) => {
+  const fetchData = useCallback(async (start: string, end: string, station: string) => {
     if (!start || !end) return
     setLoading(true)
-    const res = await fetch(`/api/reports/sales-log?date_start=${start}&date_end=${end}`)
+    const params = new URLSearchParams({ date_start: start, date_end: end })
+    if (station !== 'all') params.set('station', station)
+    const res = await fetch(`/api/reports/sales-log?${params}`)
     const data = await res.json()
-    setDays(Array.isArray(data) ? data : [])
+    if (data && Array.isArray(data.days)) {
+      setDays(data.days)
+      // Only update stations list when not filtering (so we can always show all options)
+      if (station === 'all') setStations(data.stations ?? [])
+    } else {
+      setDays([])
+    }
     setLoading(false)
   }, [])
 
-  // Single-day mode: fetch on date change
+  // Single-day mode: fetch on date or station change
   useEffect(() => {
-    if (mode === 'day') fetchData(date, date)
-  }, [date, mode, fetchData])
+    if (mode === 'day') fetchData(date, date, stationFilter)
+  }, [date, mode, stationFilter, fetchData])
 
   function handleRangeFetch() {
-    if (rangeStart && rangeEnd) fetchData(rangeStart, rangeEnd)
+    if (rangeStart && rangeEnd) fetchData(rangeStart, rangeEnd, stationFilter)
   }
 
   function filterItems(items: SalesLogItem[]): SalesLogItem[] {
@@ -65,6 +75,12 @@ export default function SalesLogPage() {
   const totalQty = days.reduce((s, d) => s + d.total_qty, 0)
   const allItems = days.flatMap((d) => filterItems(d.items))
   const hasMultipleDays = days.length > 1
+
+  const stationOptions = [
+    { key: 'all', label: 'All Stations' },
+    ...stations.map((s) => ({ key: s, label: s })),
+    ...(stations.length > 0 ? [{ key: 'none', label: 'Unassigned' }] : []),
+  ]
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -184,23 +200,43 @@ export default function SalesLogPage() {
             </div>
           </div>
 
-          {/* Type filter */}
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
-            {([
-              { key: 'all',   label: 'All' },
-              { key: 'drink', label: 'Drinks' },
-              { key: 'food',  label: 'Food' },
-            ] as const).map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setTypeFilter(key)}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                  typeFilter === key ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          {/* Filters row */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Type filter */}
+            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+              {([
+                { key: 'all',   label: 'All' },
+                { key: 'drink', label: 'Drinks' },
+                { key: 'food',  label: 'Food' },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setTypeFilter(key)}
+                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                    typeFilter === key ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Station filter — only show if stations exist */}
+            {stationOptions.length > 1 && (
+              <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 flex-wrap">
+                {stationOptions.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setStationFilter(key)}
+                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                      stationFilter === key ? 'bg-blue-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Per-day sections */}
@@ -217,7 +253,7 @@ export default function SalesLogPage() {
                   <div className="px-4 sm:px-5 py-3 border-b border-slate-800 bg-slate-800/30 flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <p className="text-sm font-semibold text-slate-200">{dateLabel(day.date)}</p>
-                      <p className="text-xs text-slate-600 mt-0.5">{day.total_qty} items sold</p>
+                      <p className="text-xs text-slate-600 mt-0.5">{day.total_qty} items sold{stationFilter !== 'all' ? ` · ${stationFilter === 'none' ? 'Unassigned' : stationFilter}` : ''}</p>
                     </div>
                     {dayHasRevenue && (
                       <p className="text-lg font-bold text-amber-400 tabular-nums">${dayRevenue.toFixed(2)}</p>

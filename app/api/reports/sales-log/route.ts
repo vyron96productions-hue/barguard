@@ -24,8 +24,9 @@ export async function GET(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const { searchParams } = new URL(req.url)
-    const dateStart = searchParams.get('date_start')
-    const dateEnd   = searchParams.get('date_end')
+    const dateStart   = searchParams.get('date_start')
+    const dateEnd     = searchParams.get('date_end')
+    const stationFilter = searchParams.get('station') // null = all, 'none' = unassigned
 
     if (!dateStart || !dateEnd) {
       return NextResponse.json({ error: 'date_start and date_end are required' }, { status: 400 })
@@ -33,13 +34,21 @@ export async function GET(req: NextRequest) {
 
     type MenuItemJoin = { id: string; name: string; category: string | null; item_type: string | null }
 
-    const { data: rawRows, error } = await supabase
+    let query = supabase
       .from('sales_transactions')
-      .select('sale_date, menu_item_id, raw_item_name, quantity_sold, gross_sales, menu_item:menu_items(id, name, category, item_type)')
+      .select('sale_date, menu_item_id, raw_item_name, quantity_sold, gross_sales, station, menu_item:menu_items(id, name, category, item_type)')
       .eq('business_id', businessId)
       .gte('sale_date', dateStart)
       .lte('sale_date', dateEnd)
       .order('sale_date', { ascending: false })
+
+    if (stationFilter === 'none') {
+      query = query.is('station', null)
+    } else if (stationFilter) {
+      query = query.eq('station', stationFilter)
+    }
+
+    const { data: rawRows, error } = await query
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -49,8 +58,18 @@ export async function GET(req: NextRequest) {
       raw_item_name: string
       quantity_sold: number
       gross_sales: number | null
+      station: string | null
       menu_item: MenuItemJoin | null
     }>
+
+    // Collect available stations across all rows (before station filter for use by UI)
+    // We always return the station list from a separate unfiltered pass — but for simplicity
+    // we return it from the filtered rows + note: UI fetches stations separately if needed.
+    // Here we derive it from the raw result for the date range (ignoring stationFilter).
+    const stationSet = new Set<string>()
+    for (const row of rows) {
+      if (row.station) stationSet.add(row.station)
+    }
 
     // Aggregate: group by date → by menu_item_id (or raw_item_name for unmatched)
     const dayMap = new Map<string, Map<string, SalesLogItem>>()
@@ -106,6 +125,6 @@ export async function GET(req: NextRequest) {
         return { date, total_revenue: totalRevenue, total_qty: totalQty, items }
       })
 
-    return NextResponse.json(days)
+    return NextResponse.json({ days, stations: Array.from(stationSet).sort() })
   } catch (e) { return authErrorResponse(e) }
 }

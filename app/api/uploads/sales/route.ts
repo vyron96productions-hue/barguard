@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       sale_timestamp: string | null
       guest_count: number | null
       check_id: string | null
+      station: string | null
     }[] = []
     const rowErrors: string[] = []
 
@@ -74,8 +75,9 @@ export async function POST(req: NextRequest) {
       const rawGuest       = mapping.guest_count     ? parseFloatSafe(row[mapping.guest_count])     : null
       const guestCount     = rawGuest !== null && rawGuest >= 0 ? Math.round(rawGuest) : null
       const checkId        = mapping.check_id && row[mapping.check_id] ? row[mapping.check_id].trim() || null : null
+      const station        = mapping.station && row[mapping.station] ? row[mapping.station].trim() || null : null
 
-      validRows.push({ date, item_name: itemName, quantity, gross_sales: grossSales, sale_timestamp: saleTimestamp, guest_count: guestCount, check_id: checkId })
+      validRows.push({ date, item_name: itemName, quantity, gross_sales: grossSales, sale_timestamp: saleTimestamp, guest_count: guestCount, check_id: checkId, station })
     }
 
     if (validRows.length === 0) {
@@ -146,6 +148,7 @@ export async function POST(req: NextRequest) {
       sale_timestamp: r.sale_timestamp,
       guest_count:    r.guest_count,
       check_id:       r.check_id,
+      station:        r.station,
     }))
 
     const { error: txError } = await supabase.from('sales_transactions').insert(transactions)
