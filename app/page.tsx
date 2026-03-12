@@ -9,6 +9,7 @@ import UsageChart from '@/components/dashboard/UsageChart'
 import ShiftSelector from '@/components/dashboard/ShiftSelector'
 import PerformanceSummaryCard from '@/components/dashboard/PerformanceSummaryCard'
 import DrinkProfitPreview from '@/components/dashboard/DrinkProfitPreview'
+import ReorderAlerts from '@/components/dashboard/ReorderAlerts'
 import { SHIFT_PRESETS, resolveShiftWindow, type ResolvedShiftWindow } from '@/lib/shifts'
 import { itemCostPerOz } from '@/lib/conversions'
 import type { PerformanceData } from '@/app/api/reports/performance/route'
@@ -457,6 +458,9 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* ── Reorder Alerts ─────────────────────────────────────────────────── */}
+      <ReorderAlerts />
 
       {/* ── Viewing context ribbon ─────────────────────────────────────────── */}
       {hasData && (

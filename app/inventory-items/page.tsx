@@ -42,6 +42,7 @@ export default function InventoryItemsPage() {
   const [packageType, setPackageType] = useState('')
   const [packSize, setPackSize] = useState('')
   const [costPerUnit, setCostPerUnit] = useState('')
+  const [reorderLevel, setReorderLevel] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [autoLinked, setAutoLinked] = useState<string | null>(null)
@@ -50,9 +51,10 @@ export default function InventoryItemsPage() {
   const [editName,    setEditName]    = useState('')
   const [editUnit,    setEditUnit]    = useState('')
   const [editCat,     setEditCat]     = useState('')
-  const [editCost,    setEditCost]    = useState('')
-  const [editSaving,  setEditSaving]  = useState(false)
-  const [editError,   setEditError]   = useState<string | null>(null)
+  const [editCost,          setEditCost]          = useState('')
+  const [editReorderLevel,  setEditReorderLevel]  = useState('')
+  const [editSaving,        setEditSaving]        = useState(false)
+  const [editError,         setEditError]         = useState<string | null>(null)
 
   useEffect(() => { fetchItems() }, [])
 
@@ -80,11 +82,12 @@ export default function InventoryItemsPage() {
         package_type: packageType || null,
         pack_size: packSize || null,
         cost_per_unit: costPerUnit || null,
+        reorder_level: reorderLevel || null,
       }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
-    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setItemType('beverage')
+    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setReorderLevel(''); setItemType('beverage')
     if (data.auto_menu_item) {
       setAutoLinked(data.auto_menu_item)
       setTimeout(() => setAutoLinked(null), 5000)
@@ -110,6 +113,7 @@ export default function InventoryItemsPage() {
     setEditUnit(item.unit)
     setEditCat(item.category ?? '')
     setEditCost(item.cost_per_unit != null ? String(item.cost_per_unit) : '')
+    setEditReorderLevel(item.reorder_level != null ? String(item.reorder_level) : '')
     setEditError(null)
   }
 
@@ -126,6 +130,7 @@ export default function InventoryItemsPage() {
         unit: editUnit,
         category: editCat || null,
         cost_per_unit: editCost !== '' ? editCost : null,
+        reorder_level: editReorderLevel !== '' ? editReorderLevel : null,
       }),
     })
     const data = await res.json()
@@ -203,9 +208,9 @@ export default function InventoryItemsPage() {
                         placeholder="Select or create…"
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                        Cost per {UNIT_LABELS[editUnit] ?? editUnit} <span className="text-slate-700">(for loss tracking)</span>
+                        Cost per {UNIT_LABELS[editUnit] ?? editUnit} <span className="text-slate-700">(optional)</span>
                       </label>
                       <div className="relative mt-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
@@ -219,6 +224,20 @@ export default function InventoryItemsPage() {
                           className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                         />
                       </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-500 uppercase tracking-wider">
+                        Reorder at <span className="text-slate-700">({UNIT_LABELS[editUnit] ?? editUnit}s)</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={editReorderLevel}
+                        onChange={(e) => setEditReorderLevel(e.target.value)}
+                        placeholder="e.g. 3"
+                        className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+                      />
                     </div>
                   </div>
                   {editError && <p className="text-red-400 text-xs">{editError}</p>}
@@ -256,6 +275,11 @@ export default function InventoryItemsPage() {
                     {item.cost_per_unit != null && (
                       <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
                         ${item.cost_per_unit.toFixed(2)}/{UNIT_LABELS[item.unit] ?? item.unit}
+                      </span>
+                    )}
+                    {item.reorder_level != null && (
+                      <span className="text-xs text-amber-500/60 shrink-0 bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded">
+                        reorder @ {item.reorder_level}
                       </span>
                     )}
                   </div>
@@ -383,20 +407,36 @@ export default function InventoryItemsPage() {
             </>
           )}
 
-          <div>
-            <label className="block text-xs text-slate-500 mb-1">
-              Cost per {unit || 'unit'} <span className="text-slate-700">(optional, for loss tracking)</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">
+                Cost per {unit || 'unit'} <span className="text-slate-700">(optional)</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={costPerUnit}
+                  onChange={(e) => setCostPerUnit(e.target.value)}
+                  placeholder="e.g. 24.99"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">
+                Reorder at <span className="text-slate-700">({UNIT_LABELS[unit] ?? unit}s, optional)</span>
+              </label>
               <input
                 type="number"
                 min="0"
-                step="0.01"
-                value={costPerUnit}
-                onChange={(e) => setCostPerUnit(e.target.value)}
-                placeholder="e.g. 24.99"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+                step="1"
+                value={reorderLevel}
+                onChange={(e) => setReorderLevel(e.target.value)}
+                placeholder="e.g. 3"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
               />
             </div>
           </div>

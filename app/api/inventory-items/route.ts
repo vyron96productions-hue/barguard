@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
 
     const costPerUnit = body.cost_per_unit !== undefined && body.cost_per_unit !== ''
       ? parseFloat(body.cost_per_unit) : null
+    const reorderLevel = body.reorder_level !== undefined && body.reorder_level !== ''
+      ? parseFloat(body.reorder_level) : null
 
     const { data, error } = await supabase
       .from('inventory_items')
@@ -44,6 +46,7 @@ export async function POST(req: NextRequest) {
         pack_size: packSizeVal,
         package_type: package_type || null,
         cost_per_unit: costPerUnit !== null && !isNaN(costPerUnit) ? costPerUnit : null,
+        reorder_level: reorderLevel !== null && !isNaN(reorderLevel) ? reorderLevel : null,
         item_type: item_type || 'beverage',
       })
       .select()
@@ -116,6 +119,10 @@ export async function PATCH(req: NextRequest) {
       updates.cost_per_unit = v !== null && !isNaN(v) ? v : null
     }
     if (body.item_type !== undefined) updates.item_type = body.item_type || 'beverage'
+    if (body.reorder_level !== undefined) {
+      const v = body.reorder_level !== '' ? parseFloat(body.reorder_level) : null
+      updates.reorder_level = v !== null && !isNaN(v) ? v : null
+    }
 
     const { data, error } = await supabase
       .from('inventory_items')

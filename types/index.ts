@@ -15,6 +15,7 @@ export interface InventoryItem {
   package_type: string | null // label for package format (e.g. '6-pack', 'case', 'keg')
   cost_per_oz: number | null  // cost in USD per oz (beverages)
   cost_per_unit: number | null // cost in USD per unit (beverages by bottle/keg, food by each/lb/etc.)
+  reorder_level: number | null // trigger reorder alert when stock ≤ this value
   created_at: string
 }
 
