@@ -66,6 +66,7 @@ export async function importPosItemsToSupabase(
       menu_item_id: resolveMenuItemId(item.raw_item_name),
       quantity_sold: item.quantity_sold,
       gross_sales: item.gross_sales,
+      station: item.station ?? null,
     }))
 
     const { error } = await adminSupabase.from('sales_transactions').insert(batch)

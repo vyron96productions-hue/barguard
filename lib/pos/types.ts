@@ -56,6 +56,7 @@ export interface NormalizedSaleItem {
   raw_item_name: string
   quantity_sold: number
   gross_sales: number | null
+  station?: string | null  // bartender, register, terminal name, etc.
 }
 
 export interface PosTokenResponse {
