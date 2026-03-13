@@ -167,13 +167,60 @@ export default function SalesLogPage() {
         )}
       </div>
 
+      {/* Filters row — always visible when stations are known */}
+      {(days.length > 0 || stations.length > 0) && !loading && (
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Type filter */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+            {([
+              { key: 'all',   label: 'All' },
+              { key: 'drink', label: 'Drinks' },
+              { key: 'food',  label: 'Food' },
+            ] as const).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTypeFilter(key)}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  typeFilter === key ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Station filter — always visible once stations are loaded */}
+          {stationOptions.length > 1 && (
+            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 flex-wrap">
+              {stationOptions.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setStationFilter(key)}
+                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                    stationFilter === key ? 'bg-blue-500 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <p className="text-slate-500 text-sm">Loading…</p>
       ) : days.length === 0 ? (
         <div className="text-center py-16 border border-slate-800 border-dashed rounded-2xl text-slate-700">
           <p className="text-3xl mb-3">◎</p>
-          <p className="text-sm">No sales data for this date.</p>
-          <p className="text-xs mt-1 text-slate-800">Import a sales report from the <a href="/uploads" className="text-amber-500/60 hover:text-amber-400">Imports</a> page.</p>
+          <p className="text-sm">
+            {stationFilter !== 'all'
+              ? `No sales data for ${stationFilter === 'none' ? 'unassigned' : stationFilter} on this date.`
+              : 'No sales data for this date.'}
+          </p>
+          {stationFilter === 'all' && (
+            <p className="text-xs mt-1 text-slate-800">Import a sales report from the <a href="/uploads" className="text-amber-500/60 hover:text-amber-400">Imports</a> page.</p>
+          )}
         </div>
       ) : (
         <>
@@ -198,45 +245,6 @@ export default function SalesLogPage() {
               </p>
               <p className="text-[10px] text-slate-600 mt-0.5">unique items</p>
             </div>
-          </div>
-
-          {/* Filters row */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Type filter */}
-            <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
-              {([
-                { key: 'all',   label: 'All' },
-                { key: 'drink', label: 'Drinks' },
-                { key: 'food',  label: 'Food' },
-              ] as const).map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setTypeFilter(key)}
-                  className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                    typeFilter === key ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Station filter — only show if stations exist */}
-            {stationOptions.length > 1 && (
-              <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 flex-wrap">
-                {stationOptions.map(({ key, label }) => (
-                  <button
-                    key={key}
-                    onClick={() => setStationFilter(key)}
-                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                      stationFilter === key ? 'bg-blue-500 text-white' : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Per-day sections */}
