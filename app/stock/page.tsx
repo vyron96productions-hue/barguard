@@ -42,6 +42,23 @@ interface StockItem {
   has_estimate: boolean
 }
 
+interface AnalysisFinding {
+  id: string
+  name: string
+  category: string | null
+  expected: number
+  actual: number
+  unit: string
+  gap: number
+  gapPercent: number
+  reasons: string[]
+}
+
+interface AnalysisResult {
+  findings: AnalysisFinding[]
+  summary: string | null
+}
+
 type FilterCategory = 'all' | string
 type TypeFilter = 'all' | 'beverage' | 'food'
 
@@ -74,6 +91,8 @@ export default function StockPage() {
   const [countTypeFilter, setCountTypeFilter] = useState<TypeFilter>('all')
   const [countSaving, setCountSaving] = useState(false)
   const [countDone, setCountDone] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
 
   function reload() {
     fetch('/api/stock-levels')
@@ -93,6 +112,8 @@ export default function StockPage() {
     setCountSearch('')
     setCountTypeFilter('all')
     setCountDone(false)
+    setAnalyzing(false)
+    setAnalysisResult(null)
     setCountMode(true)
   }
 
@@ -110,7 +131,42 @@ export default function StockPage() {
     setCountSaving(false)
     setCountDone(true)
     reload()
-    setTimeout(() => { setCountMode(false); setCountDone(false) }, 1200)
+
+    // Run AI analysis on items that have an expected quantity
+    const countsWithExpected = counts
+      .map(({ id, quantity }) => {
+        const item = items.find((i) => i.id === id)
+        if (!item) return null
+        const expected = item.has_estimate ? item.estimated_qty : item.quantity_on_hand
+        if (expected === null || expected <= 0) return null
+        return {
+          id,
+          name: item.name,
+          category: item.category,
+          unit: item.unit,
+          expected,
+          actual: quantity,
+        }
+      })
+      .filter(Boolean)
+
+    if (countsWithExpected.length > 0) {
+      setAnalyzing(true)
+      try {
+        const res = await fetch('/api/inventory-counts/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ counts: countsWithExpected }),
+        })
+        const data = await res.json()
+        setAnalysisResult(data)
+      } catch {
+        setAnalysisResult({ findings: [], summary: null })
+      }
+      setAnalyzing(false)
+    } else {
+      setAnalysisResult({ findings: [], summary: null })
+    }
   }
 
   const countFiltered = items.filter((i) => {
@@ -326,15 +382,15 @@ export default function StockPage() {
             <p className="text-xs text-slate-500 mt-0.5">Enter what you see on the shelf. Leave blank to skip.</p>
           </div>
           <button
-            onClick={() => setCountMode(false)}
+            onClick={() => { setCountMode(false); setCountDone(false); setAnalysisResult(null) }}
             className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1"
           >
             ✕
           </button>
         </div>
 
-        {/* Search + type filter */}
-        <div className="px-4 py-3 border-b border-slate-800 space-y-2 shrink-0">
+        {/* Search + type filter — hidden on results screen */}
+        <div className={`px-4 py-3 border-b border-slate-800 space-y-2 shrink-0 ${countDone ? 'hidden' : ''}`}>
           <input
             type="text"
             value={countSearch}
@@ -360,9 +416,82 @@ export default function StockPage() {
         {/* Item list */}
         <div className="flex-1 overflow-y-auto">
           {countDone ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3">
-              <p className="text-4xl">✓</p>
-              <p className="text-lg font-semibold text-emerald-400">Count saved!</p>
+            <div className="flex flex-col h-full overflow-y-auto">
+              {/* Saved banner */}
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-800 shrink-0">
+                <span className="text-emerald-400 text-xl leading-none">✓</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-400">Count saved!</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {analyzing ? 'Analyzing discrepancies…' : analysisResult?.summary ?? 'No expected quantities to compare.'}
+                  </p>
+                </div>
+                {analyzing && (
+                  <div className="ml-auto w-4 h-4 border-2 border-amber-500/40 border-t-amber-500 rounded-full animate-spin shrink-0" />
+                )}
+              </div>
+
+              {/* Analysis results */}
+              {!analyzing && analysisResult && analysisResult.findings.length > 0 && (
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+                  {analysisResult.findings
+                    .sort((a, b) => Math.abs(b.gapPercent) - Math.abs(a.gapPercent))
+                    .map((f) => {
+                      const isShort = f.gap < 0
+                      const severityColor = Math.abs(f.gapPercent) >= 15
+                        ? 'text-red-400 bg-red-500/10 border-red-500/20'
+                        : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                      return (
+                        <div key={f.id} className="px-4 py-4 space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-slate-100">{f.name}</p>
+                              {f.category && <p className="text-xs text-slate-600 mt-0.5">{f.category}</p>}
+                            </div>
+                            <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded border ${severityColor}`}>
+                              {isShort ? '▼' : '▲'} {Math.abs(f.gapPercent)}% {isShort ? 'short' : 'over'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            Expected <span className="text-slate-300">{Number(f.expected.toFixed(2))}</span> · Counted <span className="text-slate-300">{Number(f.actual.toFixed(2))}</span> {f.unit}
+                          </p>
+                          <ul className="space-y-1 mt-2">
+                            {f.reasons.map((r, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                                <span className="text-slate-600 shrink-0 mt-0.5">•</span>
+                                {r}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+
+              {!analyzing && analysisResult && analysisResult.findings.length === 0 && (
+                <div className="flex flex-col items-center justify-center flex-1 gap-2 px-8 text-center">
+                  <p className="text-2xl">✓</p>
+                  <p className="text-sm font-medium text-emerald-400">Everything looks good</p>
+                  <p className="text-xs text-slate-500">No significant discrepancies found.</p>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-3 shrink-0 bg-slate-950/95 backdrop-blur">
+                <a
+                  href="/variance-reports"
+                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  View Variance Reports →
+                </a>
+                <button
+                  onClick={() => { setCountMode(false); setCountDone(false); setAnalysisResult(null) }}
+                  className="px-5 py-2 bg-slate-800 text-slate-200 font-semibold rounded-lg text-sm hover:bg-slate-700 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           ) : countFiltered.length === 0 ? (
             <div className="flex items-center justify-center h-32">
@@ -373,22 +502,53 @@ export default function StockPage() {
               {countFiltered.map((item) => {
                 const val = countValues[item.id] ?? ''
                 const hasVal = val !== ''
-                const effectiveQty = item.has_estimate ? item.estimated_qty : item.quantity_on_hand
+                const expected = item.has_estimate ? item.estimated_qty : item.quantity_on_hand
+                const actual = hasVal ? parseFloat(val) : null
+                const gapSeverity = (() => {
+                  if (actual === null || expected === null || expected <= 0) return 'none'
+                  const pct = Math.abs(actual - expected) / expected
+                  if (pct <= 0.05) return 'ok'
+                  if (pct <= 0.15) return 'warn'
+                  return 'critical'
+                })()
+                const inputBorder = {
+                  none: 'border-slate-700 focus:border-amber-500/60',
+                  ok: 'border-emerald-500/60 focus:border-emerald-500',
+                  warn: 'border-amber-500/60 focus:border-amber-500',
+                  critical: 'border-red-500/60 focus:border-red-500',
+                }[gapSeverity]
+                const gapIndicator = {
+                  none: null,
+                  ok: <span className="text-emerald-400 text-sm leading-none">✓</span>,
+                  warn: <span className="text-amber-400 text-sm leading-none">⚠</span>,
+                  critical: <span className="text-red-400 text-sm leading-none">✗</span>,
+                }[gapSeverity]
+
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${hasVal ? 'bg-amber-500/5' : ''}`}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                      gapSeverity === 'critical' ? 'bg-red-500/5' :
+                      gapSeverity === 'warn' ? 'bg-amber-500/5' :
+                      gapSeverity === 'ok' ? 'bg-emerald-500/5' : ''
+                    }`}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-200 truncate">{item.name}</p>
-                      <p className="text-xs text-slate-600 mt-0.5">
-                        {item.category && <span className="mr-2">{item.category}</span>}
-                        {effectiveQty !== null
-                          ? `Current: ${Number(effectiveQty.toFixed(2))} ${item.unit}`
-                          : 'Never counted'}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {item.category && <span className="text-xs text-slate-600">{item.category}</span>}
+                        {expected !== null ? (
+                          <span className="text-xs text-slate-500">
+                            Expected: <span className="text-slate-300 font-medium">{Number(expected.toFixed(2))} {UNIT_LABELS[item.unit] ?? item.unit}</span>
+                            {item.has_estimate && <span className="ml-1 text-sky-500/70">est.</span>}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-600">No prior count</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      {gapIndicator}
                       <input
                         type="number"
                         min="0"
@@ -396,13 +556,9 @@ export default function StockPage() {
                         value={val}
                         onChange={(e) => setCountValues((prev) => ({ ...prev, [item.id]: e.target.value }))}
                         placeholder="—"
-                        className={`w-20 text-right bg-slate-900 border rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none transition-colors ${
-                          hasVal
-                            ? 'border-amber-500/50 focus:border-amber-500'
-                            : 'border-slate-700 focus:border-amber-500/60'
-                        }`}
+                        className={`w-20 text-right bg-slate-900 border rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none transition-colors ${inputBorder}`}
                       />
-                      <span className="text-xs text-slate-500 w-20 truncate">{UNIT_LABELS[item.unit] ?? item.unit}</span>
+                      <span className="text-xs text-slate-500 w-14 truncate">{UNIT_LABELS[item.unit] ?? item.unit}</span>
                     </div>
                   </div>
                 )
@@ -411,7 +567,7 @@ export default function StockPage() {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer — only show during entry, not on results screen */}
         {!countDone && (
           <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
             <p className="text-xs text-slate-500">
