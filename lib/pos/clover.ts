@@ -57,6 +57,62 @@ export async function exchangeCloverCode(
   }
 }
 
+export interface CloverCatalogItem {
+  id: string
+  name: string
+  category: string | null
+  suggestedUnit: string
+}
+
+function guessUnit(categoryName: string | null): string {
+  const c = (categoryName ?? '').toLowerCase()
+  if (/beer|lager|ale|stout|cider|seltzer|hard/.test(c)) return 'can'
+  if (/keg|draft|draught/.test(c)) return 'keg'
+  if (/wine/.test(c)) return 'bottle'
+  return 'bottle'
+}
+
+export async function fetchCloverItems(
+  accessToken: string,
+  merchantId: string
+): Promise<CloverCatalogItem[]> {
+  const results: CloverCatalogItem[] = []
+  let offset = 0
+  const limit = 200
+
+  while (true) {
+    const params = new URLSearchParams({
+      expand: 'categories',
+      limit: String(limit),
+      offset: String(offset),
+    })
+    const res = await fetch(
+      `${BASE_API}/v3/merchants/${merchantId}/items?${params}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    )
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.message ?? 'Clover items fetch failed')
+
+    const elements: any[] = data.elements ?? []
+    if (elements.length === 0) break
+
+    for (const item of elements) {
+      const categoryName: string | null = item.categories?.elements?.[0]?.name ?? null
+      results.push({
+        id: item.id as string,
+        name: item.name as string,
+        category: categoryName,
+        suggestedUnit: guessUnit(categoryName),
+      })
+    }
+
+    if (elements.length < limit) break
+    offset += limit
+  }
+
+  return results
+}
+
 export async function fetchCloverSales(
   accessToken: string,
   merchantId: string,

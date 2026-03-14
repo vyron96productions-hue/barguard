@@ -4,6 +4,134 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { POS_PROVIDERS, type PosProviderMeta, type PosConnection, type PosSyncLog } from '@/lib/pos/types'
 
+interface CloverCatalogItem {
+  id: string
+  name: string
+  category: string | null
+  suggestedUnit: string
+}
+
+// ── Clover import items modal ─────────────────────────────────────────────────
+function CloverImportModal({ onClose, onImported }: { onClose: () => void; onImported: (count: number) => void }) {
+  const [items, setItems] = useState<CloverCatalogItem[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [units, setUnits] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [importing, setImporting] = useState(false)
+  const [err, setErr] = useState('')
+
+  useEffect(() => {
+    fetch('/api/pos/clover/items')
+      .then(r => r.json())
+      .then((data: CloverCatalogItem[]) => {
+        setItems(data)
+        const u: Record<string, string> = {}
+        const sel = new Set<string>()
+        for (const item of data) {
+          u[item.id] = item.suggestedUnit
+          sel.add(item.id)
+        }
+        setUnits(u)
+        setSelected(sel)
+      })
+      .catch(() => setErr('Failed to load Clover items'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  function toggleAll() {
+    if (selected.size === items.length) setSelected(new Set())
+    else setSelected(new Set(items.map(i => i.id)))
+  }
+
+  async function importSelected() {
+    setImporting(true); setErr('')
+    const payload = items
+      .filter(i => selected.has(i.id))
+      .map(i => ({ name: i.name, unit: units[i.id] ?? 'bottle', category: i.category }))
+
+    const res = await fetch('/api/pos/clover/import-items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: payload }),
+    })
+    const data = await res.json()
+    setImporting(false)
+    if (res.ok) { onImported(data.imported); onClose() }
+    else setErr(data.error ?? 'Import failed')
+  }
+
+  const UNIT_OPTIONS = ['bottle', '1l', '1.75l', 'can', 'keg', 'pint', 'case']
+
+  return (
+    <ModalBase onClose={onClose}>
+      <div className="p-5 sm:p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <ProviderIcon provider="clover" size={36} />
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">Import Items from Clover</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Select items to add to your inventory</p>
+          </div>
+        </div>
+
+        {loading && <p className="text-xs text-slate-500 py-6 text-center">Loading Clover catalog…</p>}
+        {err && <p className="text-xs text-red-400 mb-3">{err}</p>}
+
+        {!loading && items.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] text-slate-500">{selected.size} of {items.length} selected</span>
+              <button onClick={toggleAll} className="text-[10px] text-amber-400 hover:text-amber-300">
+                {selected.size === items.length ? 'Deselect all' : 'Select all'}
+              </button>
+            </div>
+            <div className="space-y-1 max-h-72 overflow-y-auto pr-1 mb-4">
+              {items.map(item => (
+                <div key={item.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                  selected.has(item.id) ? 'bg-slate-800/80' : 'bg-slate-800/20 opacity-50'
+                }`} onClick={() => setSelected(prev => {
+                  const n = new Set(prev)
+                  n.has(item.id) ? n.delete(item.id) : n.add(item.id)
+                  return n
+                })}>
+                  <input type="checkbox" readOnly checked={selected.has(item.id)}
+                    className="accent-amber-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-slate-200 truncate">{item.name}</p>
+                    {item.category && <p className="text-[10px] text-slate-600">{item.category}</p>}
+                  </div>
+                  <select
+                    value={units[item.id] ?? 'bottle'}
+                    onClick={e => e.stopPropagation()}
+                    onChange={e => setUnits(prev => ({ ...prev, [item.id]: e.target.value }))}
+                    className="text-[10px] bg-slate-700 border border-slate-600 rounded px-1.5 py-1 text-slate-300 shrink-0"
+                  >
+                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {!loading && items.length === 0 && !err && (
+          <p className="text-xs text-slate-500 py-6 text-center">No items found in your Clover catalog.</p>
+        )}
+
+        <div className="flex gap-2 pt-1">
+          <button onClick={onClose}
+            className="flex-1 px-4 py-3 sm:py-2 text-slate-500 hover:text-slate-300 text-sm rounded-xl sm:rounded-lg border border-slate-700/60 transition-colors">
+            Cancel
+          </button>
+          <button onClick={importSelected} disabled={importing || selected.size === 0}
+            className="flex-1 px-4 py-3 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm rounded-xl sm:rounded-lg transition-colors disabled:opacity-50">
+            {importing ? 'Importing…' : `Import ${selected.size} Items`}
+          </button>
+        </div>
+      </div>
+    </ModalBase>
+  )
+}
+
 const ProviderIcon = ({ provider, size = 32 }: { provider: string; size?: number }) => {
   const icons: Record<string, string> = {
     square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS',
@@ -166,12 +294,13 @@ function SyncModal({ provider, onClose, onSynced }: { provider: PosProviderMeta;
 }
 
 // ── Provider card ─────────────────────────────────────────────────────────────
-function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync }: {
+function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync, onImport }: {
   meta: PosProviderMeta
   connection: PosConnection | null
   onConnect: () => void
   onDisconnect: () => void
   onSync: () => void
+  onImport?: () => void
 }) {
   const connected = !!connection
   return (
@@ -213,7 +342,7 @@ function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync }: {
         </div>
       )}
 
-      <div className="flex gap-2 mt-auto">
+      <div className="flex gap-2 mt-auto flex-wrap">
         {connected ? (
           <>
             <button onClick={onSync}
@@ -224,6 +353,12 @@ function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync }: {
               </svg>
               Sync Sales
             </button>
+            {onImport && (
+              <button onClick={onImport}
+                className="flex-1 px-3 py-2.5 sm:py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs rounded-xl sm:rounded-lg transition-colors">
+                Import Items
+              </button>
+            )}
             <button onClick={onDisconnect}
               className="px-3 py-2.5 sm:py-2 text-slate-600 hover:text-red-400 text-xs rounded-xl sm:rounded-lg border border-transparent hover:border-red-500/20 hover:bg-red-500/5 transition-colors">
               Disconnect
@@ -255,6 +390,7 @@ function ConnectionsContent() {
   const [syncLogs, setSyncLogs] = useState<PosSyncLog[]>([])
   const [toastModal, setToastModal] = useState(false)
   const [syncTarget, setSyncTarget] = useState<PosProviderMeta | null>(null)
+  const [cloverImportModal, setCloverImportModal] = useState(false)
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
 
   const loadConnections = useCallback(async () => {
@@ -332,6 +468,7 @@ function ConnectionsContent() {
             onConnect={() => handleConnect(meta)}
             onDisconnect={() => disconnect(meta.id)}
             onSync={() => setSyncTarget(meta)}
+            onImport={meta.id === 'clover' ? () => setCloverImportModal(true) : undefined}
           />
         ))}
       </div>
@@ -418,6 +555,15 @@ function ConnectionsContent() {
       {/* Modals */}
       {toastModal && (
         <ToastModal onClose={() => setToastModal(false)} onConnected={loadConnections} />
+      )}
+      {cloverImportModal && (
+        <CloverImportModal
+          onClose={() => setCloverImportModal(false)}
+          onImported={(count) => {
+            setBanner({ type: 'success', msg: `Imported ${count} items into inventory` })
+            setCloverImportModal(false)
+          }}
+        />
       )}
       {syncTarget && (
         <SyncModal
