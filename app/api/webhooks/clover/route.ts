@@ -37,8 +37,16 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text()
   const signatureHeader = req.headers.get('x-clover-auth') ?? ''
 
-  if (!verifyCloverSignature(rawBody, signatureHeader)) {
+  // Clover verification pings don't include a signature — let them through
+  if (signatureHeader && !verifyCloverSignature(rawBody, signatureHeader)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
+  // Respond to verification pings
+  let parsed: Record<string, unknown>
+  try { parsed = JSON.parse(rawBody) } catch { parsed = {} }
+  if (parsed.verificationCode) {
+    return NextResponse.json({ received: true })
   }
 
   let event: {
