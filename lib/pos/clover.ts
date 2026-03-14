@@ -23,19 +23,15 @@ export function getCloverAuthUrl(state: string, redirectUri: string): string {
 export async function exchangeCloverCode(
   code: string,
   merchantId: string,
-  redirectUri: string
+  _redirectUri: string
 ): Promise<PosTokenResponse> {
-  const body = new URLSearchParams({
+  const params = new URLSearchParams({
     client_id: APP_ID,
     client_secret: APP_SECRET,
     code,
-    grant_type: 'authorization_code',
-    redirect_uri: redirectUri,
   })
-  const res = await fetch(`${BASE_AUTH}/oauth/v2/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
+  const res = await fetch(`${BASE_AUTH}/oauth/token?${params}`, {
+    method: 'GET',
   })
   const rawText = await res.text()
   console.log('[clover-token] status:', res.status, 'body:', rawText.slice(0, 500))
