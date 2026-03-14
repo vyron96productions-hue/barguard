@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
 import { UNIT_LABELS } from '@/lib/conversions'
@@ -93,6 +93,14 @@ export default function StockPage() {
   const [countDone, setCountDone] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+
+  // Bottle scan
+  const [scanTarget, setScanTarget] = useState<{ itemId: string; itemName: string; unit: string } | null>(null)
+
+  const handleScanConfirm = useCallback((itemId: string, fraction: number) => {
+    setCountValues((prev) => ({ ...prev, [itemId]: fraction.toFixed(2) }))
+    setScanTarget(null)
+  }, [])
 
   function reload() {
     fetch('/api/stock-levels')
@@ -373,6 +381,16 @@ export default function StockPage() {
 
     {/* ── Count Mode Overlay ── */}
 
+    {scanTarget && (
+      <BottleScanModal
+        itemName={scanTarget.itemName}
+        unit={scanTarget.unit}
+        bottleSizeOz={BOTTLE_SIZE_OZ[scanTarget.unit] ?? 25.36}
+        onConfirm={(fraction) => handleScanConfirm(scanTarget.itemId, fraction)}
+        onClose={() => setScanTarget(null)}
+      />
+    )}
+
     {countMode && (
       <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
         {/* Header */}
@@ -549,6 +567,15 @@ export default function StockPage() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {gapIndicator}
+                      {Object.prototype.hasOwnProperty.call(BOTTLE_SIZE_OZ, item.unit) && (
+                        <button
+                          onClick={() => setScanTarget({ itemId: item.id, itemName: item.name, unit: item.unit })}
+                          className="text-slate-600 hover:text-amber-400 active:text-amber-300 transition-colors text-base leading-none p-1"
+                          title="Scan bottle to measure fill level"
+                        >
+                          📷
+                        </button>
+                      )}
                       <input
                         type="number"
                         min="0"
@@ -595,6 +622,202 @@ export default function StockPage() {
       </div>
     )}
     </>
+  )
+}
+
+// ── Bottle Scan Modal ──────────────────────────────────────────────────────
+
+interface ScanResult {
+  fill_percent: number
+  confidence: 'high' | 'medium' | 'low'
+  bottle_name: string | null
+  notes: string
+}
+
+function BottleScanModal({
+  itemName, unit, bottleSizeOz, onConfirm, onClose,
+}: {
+  itemName: string
+  unit: string
+  bottleSizeOz: number
+  onConfirm: (fraction: number) => void
+  onClose: () => void
+}) {
+  const [preview, setPreview] = useState<string | null>(null)
+  const [file, setFile] = useState<File | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [result, setResult] = useState<ScanResult | null>(null)
+  const [adjusted, setAdjusted] = useState(50)
+  const [error, setError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setFile(f)
+    setResult(null)
+    setError('')
+    const url = URL.createObjectURL(f)
+    setPreview(url)
+  }
+
+  async function handleScan() {
+    if (!file) return
+    setScanning(true)
+    setError('')
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await fetch('/api/inventory-counts/bottle-scan', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Scan failed'); setScanning(false); return }
+      setResult(data)
+      setAdjusted(data.fill_percent)
+    } catch {
+      setError('Failed to analyze image. Try again.')
+    }
+    setScanning(false)
+  }
+
+  const fraction = adjusted / 100
+  const oz = (fraction * bottleSizeOz).toFixed(1)
+  const confidenceColor = result?.confidence === 'high' ? 'text-emerald-400' : result?.confidence === 'medium' ? 'text-amber-400' : 'text-red-400'
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-sm bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-800">
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Scan Bottle</h2>
+            <p className="text-xs text-slate-500 mt-0.5">{itemName}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-600 hover:text-slate-300 text-xl leading-none">✕</button>
+        </div>
+
+        <div className="px-5 py-5 space-y-5">
+          {/* Photo capture */}
+          {!preview ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-slate-700 rounded-xl h-40 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-500/50 transition-colors"
+            >
+              <span className="text-4xl">📷</span>
+              <p className="text-sm text-slate-400">Tap to take a photo or upload</p>
+              <p className="text-xs text-slate-600">Hold bottle up so liquid level is visible</p>
+            </div>
+          ) : (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={preview} alt="Bottle" className="w-full max-h-52 object-contain rounded-xl border border-slate-800 bg-slate-900" />
+              {!result && (
+                <button
+                  onClick={() => { setPreview(null); setFile(null); setResult(null) }}
+                  className="absolute top-2 right-2 bg-slate-900/80 text-slate-400 hover:text-slate-200 rounded-full w-7 h-7 flex items-center justify-center text-sm"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          {/* Scan button — show before result */}
+          {preview && !result && (
+            <button
+              onClick={handleScan}
+              disabled={scanning}
+              className="w-full py-3 rounded-xl bg-amber-500 text-slate-900 font-bold text-sm hover:bg-amber-400 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {scanning ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-slate-900/40 border-t-slate-900 rounded-full animate-spin" />
+                  Analyzing…
+                </>
+              ) : 'Measure Fill Level'}
+            </button>
+          )}
+
+          {/* Result */}
+          {result && (
+            <div className="space-y-4">
+              {/* Bottle fill visualization */}
+              <div className="flex items-center gap-5">
+                {/* Visual bottle */}
+                <div className="relative w-14 shrink-0">
+                  {/* Neck */}
+                  <div className="w-5 h-4 bg-slate-800 border border-slate-700 rounded-t-lg mx-auto" />
+                  {/* Body */}
+                  <div className="relative h-28 bg-slate-800 border border-slate-700 rounded-b-lg overflow-hidden">
+                    <div
+                      className="absolute bottom-0 left-0 right-0 bg-amber-500/50 transition-all duration-300"
+                      style={{ height: `${adjusted}%` }}
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-100">
+                      {adjusted}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="flex-1 space-y-1">
+                  {result.bottle_name && (
+                    <p className="text-sm font-semibold text-slate-200">{result.bottle_name}</p>
+                  )}
+                  <p className="text-xs text-slate-400">{result.notes}</p>
+                  <p className={`text-xs font-medium ${confidenceColor}`}>
+                    {result.confidence === 'high' ? '✓ High confidence' : result.confidence === 'medium' ? '~ Medium confidence' : '⚠ Low confidence — adjust below'}
+                  </p>
+                  <p className="text-xs text-slate-500">≈ {oz} oz remaining</p>
+                </div>
+              </div>
+
+              {/* Adjustment slider */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Adjust if needed</label>
+                  <span className="text-xs text-amber-400 font-bold">{adjusted}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={adjusted}
+                  onChange={(e) => setAdjusted(Number(e.target.value))}
+                  className="w-full accent-amber-500"
+                />
+                <div className="flex justify-between text-[10px] text-slate-700 mt-0.5">
+                  <span>Empty</span>
+                  <span>Full</span>
+                </div>
+              </div>
+
+              {/* Confirm */}
+              <button
+                onClick={() => onConfirm(fraction)}
+                className="w-full py-3 rounded-xl bg-amber-500 text-slate-900 font-bold text-sm hover:bg-amber-400 transition-colors"
+              >
+                Use {fraction.toFixed(2)} {UNIT_LABELS[unit] ?? unit} ({oz} oz)
+              </button>
+              <p className="text-[11px] text-slate-600 text-center">
+                This fills in the count for {itemName}. Add whole sealed bottles to it manually.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 
