@@ -8,8 +8,8 @@ const BASE_API = process.env.CLOVER_ENVIRONMENT === 'production'
   ? 'https://api.clover.com'
   : 'https://apisandbox.dev.clover.com'
 
-const APP_ID     = process.env.CLOVER_APP_ID     ?? ''
-const APP_SECRET = process.env.CLOVER_APP_SECRET ?? ''
+const APP_ID     = process.env.CLOVER_CLIENT_ID     ?? ''
+const APP_SECRET = process.env.CLOVER_CLIENT_SECRET ?? ''
 
 export function getCloverAuthUrl(state: string, redirectUri: string): string {
   const params = new URLSearchParams({
