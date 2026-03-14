@@ -124,12 +124,10 @@ export async function fetchCloverSales(
   const limit = 100
 
   while (true) {
-    const params = new URLSearchParams({
-      expand: 'lineItems',
-      filter: `createdTime>=${startMs}&filter=createdTime<=${endMs}&filter=payType!=null`,
-      limit: String(limit),
-      offset: String(offset),
-    })
+    const params = new URLSearchParams({ expand: 'lineItems', limit: String(limit), offset: String(offset) })
+    params.append('filter', `createdTime>=${startMs}`)
+    params.append('filter', `createdTime<=${endMs}`)
+    params.append('filter', 'payType!=null')
     const res = await fetch(
       `${BASE_API}/v3/merchants/${merchantId}/orders?${params}`,
       { headers: { Authorization: `Bearer ${accessToken}` } }
