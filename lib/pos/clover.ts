@@ -37,8 +37,11 @@ export async function exchangeCloverCode(
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
   })
-  const data = await res.json()
-  if (!res.ok || !data.access_token) throw new Error(data.message ?? 'Clover token exchange failed')
+  const rawText = await res.text()
+  console.log('[clover-token] status:', res.status, 'body:', rawText.slice(0, 500))
+  let data: Record<string, unknown>
+  try { data = JSON.parse(rawText) } catch { throw new Error(`Clover returned non-JSON (${res.status}): ${rawText.slice(0, 200)}`) }
+  if (!res.ok || !data.access_token) throw new Error((data.message as string) ?? 'Clover token exchange failed')
 
   // Fetch merchant name
   let locationName = merchantId
