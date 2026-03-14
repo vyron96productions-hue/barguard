@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
   let parsed: Record<string, unknown>
   try { parsed = JSON.parse(rawBody) } catch { parsed = {} }
   if (parsed.verificationCode) {
+    console.log('[clover-webhook] verificationCode:', parsed.verificationCode)
     return NextResponse.json({ received: true })
   }
 
