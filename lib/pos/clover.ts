@@ -47,16 +47,16 @@ export async function exchangeCloverCode(
   let locationName = merchantId
   try {
     const mRes = await fetch(`${BASE_API}/v3/merchants/${merchantId}`, {
-      headers: { Authorization: `Bearer ${data.access_token}` },
+      headers: { Authorization: `Bearer ${data.access_token as string}` },
     })
     const mData = await mRes.json()
     if (mData.name) locationName = mData.name
   } catch { /* non-fatal */ }
 
   return {
-    access_token: data.access_token,
-    refresh_token: data.refresh_token,
-    expires_in: data.expires_in,
+    access_token: data.access_token as string,
+    refresh_token: data.refresh_token as string | undefined,
+    expires_in: data.expires_in as number | undefined,
     merchant_id: merchantId,
     location_id: merchantId,
     location_name: locationName,
