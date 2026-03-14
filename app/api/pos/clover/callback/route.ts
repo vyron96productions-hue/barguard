@@ -32,7 +32,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    const token = await exchangeCloverCode(code, merchantId)
+    const redirectUri = `${baseUrl}/api/pos/clover/callback`
+    const token = await exchangeCloverCode(code, merchantId, redirectUri)
 
     await adminSupabase.from('pos_connections').upsert({
       business_id: businessId,

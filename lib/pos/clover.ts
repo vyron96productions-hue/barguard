@@ -22,7 +22,8 @@ export function getCloverAuthUrl(state: string, redirectUri: string): string {
 
 export async function exchangeCloverCode(
   code: string,
-  merchantId: string
+  merchantId: string,
+  redirectUri: string
 ): Promise<PosTokenResponse> {
   const res = await fetch(`${BASE_AUTH}/oauth/v2/token`, {
     method: 'POST',
@@ -32,6 +33,7 @@ export async function exchangeCloverCode(
       client_secret: APP_SECRET,
       code,
       grant_type: 'authorization_code',
+      redirect_uri: redirectUri,
     }),
   })
   const data = await res.json()
