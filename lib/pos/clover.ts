@@ -25,13 +25,10 @@ export async function exchangeCloverCode(
   merchantId: string,
   _redirectUri: string
 ): Promise<PosTokenResponse> {
-  const params = new URLSearchParams({
-    client_id: APP_ID,
-    client_secret: APP_SECRET,
-    code,
-  })
-  const res = await fetch(`${BASE_AUTH}/oauth/token?${params}`, {
-    method: 'GET',
+  const res = await fetch(`${BASE_AUTH}/oauth/v2/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ client_id: APP_ID, client_secret: APP_SECRET, code }),
   })
   const rawText = await res.text()
   console.log('[clover-token] status:', res.status, 'body:', rawText.slice(0, 500))
