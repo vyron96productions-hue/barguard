@@ -283,9 +283,10 @@ export function formatPackBreakdown(
   packSize: number,
   packageType?: string | null,
 ): string {
-  if (packSize <= 1) return `${totalUnits} unit${totalUnits !== 1 ? 's' : ''}`
-  const packs  = Math.floor(totalUnits / packSize)
-  const rem    = totalUnits % packSize
+  const units = Math.round(totalUnits * 100) / 100
+  if (packSize <= 1) return `${units} unit${units !== 1 ? 's' : ''}`
+  const packs  = Math.floor(units / packSize)
+  const rem    = Math.round((units % packSize) * 100) / 100
   const label  = packageType ?? `${packSize}-pack`
   const packStr = `${packs} × ${label}${rem > 0 ? ` + ${rem}` : ''}`
   return `${totalUnits} units · ${packStr}`
