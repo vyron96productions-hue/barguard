@@ -4,6 +4,15 @@ export interface Business {
   created_at: string
 }
 
+export interface Vendor {
+  id: string
+  business_id: string
+  name: string
+  email: string
+  rep_name: string | null
+  created_at: string
+}
+
 export interface InventoryItem {
   id: string
   business_id: string
@@ -16,6 +25,7 @@ export interface InventoryItem {
   cost_per_oz: number | null  // cost in USD per oz (beverages)
   cost_per_unit: number | null // cost in USD per unit (beverages by bottle/keg, food by each/lb/etc.)
   reorder_level: number | null // trigger reorder alert when stock ≤ this value
+  vendor_id: string | null    // optional link to vendor for reorder purposes
   created_at: string
 }
 

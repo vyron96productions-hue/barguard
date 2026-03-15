@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 import { UNIT_LABELS } from '@/lib/conversions'
-import type { InventoryItem } from '@/types'
+import type { InventoryItem, Vendor } from '@/types'
 
 const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat']
@@ -34,6 +34,7 @@ function SectionDivider({ label, count }: { label: string; count: number }) {
 
 export default function InventoryItemsPage() {
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [vendors, setVendors] = useState<Vendor[]>([])
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
   const [unit, setUnit] = useState('bottle')
@@ -43,20 +44,25 @@ export default function InventoryItemsPage() {
   const [packSize, setPackSize] = useState('')
   const [costPerUnit, setCostPerUnit] = useState('')
   const [reorderLevel, setReorderLevel] = useState('')
+  const [vendorId, setVendorId] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [autoLinked, setAutoLinked] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'all' | ItemType>('all')
-  const [editingId,   setEditingId]   = useState<string | null>(null)
-  const [editName,    setEditName]    = useState('')
-  const [editUnit,    setEditUnit]    = useState('')
-  const [editCat,     setEditCat]     = useState('')
-  const [editCost,          setEditCost]          = useState('')
-  const [editReorderLevel,  setEditReorderLevel]  = useState('')
-  const [editSaving,        setEditSaving]        = useState(false)
-  const [editError,         setEditError]         = useState<string | null>(null)
+  const [editingId,      setEditingId]      = useState<string | null>(null)
+  const [editName,       setEditName]       = useState('')
+  const [editUnit,       setEditUnit]       = useState('')
+  const [editCat,        setEditCat]        = useState('')
+  const [editCost,       setEditCost]       = useState('')
+  const [editReorderLevel, setEditReorderLevel] = useState('')
+  const [editVendorId,   setEditVendorId]   = useState('')
+  const [editSaving,     setEditSaving]     = useState(false)
+  const [editError,      setEditError]      = useState<string | null>(null)
 
-  useEffect(() => { fetchItems() }, [])
+  useEffect(() => {
+    fetchItems()
+    fetchVendors()
+  }, [])
 
   async function fetchItems() {
     setLoading(true)
@@ -64,6 +70,12 @@ export default function InventoryItemsPage() {
     const data = await res.json()
     setItems(Array.isArray(data) ? data : [])
     setLoading(false)
+  }
+
+  async function fetchVendors() {
+    const res = await fetch('/api/vendors')
+    const data = await res.json()
+    setVendors(Array.isArray(data) ? data : [])
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -83,11 +95,12 @@ export default function InventoryItemsPage() {
         pack_size: packSize || null,
         cost_per_unit: costPerUnit || null,
         reorder_level: reorderLevel || null,
+        vendor_id: vendorId || null,
       }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
-    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setReorderLevel(''); setItemType('beverage')
+    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setReorderLevel(''); setVendorId(''); setItemType('beverage')
     if (data.auto_menu_item) {
       setAutoLinked(data.auto_menu_item)
       setTimeout(() => setAutoLinked(null), 5000)
@@ -114,6 +127,7 @@ export default function InventoryItemsPage() {
     setEditCat(item.category ?? '')
     setEditCost(item.cost_per_unit != null ? String(item.cost_per_unit) : '')
     setEditReorderLevel(item.reorder_level != null ? String(item.reorder_level) : '')
+    setEditVendorId(item.vendor_id ?? '')
     setEditError(null)
   }
 
@@ -131,6 +145,7 @@ export default function InventoryItemsPage() {
         category: editCat || null,
         cost_per_unit: editCost !== '' ? editCost : null,
         reorder_level: editReorderLevel !== '' ? editReorderLevel : null,
+        vendor_id: editVendorId || null,
       }),
     })
     const data = await res.json()
@@ -239,6 +254,21 @@ export default function InventoryItemsPage() {
                         className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                       />
                     </div>
+                    {vendors.length > 0 && (
+                      <div className="col-span-2">
+                        <label className="text-[10px] text-slate-500 uppercase tracking-wider">Vendor <span className="text-slate-700">(optional)</span></label>
+                        <select
+                          value={editVendorId}
+                          onChange={(e) => setEditVendorId(e.target.value)}
+                          className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                        >
+                          <option value="">None</option>
+                          {vendors.map((v) => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                   {editError && <p className="text-red-400 text-xs">{editError}</p>}
                   <div className="flex gap-2">
@@ -280,6 +310,11 @@ export default function InventoryItemsPage() {
                     {item.reorder_level != null && (
                       <span className="text-xs text-amber-500/60 shrink-0 bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded">
                         reorder @ {item.reorder_level}
+                      </span>
+                    )}
+                    {item.vendor_id && vendors.find((v) => v.id === item.vendor_id) && (
+                      <span className="text-xs text-indigo-400/70 shrink-0 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
+                        {vendors.find((v) => v.id === item.vendor_id)!.name}
                       </span>
                     )}
                   </div>
@@ -440,6 +475,22 @@ export default function InventoryItemsPage() {
               />
             </div>
           </div>
+
+          {vendors.length > 0 && (
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Vendor <span className="text-slate-700">(optional)</span></label>
+              <select
+                value={vendorId}
+                onChange={(e) => setVendorId(e.target.value)}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+              >
+                <option value="">None</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>{v.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <button
             type="submit"

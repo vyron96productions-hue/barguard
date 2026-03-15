@@ -6,7 +6,7 @@ export async function GET() {
     const { supabase, businessId } = await getAuthContext()
     const { data, error } = await supabase
       .from('inventory_items')
-      .select('*')
+      .select('*, vendor:vendors(id, name)')
       .eq('business_id', businessId)
       .order('category', { nullsFirst: false })
       .order('name')
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
-    const { name, unit, category, pack_size, package_type, item_type } = body
+    const { name, unit, category, pack_size, package_type, item_type, vendor_id } = body
 
     if (!name || !unit) {
       return NextResponse.json({ error: 'name and unit are required' }, { status: 400 })
@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         cost_per_unit: costPerUnit !== null && !isNaN(costPerUnit) ? costPerUnit : null,
         reorder_level: reorderLevel !== null && !isNaN(reorderLevel) ? reorderLevel : null,
         item_type: item_type || 'beverage',
+        vendor_id: vendor_id || null,
       })
       .select()
       .single()
@@ -123,6 +124,7 @@ export async function PATCH(req: NextRequest) {
       const v = body.reorder_level !== '' ? parseFloat(body.reorder_level) : null
       updates.reorder_level = v !== null && !isNaN(v) ? v : null
     }
+    if (body.vendor_id !== undefined) updates.vendor_id = body.vendor_id || null
 
     const { data, error } = await supabase
       .from('inventory_items')

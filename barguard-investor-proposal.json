@@ -1,0 +1,110 @@
+{
+  "company": "BarGuard",
+  "tagline": "The AI-powered back-of-bar operating system that tells you exactly where your money is going — before you lose it.",
+  "problem": "Bars lose 15–25% of revenue to shrinkage (over-pouring, theft, spillage, miscounting). BarGuard automates loss detection by comparing what should have been used (from sales data + recipes) vs. what actually remains (from physical counts).",
+  "stack": {
+    "frontend": ["Next.js 15 App Router", "TypeScript", "React 19", "Tailwind CSS v4", "Recharts"],
+    "backend": ["Supabase (Postgres + Auth + RLS)", "Vercel (auto-deploy from GitHub)"],
+    "ai": ["Anthropic Claude claude-sonnet-4-6 (invoice scanning, variance analysis, profit insights)"]
+  },
+  "by_the_numbers": {
+    "pages_screens": 40,
+    "api_routes": 58,
+    "pos_integrations": 4,
+    "ai_features": 3,
+    "deployment": "Production-ready, multi-tenant SaaS"
+  },
+  "features": {
+    "inventory_management": {
+      "description": "Track and count all bar inventory",
+      "capabilities": [
+        "Track spirits, beer (bottles/kegs/packs), wine, and food items",
+        "Mobile-friendly physical stock count screen",
+        "Partial bottle tracking with visual fill gauge and shot estimator",
+        "Color-coded staleness indicators (fresh / aging / stale / never counted)",
+        "Reorder level alerts — get notified before running out",
+        "Bulk CSV upload for inventory counts",
+        "Filter by category (spirits, beer, wine, mixer, food)"
+      ]
+    },
+    "ai_invoice_scanning": {
+      "description": "Upload any purchase invoice and AI extracts everything",
+      "capabilities": [
+        "Upload invoice images (JPG, PNG, WebP) or PDFs",
+        "Claude AI extracts vendor name, purchase date, and all line items",
+        "Automatic pack type detection (6-pack, 12-pack, case, keg)",
+        "Confidence indicators per line item (high / medium / low)",
+        "Manual review and edit before confirming",
+        "Auto-learns vendor product names over time via alias system",
+        "Draft history — re-review past uploads"
+      ]
+    },
+    "sales_data_integration": {
+      "description": "Pull in sales from any POS or CSV",
+      "pos_integrations": ["Square (OAuth)", "Toast (credentials)", "Clover (OAuth)", "Lightspeed (OAuth)"],
+      "capabilities": [
+        "Full OAuth flow for Square, Clover, Lightspeed",
+        "Credentials-based auth for Toast",
+        "CSV import for any unsupported POS",
+        "Station/register filtering (Bar 1, Bar 2, Kitchen, etc.)",
+        "Full sales log with date-range filtering",
+        "Per-item revenue breakdowns",
+        "Sync logs with transaction counts and error tracking"
+      ]
+    },
+    "loss_detection_and_variance": {
+      "description": "Automatically detect where inventory is going missing",
+      "capabilities": [
+        "Compares expected usage (sales × recipes) vs. actual (inventory counts)",
+        "Shift-based analysis: Morning, Afternoon, Dinner, Late Night, or custom window",
+        "Severity levels: critical (>20% variance), warning (10–19%), normal (<10%)",
+        "Dollar-value loss estimate per item",
+        "KPI dashboard: critical items count, warnings, health score (0–100)",
+        "Highest-risk item banner with dollar impact",
+        "AI plain-English briefing: what's off, probable causes, recommended actions"
+      ]
+    },
+    "profitability_intelligence": {
+      "description": "Menu-level profit and margin analysis",
+      "capabilities": [
+        "Margin % and profit per drink and food item",
+        "7-day, 30-day, monthly, or custom date ranges",
+        "Identifies highest-margin winners and weakest-margin items",
+        "AI highlights pricing opportunities and waste patterns",
+        "Volume vs. profit analysis",
+        "Separate drink and food performance views"
+      ]
+    },
+    "menu_and_recipe_management": {
+      "description": "Build and cost out every item on the menu",
+      "capabilities": [
+        "Create drinks and food items with sell price and category",
+        "Define recipes with exact ingredients and quantities",
+        "AI auto-suggests ingredients from menu item name",
+        "Cost-per-drink calculation from inventory item costs",
+        "Bartender-facing drink library (searchable, mobile-friendly)",
+        "Bulk recipe import"
+      ]
+    },
+    "data_management": {
+      "description": "Keep messy data clean and mapped",
+      "capabilities": [
+        "Alias system maps raw CSV/POS names to correct inventory items",
+        "Bulk CSV import for inventory counts, purchases, and sales",
+        "Draft review workflow — nothing posts without confirmation",
+        "Visual progress tracker for unresolved aliases"
+      ]
+    },
+    "ai_features": {
+      "invoice_scanning": "Claude vision reads any purchase invoice and extracts structured line items",
+      "variance_analysis": "After each count session, AI flags discrepancies with probable causes (over-pouring, theft, spillage, miscounting, vendor short-ships) and numbered next steps",
+      "profit_insights": "Claude analyzes full menu profitability and surfaces the single most actionable focus area for the manager this week"
+    },
+    "platform": {
+      "multi_tenant": "Each bar has its own isolated workspace",
+      "auth": "Username/password (no email required)",
+      "responsive": "Fully mobile-optimized — works on phone, tablet, desktop",
+      "security": "Supabase Row-Level Security (RLS), middleware route protection, encrypted POS credentials"
+    }
+  }
+}
