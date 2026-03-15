@@ -55,10 +55,11 @@ export default function SalesLogPage() {
     setLoading(false)
   }, [])
 
-  // Single-day mode: fetch on date or station change
+  // Refetch when date/station changes (day mode) or when station changes with a valid range
   useEffect(() => {
     if (mode === 'day') fetchData(date, date, stationFilter)
-  }, [date, mode, stationFilter, fetchData])
+    else if (mode === 'range' && rangeStart && rangeEnd) fetchData(rangeStart, rangeEnd, stationFilter)
+  }, [date, mode, stationFilter, fetchData]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleRangeFetch() {
     if (rangeStart && rangeEnd) fetchData(rangeStart, rangeEnd, stationFilter)
