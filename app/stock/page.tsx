@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
-import { UNIT_LABELS } from '@/lib/conversions'
+import { UNIT_LABELS, formatQty } from '@/lib/conversions'
 
 const BEVERAGE_CATEGORIES = [
   'spirits', 'beer', 'wine', 'keg',
@@ -1031,7 +1031,7 @@ function StockCard({ item, allCategories, onUpdate }: {
       <div className="space-y-1.5">
         <div className="flex items-baseline gap-1.5">
           <p className={`text-3xl font-bold tabular-nums leading-none ${qtyColor}`}>
-            {effectiveQty !== null ? Number(effectiveQty.toFixed(2)).toString() : '—'}
+            {effectiveQty !== null ? formatQty(effectiveQty, item.unit) : '—'}
           </p>
           {item.has_estimate && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-semibold leading-tight">Est.</span>

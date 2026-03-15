@@ -12,12 +12,59 @@ export interface ReorderAlert {
   count_date: string | null
 }
 
+type ItemRow = { id: string; name: string; unit: string; category: string | null; reorder_level: number }
+type CountRow = { quantity_on_hand: number; count_date: string }
+
+function estimateQty(
+  item: ItemRow,
+  count: CountRow,
+  recipesByInvItem: Record<string, Array<{ menu_item_id: string; oz_per_sale: number }>>,
+  salesMap: Record<string, Record<string, number>>,
+  purchasesMap: Record<string, Array<{ quantity_oz: number; purchase_date: string }>>,
+): number {
+  const recipes = recipesByInvItem[item.id]
+  if (!recipes?.length) return count.quantity_on_hand
+
+  const lastCountOz = convertToOz(count.quantity_on_hand, item.unit)
+
+  const purchasedOz = (purchasesMap[item.id] ?? [])
+    .filter((p) => p.purchase_date > count.count_date)
+    .reduce((s, p) => s + p.quantity_oz, 0)
+
+  let usedOz = 0
+  for (const recipe of recipes) {
+    const datesMap = salesMap[recipe.menu_item_id]
+    if (!datesMap) continue
+    for (const [date, qty] of Object.entries(datesMap)) {
+      if (date > count.count_date) usedOz += qty * recipe.oz_per_sale
+    }
+  }
+
+  const estimatedOz = lastCountOz + purchasedOz - usedOz
+  const unitFactor = UNIT_TO_OZ[item.unit.toLowerCase().trim()]
+
+  if (unitFactor) {
+    return Math.max(0, estimatedOz / unitFactor)
+  }
+
+  // Food / non-liquid: usage is in native units
+  let nativeUsed = 0
+  for (const recipe of recipes) {
+    const datesMap = salesMap[recipe.menu_item_id]
+    if (!datesMap) continue
+    for (const [date, qty] of Object.entries(datesMap)) {
+      if (date > count.count_date) nativeUsed += qty * recipe.oz_per_sale
+    }
+  }
+  return Math.max(0, count.quantity_on_hand - nativeUsed)
+}
+
 export async function GET() {
   try {
     const { supabase, businessId } = await getAuthContext()
 
     // Fetch items that have a reorder_level set
-    const { data: items, error: itemsError } = await supabase
+    const { data: rawItems, error: itemsError } = await supabase
       .from('inventory_items')
       .select('id, name, unit, category, reorder_level')
       .eq('business_id', businessId)
@@ -25,8 +72,10 @@ export async function GET() {
       .order('name')
 
     if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 })
-    if (!items || items.length === 0) return NextResponse.json([])
+    if (!rawItems || rawItems.length === 0) return NextResponse.json([])
 
+    // Cast to non-null reorder_level since we filtered above
+    const items: ItemRow[] = rawItems.map((i) => ({ ...i, reorder_level: i.reorder_level as number }))
     const itemIds = items.map((i) => i.id)
 
     // Fetch latest count per item
@@ -37,7 +86,7 @@ export async function GET() {
       .in('inventory_item_id', itemIds)
       .order('count_date', { ascending: false })
 
-    const latestCount = new Map<string, { quantity_on_hand: number; count_date: string }>()
+    const latestCount = new Map<string, CountRow>()
     for (const c of counts ?? []) {
       if (c.inventory_item_id && !latestCount.has(c.inventory_item_id)) {
         latestCount.set(c.inventory_item_id, {
@@ -105,53 +154,12 @@ export async function GET() {
       }
     }
 
-    // Compute effective qty using same estimation as stock-levels page
-    function getEffectiveQty(
-      item: (typeof items)[0],
-      count: { quantity_on_hand: number; count_date: string },
-    ): number {
-      if (!recipesByInvItem[item.id]?.length) return count.quantity_on_hand
-
-      const lastCountOz = convertToOz(count.quantity_on_hand, item.unit)
-
-      const purchasedOz = (purchasesMap[item.id] ?? [])
-        .filter((p) => p.purchase_date > count.count_date)
-        .reduce((s, p) => s + p.quantity_oz, 0)
-
-      let usedOz = 0
-      for (const recipe of recipesByInvItem[item.id]) {
-        const datesMap = salesMap[recipe.menu_item_id]
-        if (!datesMap) continue
-        for (const [date, qty] of Object.entries(datesMap)) {
-          if (date > count.count_date) usedOz += qty * recipe.oz_per_sale
-        }
-      }
-
-      const estimatedOz = lastCountOz + purchasedOz - usedOz
-      const unitFactor = UNIT_TO_OZ[item.unit.toLowerCase().trim()] ?? null
-
-      if (unitFactor) {
-        return Math.max(0, estimatedOz / unitFactor)
-      }
-
-      // Food / non-liquid: compute usage in native units
-      let nativeUsed = 0
-      for (const recipe of recipesByInvItem[item.id]) {
-        const datesMap = salesMap[recipe.menu_item_id]
-        if (!datesMap) continue
-        for (const [date, qty] of Object.entries(datesMap)) {
-          if (date > count.count_date) nativeUsed += qty * recipe.oz_per_sale
-        }
-      }
-      return Math.max(0, count.quantity_on_hand - nativeUsed)
-    }
-
     // Return items where effective qty ≤ reorder_level (or never counted)
     const alerts: ReorderAlert[] = items
       .filter((item) => {
         const count = latestCount.get(item.id)
         if (!count) return true // never counted → flag it
-        return getEffectiveQty(item, count) <= item.reorder_level
+        return estimateQty(item, count, recipesByInvItem, salesMap, purchasesMap) <= item.reorder_level
       })
       .map((item) => {
         const count = latestCount.get(item.id)
@@ -161,7 +169,9 @@ export async function GET() {
           unit: item.unit,
           category: item.category,
           reorder_level: item.reorder_level,
-          current_qty: count ? getEffectiveQty(item, count) : null,
+          current_qty: count
+            ? estimateQty(item, count, recipesByInvItem, salesMap, purchasesMap)
+            : null,
           count_date: count?.count_date ?? null,
         }
       })

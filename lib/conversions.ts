@@ -106,6 +106,19 @@ export function itemCostPerOz(costPerUnit: number | null | undefined, unit: stri
   return costPerUnit / oz
 }
 
+// Units that are always whole items — never display as decimals
+const WHOLE_UNITS = new Set([
+  'bottle', 'beer_bottle', 'can', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg', '1L', '1.75L',
+  'each', 'piece', 'portion', 'serving', 'slice', 'bag', 'tray', 'box', 'flat', 'jar', 'packet',
+])
+
+/** Format a quantity for display. Whole-item units (bottles, cans, etc.) show as integers. */
+export function formatQty(qty: number, unit: string): string {
+  if (WHOLE_UNITS.has(unit)) return String(Math.round(qty))
+  const rounded = Number(qty.toFixed(1))
+  return rounded % 1 === 0 ? String(rounded) : String(rounded)
+}
+
 /** All units (inventory + recipe pour units) */
 export const ALL_UNITS = [
   // Beverage — counting units

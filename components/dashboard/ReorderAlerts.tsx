@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { UNIT_LABELS } from '@/lib/conversions'
+import { UNIT_LABELS, formatQty } from '@/lib/conversions'
 import type { ReorderAlert } from '@/app/api/reorder-alerts/route'
 
 export default function ReorderAlerts() {
@@ -78,7 +78,7 @@ export default function ReorderAlerts() {
                     urgency === 'unknown'  ? 'text-slate-500' :
                     'text-amber-400'
                   }`}>
-                    {neverCounted ? '—' : `${qty} ${unitLabel(alert.unit)}`}
+                    {neverCounted ? '—' : `${formatQty(qty, alert.unit)} ${unitLabel(alert.unit)}`}
                   </p>
                   <p className="text-[10px] text-slate-600">
                     reorder at {alert.reorder_level} {unitLabel(alert.unit)}
