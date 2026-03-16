@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { formatQty } from '@/lib/conversions'
 import type { ReorderSuggestion } from '@/app/api/reorder-suggestions/route'
 
 type Priority = 'urgent' | 'soon' | 'watch' | 'ok'
@@ -230,7 +231,7 @@ ${businessName || 'My Bar'}`
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
                             {s.current_stock != null && (
                               <span className="text-xs text-slate-500">
-                                {Math.round(s.current_stock * 10) / 10} {s.unit} in stock
+                                {formatQty(s.current_stock, s.unit)} {s.unit} in stock
                               </span>
                             )}
                             {s.avg_daily_usage > 0 && (
