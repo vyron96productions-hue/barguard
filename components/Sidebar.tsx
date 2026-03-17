@@ -36,6 +36,7 @@ const sections = [
       { href: '/menu-items', label: 'Recipe Mapping', icon: '◉' },
       { href: '/vendors', label: 'Vendors', icon: '◷' },
       { href: '/connections', label: 'POS Connections', icon: '⇋' },
+      { href: '/profile', label: 'Account Settings', icon: '◎' },
     ],
   },
 ]

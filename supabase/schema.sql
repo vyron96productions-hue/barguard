@@ -31,7 +31,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS businesses (
   id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   name          text        NOT NULL,
-  contact_email text,                     -- added via vendors_migration
+  address       text,
+  contact_email text,
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 
