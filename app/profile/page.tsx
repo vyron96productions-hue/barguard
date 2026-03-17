@@ -13,6 +13,10 @@ function ProfileContent() {
   const [contactEmail, setContactEmail] = useState('')
   const [username, setUsername] = useState('')
   const [newUsername, setNewUsername] = useState('')
+  const [plan, setPlan] = useState('basic')
+  const [hasSubscription, setHasSubscription] = useState(false)
+  const [upgradingTo, setUpgradingTo] = useState<string | null>(null)
+  const [managingBilling, setManagingBilling] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [saving, setSaving] = useState(false)
@@ -32,6 +36,8 @@ function ProfileContent() {
         setContactEmail(d.contact_email ?? '')
         setUsername(d.username ?? '')
         setNewUsername(d.username ?? '')
+        setPlan(d.plan ?? 'basic')
+        setHasSubscription(d.has_subscription ?? false)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -274,17 +280,106 @@ function ProfileContent() {
       {/* Billing / Plan */}
       <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-slate-300 mb-5 uppercase tracking-wider">Billing &amp; Plan</h2>
-        <div className="flex items-center justify-between">
+
+        {/* Current plan */}
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-sm font-semibold text-slate-100">Free Plan</p>
-            <p className="text-xs text-slate-500 mt-0.5">Unlimited inventory tracking, AI scanning, and reorder alerts.</p>
+            <p className="text-sm font-semibold text-slate-100">
+              Current Plan: <span className="text-amber-400">{plan.charAt(0).toUpperCase() + plan.slice(1)}</span>
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {plan === 'legacy' && 'Full access — Legacy member'}
+              {plan === 'basic' && '$99/mo — Inventory, scanning, and alerts'}
+              {plan === 'pro' && '$199/mo — Everything + reorder & POS'}
+              {plan === 'enterprise' && '$399/mo — Everything + up to 5 locations'}
+            </p>
           </div>
           <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-400">Active</span>
         </div>
-        <div className="mt-4 pt-4 border-t border-slate-800">
-          <p className="text-xs text-slate-600">Paid plans with advanced analytics and multi-location support coming soon.</p>
-        </div>
+
+        {/* Upgrade options */}
+        {plan !== 'legacy' && plan !== 'enterprise' && (
+          <div className="space-y-3 mb-6">
+            {plan === 'basic' && (
+              <PlanCard
+                name="Pro"
+                price="$199/mo"
+                description="Full history, vendor management, automated reorder, POS integration, data export"
+                onUpgrade={async () => {
+                  setUpgradingTo('pro')
+                  const res = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: 'pro' }),
+                  })
+                  const data = await res.json()
+                  if (data.url) window.location.href = data.url
+                  else setUpgradingTo(null)
+                }}
+                loading={upgradingTo === 'pro'}
+              />
+            )}
+            <PlanCard
+              name="Enterprise"
+              price="$399/mo"
+              description="Everything in Pro + up to 5 locations and priority support"
+              onUpgrade={async () => {
+                setUpgradingTo('enterprise')
+                const res = await fetch('/api/stripe/checkout', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ plan: 'enterprise' }),
+                })
+                const data = await res.json()
+                if (data.url) window.location.href = data.url
+                else setUpgradingTo(null)
+              }}
+              loading={upgradingTo === 'enterprise'}
+            />
+          </div>
+        )}
+
+        {/* Manage subscription */}
+        {hasSubscription && plan !== 'legacy' && (
+          <button
+            onClick={async () => {
+              setManagingBilling(true)
+              const res = await fetch('/api/stripe/portal', { method: 'POST' })
+              const data = await res.json()
+              if (data.url) window.location.href = data.url
+              else setManagingBilling(false)
+            }}
+            disabled={managingBilling}
+            className="text-sm text-slate-400 hover:text-slate-200 underline transition-colors disabled:opacity-50"
+          >
+            {managingBilling ? 'Redirecting…' : 'Manage subscription / Cancel'}
+          </button>
+        )}
       </div>
+    </div>
+  )
+}
+
+function PlanCard({ name, price, description, onUpgrade, loading }: {
+  name: string
+  price: string
+  description: string
+  onUpgrade: () => void
+  loading: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 rounded-xl border border-slate-700/60 bg-slate-800/40">
+      <div>
+        <p className="text-sm font-semibold text-slate-100">{name} <span className="text-amber-400">{price}</span></p>
+        <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+      </div>
+      <button
+        onClick={onUpgrade}
+        disabled={loading}
+        className="ml-4 shrink-0 bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-900 font-semibold px-4 py-2 rounded-lg text-xs transition-colors"
+      >
+        {loading ? 'Redirecting…' : 'Upgrade'}
+      </button>
     </div>
   )
 }

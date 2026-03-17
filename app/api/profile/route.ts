@@ -8,7 +8,7 @@ export async function GET() {
 
     const { data: biz } = await supabase
       .from('businesses')
-      .select('name, address, contact_email')
+      .select('name, address, contact_email, plan, stripe_customer_id, stripe_subscription_id')
       .eq('id', businessId)
       .single()
 
@@ -21,6 +21,8 @@ export async function GET() {
       bar_name: biz?.name ?? '',
       address: biz?.address ?? '',
       contact_email: biz?.contact_email ?? '',
+      plan: biz?.plan ?? 'basic',
+      has_subscription: !!biz?.stripe_customer_id,
     })
   } catch (e) {
     return authErrorResponse(e)
