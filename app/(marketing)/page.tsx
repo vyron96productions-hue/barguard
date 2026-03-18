@@ -72,7 +72,8 @@ export default function HomePage() {
         {/* Integration strip */}
         <div style={{ marginBottom: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
           <p style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 700, color: '#f1f5f9', maxWidth: 600, lineHeight: 1.45, margin: 0, fontFamily: 'var(--font-montserrat)', letterSpacing: '-0.3px' }}>
-            No need to change your setup. BarGuard connects directly with Square and Clover, with more integrations coming soon.
+            No need to change your setup — BarGuard connects directly with Square and Clover.<br />
+            <span style={{ color: '#f59e0b' }}>More integrations coming soon.</span>
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
             <img
