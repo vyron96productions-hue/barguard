@@ -108,7 +108,7 @@ export function TrialBanner({ children }: { children: React.ReactNode }) {
   // In trial — show banner
   return (
     <>
-      {trial?.daysLeft !== null && !trial?.expired && (
+      {trial?.daysLeft != null && typeof trial.daysLeft === 'number' && !isNaN(trial.daysLeft) && !trial?.expired && (
         <div className={`flex items-center justify-between px-4 py-2 text-xs font-medium ${
           (trial?.daysLeft ?? 0) <= 3
             ? 'bg-red-500/10 border-b border-red-500/20 text-red-400'
