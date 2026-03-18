@@ -5,7 +5,7 @@ const PUBLIC_PATHS_EXACT = ['/']
 const PUBLIC_PREFIXES = [
   '/login', '/signup', '/forgot-password', '/reset-password',
   '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
-  '/pricing', '/privacy', '/terms', '/refund', '/features',
+  '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq',
 ]
 
 export async function middleware(request: NextRequest) {

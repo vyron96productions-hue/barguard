@@ -9,6 +9,10 @@ const montserrat = Montserrat({ subsets: ['latin'], weight: ['800'], variable: '
 export const metadata: Metadata = {
   title: 'BarGuard — Stop Losing Money at Your Bar',
   description: 'AI-powered inventory loss detection for bars. Catch shrinkage, over-pouring, and stock discrepancies before they cost thousands.',
+  openGraph: {
+    url: 'https://barguard.app',
+    images: [{ url: '/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
@@ -40,8 +44,10 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               <div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Product</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Link href="/features" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Features</Link>
                   <Link href="/pricing" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Pricing</Link>
-                  <Link href="/dashboard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Dashboard</Link>
+                  <Link href="/faq" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>FAQ</Link>
+                  <Link href="/dashboard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Sign In</Link>
                 </div>
               </div>
               <div>
