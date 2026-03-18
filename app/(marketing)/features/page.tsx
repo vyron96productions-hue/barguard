@@ -109,7 +109,7 @@ export default function FeaturesPage() {
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>Flexible Date &amp; Shift Filtering</h3>
               <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Run calculations on exactly the period you need. Compare opening to closing, last week, or any custom window.</p>
               <ul className="check-list">
-                {['Preset ranges: opening shift, closing shift, full shift', 'Custom start/end date &amp; time picker', 'Browser timezone auto-detection', 'Drill down by individual item or category', 'Side-by-side period comparison'].map(f => (
+                {['Preset ranges: opening shift, closing shift, full shift', 'Custom start/end date & time picker', 'Browser timezone auto-detection', 'Drill down by individual item or category', 'Side-by-side period comparison'].map(f => (
                   <li key={f}><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="7.5" fill="rgba(34,197,94,0.15)" /><path d="M4 7.5l2.5 2.5 4.5-4.5" stroke="#22c55e" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>{f}</li>
                 ))}
               </ul>
@@ -130,7 +130,7 @@ export default function FeaturesPage() {
               </div>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>Item Catalog</h3>
               <ul className="check-list">
-                {['Spirits, beer, wine, food, produce &amp; more', 'Set cost per unit for loss calculations', 'Define reorder levels per item', 'Assign items to vendors', 'Pack size logic (six-pack, case, keg)'].map(f => (
+                {['Spirits, beer, wine, food, produce & more', 'Set cost per unit for loss calculations', 'Define reorder levels per item', 'Assign items to vendors', 'Pack size logic (six-pack, case, keg)'].map(f => (
                   <li key={f}><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="7.5" fill="rgba(34,197,94,0.15)" /><path d="M4 7.5l2.5 2.5 4.5-4.5" stroke="#22c55e" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>{f}</li>
                 ))}
               </ul>
@@ -339,7 +339,7 @@ export default function FeaturesPage() {
               {[
                 { title: 'Up to 5 Locations', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>, items: ['Manage up to 5 bar locations under one account', 'Separate inventory and reports per location', 'Single login for all locations'] },
                 { title: 'Priority Support', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4 2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.8a16 16 0 0 0 6 6l.99-.99a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.6 16z" /></svg>, items: ['Priority email support', 'Faster response times than standard plans', 'Help getting your team set up'] },
-                { title: 'Everything in Pro', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>, items: ['All POS integrations included', 'Vendor management &amp; reorder automation', 'Full sales history &amp; data export', 'Profit intelligence &amp; AI insights'] },
+                { title: 'Everything in Pro', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>, items: ['All POS integrations included', 'Vendor management & reorder automation', 'Full sales history & data export', 'Profit intelligence & AI insights'] },
               ].map((card) => (
                 <div key={card.title} className="feat-card" style={{ borderColor: 'rgba(139,92,246,0.2)' }}>
                   <div className="feat-icon" style={{ background: 'rgba(139,92,246,0.1)', borderColor: 'rgba(139,92,246,0.2)' }}>
