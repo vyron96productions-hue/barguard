@@ -31,6 +31,7 @@ export default function MarketingNav() {
           </Link>
 
           <div className="mnav-links">
+            <Link href="/features" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Features</Link>
             <Link href="/pricing" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
             <Link href="/login" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>
             <Link href="/signup" className="btn-primary" style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>Get Started Free</Link>
@@ -83,6 +84,9 @@ export default function MarketingNav() {
 
             {/* Links */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <Link href="/features" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+                Features
+              </Link>
               <Link href="/pricing" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Pricing
               </Link>
