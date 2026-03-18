@@ -11,7 +11,7 @@ function heartlandBase(subdomain: string) {
 
 function heartlandHeaders(apiKey: string) {
   return {
-    'Authorization': `Token token=${apiKey}`,
+    'Authorization': `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   }
@@ -68,7 +68,7 @@ export async function fetchHeartlandSales(
     if (!res.ok) throw new Error(`Heartland tickets fetch failed (${res.status})`)
 
     const data = await res.json()
-    const tickets = Array.isArray(data) ? data : data.tickets ?? []
+    const tickets = Array.isArray(data) ? data : (data.results ?? data.tickets ?? [])
     if (tickets.length === 0) break
 
     allTickets.push(...tickets)
@@ -101,7 +101,7 @@ export async function fetchHeartlandSales(
       const res = await fetch(`${base}/items?${params}`, { headers })
       if (res.ok) {
         const data = await res.json()
-        const items = Array.isArray(data) ? data : data.items ?? []
+        const items = Array.isArray(data) ? data : (data.results ?? data.items ?? [])
         for (const item of items) {
           if (item.id && item.name) itemNameMap.set(item.id, item.name)
         }
