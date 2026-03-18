@@ -9,6 +9,35 @@ export default function HomePage() {
         .cta-card { padding: 60px 48px; }
         .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
         .hero-buttons a { width: auto; }
+
+        .feature-card {
+          background: #0f172a;
+          border: 1px solid #1e293b;
+          border-radius: 18px;
+          padding: 28px 28px 32px;
+          transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+          cursor: default;
+        }
+        .feature-card:hover {
+          transform: translateY(-6px);
+          border-color: rgba(245, 158, 11, 0.5);
+          box-shadow: 0 20px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.15), 0 0 24px rgba(245,158,11,0.08);
+        }
+        .feature-icon {
+          width: 44px; height: 44px; border-radius: 12px;
+          background: rgba(245,158,11,0.1);
+          border: 1px solid rgba(245,158,11,0.2);
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 20px; font-size: 18px; color: #f59e0b;
+          font-family: monospace;
+          transition: transform 0.3s ease, background 0.25s ease, border-color 0.25s ease;
+        }
+        .feature-card:hover .feature-icon {
+          transform: scale(1.15) rotate(-4deg);
+          background: rgba(245,158,11,0.18);
+          border-color: rgba(245,158,11,0.4);
+        }
+
         @media (max-width: 768px) {
           .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
           .features-grid { grid-template-columns: 1fr; }
@@ -183,8 +212,8 @@ export default function HomePage() {
               desc: 'Connect your Square or other POS system to auto-import sales data. Zero manual entry.'
             },
           ].map((f) => (
-            <div key={f.title} style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 18, padding: '28px 28px 32px' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20, fontSize: 18, color: '#f59e0b', fontFamily: 'monospace' }}>
+            <div key={f.title} className="feature-card">
+              <div className="feature-icon">
                 {f.icon}
               </div>
               <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>{f.title}</h3>
