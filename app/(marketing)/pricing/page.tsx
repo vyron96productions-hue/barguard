@@ -203,7 +203,7 @@ export default function PricingPage() {
         {/* TRUST STRIP */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 40, flexWrap: 'wrap', borderTop: '1px solid #1e293b', paddingTop: 48, paddingBottom: 80, marginTop: -20 }}>
           {[
-            { icon: '🔒', text: 'SOC 2 compliant' },
+            { icon: '🔒', text: 'Your data stays private' },
             { icon: '↩️', text: 'Cancel anytime' },
             { icon: '🚀', text: 'Easy setup' },
           ].map((item) => (
