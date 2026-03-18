@@ -1,12 +1,17 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PREFIXES = ['/login', '/signup', '/forgot-password', '/reset-password', '/api/auth/', '/api/webhooks/', '/api/stripe/webhook']
+const PUBLIC_PATHS_EXACT = ['/']
+const PUBLIC_PREFIXES = [
+  '/login', '/signup', '/forgot-password', '/reset-password',
+  '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
+  '/pricing', '/privacy', '/terms', '/refund',
+]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+  if (PUBLIC_PATHS_EXACT.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 

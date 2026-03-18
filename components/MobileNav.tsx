@@ -8,7 +8,7 @@ const sections = [
   {
     label: null,
     items: [
-      { href: '/', label: 'Dashboard', icon: '▣' },
+      { href: '/dashboard', label: 'Dashboard', icon: '▣' },
     ],
   },
   {
