@@ -134,10 +134,10 @@ function CloverImportModal({ onClose, onImported }: { onClose: () => void; onImp
 
 const ProviderIcon = ({ provider, size = 32 }: { provider: string; size?: number }) => {
   const icons: Record<string, string> = {
-    square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS', heartland: 'HL',
+    square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS', heartland: 'HL', focus: 'FC',
   }
   const colors: Record<string, string> = {
-    square: '#00B388', toast: '#FF4F00', clover: '#62BA46', lightspeed: '#E84E1B', heartland: '#E31837',
+    square: '#00B388', toast: '#FF4F00', clover: '#62BA46', lightspeed: '#E84E1B', heartland: '#E31837', focus: '#1B3A6B',
   }
   return (
     <div

@@ -1,4 +1,4 @@
-export type PosProvider = 'square' | 'toast' | 'clover' | 'lightspeed' | 'heartland'
+export type PosProvider = 'square' | 'toast' | 'clover' | 'lightspeed' | 'heartland' | 'focus'
 
 export interface PosProviderMeta {
   id: PosProvider
@@ -47,6 +47,19 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
     description: 'Pull sales data from Lightspeed Restaurant automatically.',
     authType: 'oauth',
     docsUrl: 'https://developers.lightspeedhq.com',
+  },
+  {
+    id: 'focus',
+    name: 'Focus POS',
+    color: '#1B3A6B',
+    description: 'Connect your Focus POS system to automatically sync sales data.',
+    authType: 'credentials',
+    credentialFields: [
+      { key: 'venueKey', label: 'Venue Key', placeholder: '7166' },
+      { key: 'apiKey', label: 'API Key', placeholder: 'Your Focus POS API key' },
+      { key: 'apiSecret', label: 'API Secret', placeholder: '••••••••', type: 'password' },
+    ],
+    docsUrl: 'https://focuslink.focuspos.com',
   },
   {
     id: 'heartland',
