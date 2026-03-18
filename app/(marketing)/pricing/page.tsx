@@ -205,7 +205,7 @@ export default function PricingPage() {
           {[
             { icon: '🔒', text: 'SOC 2 compliant' },
             { icon: '↩️', text: 'Cancel anytime' },
-            { icon: '🚀', text: 'Setup in under 10 minutes' },
+            { icon: '🚀', text: 'Easy setup' },
           ].map((item) => (
             <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#94a3b8', fontSize: 14 }}>
               <span style={{ fontSize: 18, opacity: 0.7 }}>{item.icon}</span>
