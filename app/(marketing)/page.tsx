@@ -315,7 +315,7 @@ export default function HomePage() {
             Get Started Free — 14-Day Trial
             <span>→</span>
           </a>
-          <p style={{ fontSize: 13, color: '#334155', marginTop: 16 }}>No credit card required · Cancel anytime</p>
+          <p style={{ fontSize: 15, color: '#cbd5e1', marginTop: 16 }}>No credit card required · Cancel anytime</p>
         </div>
       </section>
     </div>
