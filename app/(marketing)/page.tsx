@@ -168,10 +168,10 @@ export default function HomePage() {
       <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid #1e293b', borderBottom: '1px solid #1e293b', padding: '32px 24px' }}>
         <div className="stats-grid" style={{ maxWidth: 1120, margin: '0 auto' }}>
           {[
-            { value: '14 days', label: 'Free trial, full access' },
+            { value: '4+ POS Systems', label: 'Square, Clover, Toast & more' },
             { value: 'Easy Setup', label: 'No technical skills needed' },
             { value: '14 days', label: 'Free trial, no card needed' },
-            { value: 'Square + Clover', label: 'POS integrations built-in' },
+            { value: 'Cancel anytime', label: 'No long-term contracts' },
           ].map((stat) => (
             <div key={stat.label} style={{ padding: '8px 0' }}>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-montserrat)', letterSpacing: '-1px', marginBottom: 4 }}>{stat.value}</p>
