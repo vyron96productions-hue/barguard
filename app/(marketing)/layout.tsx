@@ -31,7 +31,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <div className="footer-grid">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <img src="/barguard_icon.png" alt="BarGuard" style={{ height: 36, width: 'auto', display: 'block' }} />
+                <img src="/barguard_icon.png" alt="BarGuard" style={{ height: 48, width: 'auto', display: 'block' }} />
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#f8fafc' }}>BarGuard</span>
               </div>
               <p style={{ fontSize: 13, color: '#475569', maxWidth: 240, lineHeight: 1.6 }}>AI-powered inventory loss detection for bars and restaurants.</p>

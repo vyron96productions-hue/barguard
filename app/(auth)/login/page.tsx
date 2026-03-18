@@ -83,7 +83,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-10">
-          <img src="/barguard_icon.png" alt="BarGuard" className="h-12 w-auto" />
+          <img src="/barguard_icon.png" alt="BarGuard" className="h-16 w-auto" />
           <div>
             <p className="text-xl font-bold text-slate-100 leading-none">BarGuard</p>
             <p className="text-[10px] text-slate-500 mt-0.5 leading-none tracking-widest uppercase">Loss Detection</p>

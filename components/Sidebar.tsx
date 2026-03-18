@@ -64,7 +64,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-6 border-b border-slate-800/60">
         <div className="flex items-center gap-2.5">
-          <img src="/barguard_icon.png" alt="BarGuard" className="h-9 w-auto" />
+          <img src="/barguard_icon.png" alt="BarGuard" className="h-12 w-auto" />
           <div>
             <p className="text-sm font-semibold text-slate-100 leading-none">BarGuard</p>
             <p className="text-[10px] text-slate-500 mt-0.5 leading-none tracking-wide uppercase">Loss Detection</p>
