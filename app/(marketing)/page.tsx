@@ -129,7 +129,7 @@ export default function HomePage() {
         <div className="stats-grid" style={{ maxWidth: 1120, margin: '0 auto' }}>
           {[
             { value: '$2,400+', label: 'Average monthly savings' },
-            { value: '15 min', label: 'Time to set up' },
+            { value: 'Easy Setup', label: 'No technical skills needed' },
             { value: '14 days', label: 'Free trial, no card needed' },
             { value: '99.9%', label: 'Uptime guaranteed' },
           ].map((stat) => (

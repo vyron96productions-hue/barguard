@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '../globals.css'
 import Link from 'next/link'
 import { Montserrat } from 'next/font/google'
+import MarketingNav from '@/components/MarketingNav'
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['800'], variable: '--font-montserrat' })
 
@@ -14,34 +15,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
   return (
     <>
       <style>{`
-        .nav-links { display: flex; align-items: center; gap: 8px; }
         .footer-grid { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 32px; margin-bottom: 40px; }
         .footer-links { display: flex; gap: 48px; flex-wrap: wrap; }
         @media (max-width: 640px) {
-          .nav-links .nav-text-link { display: none; }
           .footer-grid { flex-direction: column; }
           .footer-links { gap: 32px; }
         }
       `}</style>
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-        borderBottom: '1px solid rgba(30,41,59,0.8)',
-        backgroundColor: 'rgba(2,8,23,0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-      }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <img src="/barguard_icon.png" alt="BarGuard" style={{ height: 36, width: 'auto', display: 'block' }} />
-            <span style={{ fontWeight: 700, fontSize: 16, color: '#f8fafc', letterSpacing: '-0.3px' }}>BarGuard</span>
-          </Link>
-          <div className="nav-links">
-            <Link href="/pricing" className="nav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
-            <Link href="/login" className="nav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>
-            <Link href="/signup" style={{ fontSize: 14, fontWeight: 600, color: '#020817', backgroundColor: '#f59e0b', textDecoration: 'none', padding: '8px 18px', borderRadius: 8 }}>Get Started Free</Link>
-          </div>
-        </div>
-      </nav>
+      <MarketingNav />
       <div className={montserrat.variable} style={{ paddingTop: 64 }}>
         {children}
       </div>
@@ -50,7 +31,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <div className="footer-grid">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <img src="/barguard_icon.png" alt="BarGuard" style={{ height: 30, width: 'auto', display: 'block' }} />
+                <img src="/barguard_icon.png" alt="BarGuard" style={{ height: 36, width: 'auto', display: 'block' }} />
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#f8fafc' }}>BarGuard</span>
               </div>
               <p style={{ fontSize: 13, color: '#475569', maxWidth: 240, lineHeight: 1.6 }}>AI-powered inventory loss detection for bars and restaurants.</p>

@@ -73,9 +73,17 @@ export default function LoginPage() {
       />
 
       <div className="w-full max-w-sm relative">
+        {/* Back to homepage */}
+        <Link href="/" className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-sm mb-8 transition-colors w-fit">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 4L6 8l4 4" />
+          </svg>
+          Back to homepage
+        </Link>
+
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-900 font-black text-sm">BG</div>
+          <img src="/barguard_icon.png" alt="BarGuard" className="h-12 w-auto" />
           <div>
             <p className="text-xl font-bold text-slate-100 leading-none">BarGuard</p>
             <p className="text-[10px] text-slate-500 mt-0.5 leading-none tracking-widest uppercase">Loss Detection</p>
