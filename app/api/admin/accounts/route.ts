@@ -11,16 +11,25 @@ export async function GET() {
     const users = usersData?.users ?? []
 
     // Get all businesses with their user links
-    const { data: links } = await adminSupabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: linksRaw } = await (adminSupabase as any)
       .from('user_businesses')
       .select('user_id, business_id, role, is_admin, businesses(id, name, plan, contact_email, created_at, stripe_subscription_id)')
 
-    // Build account list
-    const accounts = (links ?? []).map((link) => {
-      const biz = link.businesses as {
-        id: string; name: string; plan: string; contact_email: string | null;
+    const links = (linksRaw ?? []) as Array<{
+      user_id: string
+      business_id: string
+      role: string
+      is_admin: boolean | null
+      businesses: {
+        id: string; name: string; plan: string; contact_email: string | null
         created_at: string; stripe_subscription_id: string | null
       } | null
+    }>
+
+    // Build account list
+    const accounts = links.map((link) => {
+      const biz = link.businesses
       const authUser = users.find((u) => u.id === link.user_id)
       const username = (authUser?.user_metadata?.username as string | undefined)
         ?? authUser?.email?.replace('@barguard.app', '')
