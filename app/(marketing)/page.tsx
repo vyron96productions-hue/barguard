@@ -69,6 +69,36 @@ export default function HomePage() {
         />
         <div style={{ padding: '48px 24px 80px' }}>
 
+        {/* Integration strip */}
+        <div style={{ marginBottom: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+          <p style={{ fontSize: 16, color: '#94a3b8', maxWidth: 520, lineHeight: 1.6, margin: 0 }}>
+            No need to change your setup. BarGuard connects directly with Square and Clover, with more integrations coming soon.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+            {/* Square logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, opacity: 0.75 }}>
+              <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="100" height="100" rx="18" fill="white"/>
+                <rect x="26" y="26" width="48" height="48" rx="6" fill="#1a1a1a"/>
+              </svg>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>Square</span>
+            </div>
+            <span style={{ width: 1, height: 24, background: '#1e293b' }} />
+            {/* Clover logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, opacity: 0.75 }}>
+              <svg width="24" height="24" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="26" r="20" fill="#4CAF50"/>
+                <circle cx="74" cy="50" r="20" fill="#4CAF50"/>
+                <circle cx="50" cy="74" r="20" fill="#4CAF50"/>
+                <circle cx="26" cy="50" r="20" fill="#4CAF50"/>
+                <circle cx="50" cy="50" r="14" fill="#4CAF50"/>
+                <rect x="46" y="68" width="8" height="18" rx="4" fill="#4CAF50"/>
+              </svg>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.3px' }}>Clover</span>
+            </div>
+          </div>
+        </div>
+
         <div className="hero-buttons">
           <a href="/signup" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
             Start Free Trial
