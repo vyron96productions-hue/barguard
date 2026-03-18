@@ -33,9 +33,10 @@ export async function GET(req: NextRequest) {
       data.user.email?.split('@')[0] ||
       'My Bar'
 
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
     const { data: business } = await adminSupabase
       .from('businesses')
-      .insert({ name: displayName, contact_email: data.user.email })
+      .insert({ name: displayName, contact_email: data.user.email, trial_ends_at: trialEndsAt })
       .select()
       .single()
 

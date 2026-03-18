@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Create business
+    const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
     const { data: business, error: bizErr } = await adminSupabase
       .from('businesses')
-      .insert({ name: bar_name.trim() })
+      .insert({ name: bar_name.trim(), trial_ends_at: trialEndsAt })
       .select()
       .single()
 
