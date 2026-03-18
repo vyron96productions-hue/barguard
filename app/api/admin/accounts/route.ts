@@ -16,7 +16,7 @@ export async function GET() {
       .from('user_businesses')
       .select('user_id, business_id, role, is_admin, businesses(id, name, plan, contact_email, created_at, stripe_subscription_id)')
 
-    const links = (linksRaw ?? []) as Array<{
+    const links = (linksRaw ?? []) as unknown as Array<{
       user_id: string
       business_id: string
       role: string
