@@ -1,4 +1,4 @@
-export type PosProvider = 'square' | 'toast' | 'clover' | 'lightspeed'
+export type PosProvider = 'square' | 'toast' | 'clover' | 'lightspeed' | 'heartland'
 
 export interface PosProviderMeta {
   id: PosProvider
@@ -47,6 +47,18 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
     description: 'Pull sales data from Lightspeed Restaurant automatically.',
     authType: 'oauth',
     docsUrl: 'https://developers.lightspeedhq.com',
+  },
+  {
+    id: 'heartland',
+    name: 'Heartland',
+    color: '#E31837',
+    description: 'Connect your Heartland Restaurant POS to sync sales data automatically.',
+    authType: 'credentials',
+    credentialFields: [
+      { key: 'subdomain', label: 'Account Subdomain', placeholder: 'yourbiz (from yourbiz.retail.heartland.us)' },
+      { key: 'apiKey', label: 'API Key', placeholder: '••••••••••••••••', type: 'password' },
+    ],
+    docsUrl: 'https://dev.retail.heartland.us',
   },
 ]
 

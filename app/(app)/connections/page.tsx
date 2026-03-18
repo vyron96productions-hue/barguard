@@ -134,10 +134,10 @@ function CloverImportModal({ onClose, onImported }: { onClose: () => void; onImp
 
 const ProviderIcon = ({ provider, size = 32 }: { provider: string; size?: number }) => {
   const icons: Record<string, string> = {
-    square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS',
+    square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS', heartland: 'HL',
   }
   const colors: Record<string, string> = {
-    square: '#00B388', toast: '#FF4F00', clover: '#62BA46', lightspeed: '#E84E1B',
+    square: '#00B388', toast: '#FF4F00', clover: '#62BA46', lightspeed: '#E84E1B', heartland: '#E31837',
   }
   return (
     <div
@@ -164,16 +164,17 @@ function ModalBase({ children, onClose }: { children: React.ReactNode; onClose: 
   )
 }
 
-// ── Toast credentials modal ───────────────────────────────────────────────────
-function ToastModal({ onClose, onConnected }: { onClose: () => void; onConnected: () => void }) {
-  const [fields, setFields] = useState({ clientId: '', clientSecret: '', restaurantGuid: '' })
+// ── Generic credentials modal (Toast, Heartland, any future credential provider) ──
+function CredentialsModal({ meta, onClose, onConnected }: { meta: PosProviderMeta; onClose: () => void; onConnected: () => void }) {
+  const initialFields = Object.fromEntries((meta.credentialFields ?? []).map(f => [f.key, '']))
+  const [fields, setFields] = useState<Record<string, string>>(initialFields)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setErr('')
-    const res = await fetch('/api/pos/toast/connect', {
+    const res = await fetch(`/api/pos/${meta.id}/connect`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fields),
@@ -188,21 +189,21 @@ function ToastModal({ onClose, onConnected }: { onClose: () => void; onConnected
     <ModalBase onClose={onClose}>
       <div className="p-5 sm:p-6">
         <div className="flex items-center gap-3 mb-5">
-          <ProviderIcon provider="toast" size={36} />
+          <ProviderIcon provider={meta.id} size={36} />
           <div>
-            <h2 className="text-sm font-semibold text-slate-100">Connect Toast</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Enter your Toast API credentials</p>
+            <h2 className="text-sm font-semibold text-slate-100">Connect {meta.name}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Enter your {meta.name} API credentials</p>
           </div>
         </div>
         <form onSubmit={submit} className="space-y-3">
-          {POS_PROVIDERS.find(p => p.id === 'toast')!.credentialFields!.map(f => (
+          {(meta.credentialFields ?? []).map(f => (
             <div key={f.key}>
               <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{f.label}</label>
               <input
                 required
                 type={f.type ?? 'text'}
                 placeholder={f.placeholder}
-                value={(fields as any)[f.key]}
+                value={fields[f.key]}
                 onChange={e => setFields(prev => ({ ...prev, [f.key]: e.target.value }))}
                 className="mt-1 w-full bg-slate-800 border border-slate-700/60 rounded-lg px-3 py-3 sm:py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/50 transition-colors"
               />
@@ -222,14 +223,14 @@ function ToastModal({ onClose, onConnected }: { onClose: () => void; onConnected
               disabled={loading}
               className="flex-1 px-4 py-3 sm:py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-sm rounded-xl sm:rounded-lg transition-colors disabled:opacity-50"
             >
-              {loading ? 'Connecting…' : 'Connect Toast'}
+              {loading ? 'Connecting…' : `Connect ${meta.name}`}
             </button>
           </div>
         </form>
         <p className="text-[10px] text-slate-600 mt-4">
-          Get your credentials at{' '}
-          <a href="https://doc.toasttab.com" target="_blank" rel="noreferrer" className="text-amber-500/70 hover:text-amber-400">
-            doc.toasttab.com
+          Need help?{' '}
+          <a href={meta.docsUrl} target="_blank" rel="noreferrer" className="text-amber-500/70 hover:text-amber-400">
+            {meta.docsUrl.replace('https://', '')}
           </a>
         </p>
       </div>
@@ -388,7 +389,7 @@ function ConnectionsContent() {
   const searchParams = useSearchParams()
   const [connections, setConnections] = useState<PosConnection[]>([])
   const [syncLogs, setSyncLogs] = useState<PosSyncLog[]>([])
-  const [toastModal, setToastModal] = useState(false)
+  const [credentialsModal, setCredentialsModal] = useState<PosProviderMeta | null>(null)
   const [syncTarget, setSyncTarget] = useState<PosProviderMeta | null>(null)
   const [cloverImportModal, setCloverImportModal] = useState(false)
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
@@ -426,7 +427,7 @@ function ConnectionsContent() {
 
   function handleConnect(meta: PosProviderMeta) {
     if (meta.authType === 'credentials') {
-      setToastModal(true)
+      setCredentialsModal(meta)
     } else {
       window.location.href = `/api/pos/${meta.id}/connect`
     }
@@ -553,8 +554,8 @@ function ConnectionsContent() {
       )}
 
       {/* Modals */}
-      {toastModal && (
-        <ToastModal onClose={() => setToastModal(false)} onConnected={loadConnections} />
+      {credentialsModal && (
+        <CredentialsModal meta={credentialsModal} onClose={() => setCredentialsModal(null)} onConnected={loadConnections} />
       )}
       {cloverImportModal && (
         <CloverImportModal
