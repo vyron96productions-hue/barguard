@@ -70,21 +70,11 @@ export default function HomePage() {
         <div style={{ padding: '48px 24px 80px' }}>
 
         <div className="hero-buttons">
-          <a href="/signup" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '14px 28px', background: '#f59e0b', color: '#020817',
-            fontWeight: 700, fontSize: 15, borderRadius: 12, textDecoration: 'none',
-            boxShadow: '0 0 30px rgba(245,158,11,0.25)'
-          }}>
+          <a href="/signup" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
             Start Free Trial
             <span style={{ fontSize: 16 }}>→</span>
           </a>
-          <a href="/pricing" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '14px 28px', background: 'transparent', color: '#94a3b8',
-            fontWeight: 500, fontSize: 15, borderRadius: 12, textDecoration: 'none',
-            border: '1px solid #1e293b'
-          }}>
+          <a href="/pricing" className="btn-secondary" style={{ padding: '14px 28px', fontSize: 15 }}>
             View Pricing
           </a>
         </div>
@@ -302,10 +292,10 @@ export default function HomePage() {
             Plans starting at $99/month. Try free for 14 days — no credit card required.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-            <a href="/pricing" style={{ padding: '14px 28px', background: '#f59e0b', color: '#020817', fontWeight: 700, fontSize: 15, borderRadius: 12, textDecoration: 'none', boxShadow: '0 0 30px rgba(245,158,11,0.2)' }}>
+            <a href="/pricing" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
               See All Plans
             </a>
-            <a href="/signup" style={{ padding: '14px 28px', background: 'transparent', color: '#94a3b8', fontWeight: 500, fontSize: 15, borderRadius: 12, textDecoration: 'none', border: '1px solid #1e293b' }}>
+            <a href="/signup" className="btn-secondary" style={{ padding: '14px 28px', fontSize: 15 }}>
               Start Free Trial
             </a>
           </div>
@@ -321,7 +311,7 @@ export default function HomePage() {
           <p style={{ fontSize: 16, color: '#64748b', marginBottom: 36, lineHeight: 1.65, maxWidth: 480, margin: '0 auto 36px' }}>
             Most bars see ROI in the first week. Start your free 14-day trial and find out exactly where your inventory is going.
           </p>
-          <a href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 36px', background: '#f59e0b', color: '#020817', fontWeight: 700, fontSize: 16, borderRadius: 12, textDecoration: 'none', boxShadow: '0 0 40px rgba(245,158,11,0.3)' }}>
+          <a href="/signup" className="btn-primary" style={{ padding: '16px 36px', fontSize: 16 }}>
             Get Started Free — 14-Day Trial
             <span>→</span>
           </a>

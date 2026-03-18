@@ -33,7 +33,7 @@ export default function MarketingNav() {
           <div className="mnav-links">
             <Link href="/pricing" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
             <Link href="/login" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>
-            <Link href="/signup" style={{ fontSize: 14, fontWeight: 600, color: '#020817', backgroundColor: '#f59e0b', textDecoration: 'none', padding: '8px 18px', borderRadius: 8 }}>Get Started Free</Link>
+            <Link href="/signup" className="btn-primary" style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>Get Started Free</Link>
 
             {/* Hamburger — mobile only */}
             <button
@@ -89,7 +89,7 @@ export default function MarketingNav() {
               <Link href="/login" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Sign in
               </Link>
-              <Link href="/signup" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, fontWeight: 600, color: '#020817', backgroundColor: '#f59e0b', textDecoration: 'none', padding: '13px 16px', borderRadius: 10, display: 'block', marginTop: 8, textAlign: 'center' }}>
+              <Link href="/signup" onClick={() => setMenuOpen(false)} className="btn-primary" style={{ fontSize: 16, padding: '13px 16px', borderRadius: 10, display: 'block', marginTop: 8, textAlign: 'center' as const, justifyContent: 'center' }}>
                 Get Started Free
               </Link>
             </div>

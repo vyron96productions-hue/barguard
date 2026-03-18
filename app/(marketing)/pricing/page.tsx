@@ -140,7 +140,7 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <a href="/signup" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, textDecoration: 'none', background: 'transparent', border: '1px solid #1e293b', color: '#94a3b8', boxSizing: 'border-box' as const }}>
+            <a href="/signup" className="btn-secondary" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const }}>
               Get started free
             </a>
           </div>
@@ -168,7 +168,7 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <a href="/signup" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, textDecoration: 'none', background: '#f59e0b', color: '#020817', boxSizing: 'border-box' as const }}>
+            <a href="/signup" className="btn-primary" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const }}>
               Start free trial
             </a>
           </div>
@@ -193,7 +193,7 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <a href="mailto:support@barguard.app" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, textDecoration: 'none', background: 'transparent', border: '1px solid #1e293b', color: '#94a3b8', boxSizing: 'border-box' as const }}>
+            <a href="mailto:support@barguard.app" className="btn-secondary" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const }}>
               Contact sales
             </a>
           </div>
