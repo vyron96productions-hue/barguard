@@ -180,46 +180,87 @@ export default function HomePage() {
           <p style={{ fontSize: 16, color: '#64748b', maxWidth: 480, margin: '0 auto' }}>Built specifically for bars and restaurants. Not a generic inventory tool.</p>
         </div>
         <div className="features-grid">
-          {[
-            {
-              icon: '◈',
-              title: 'Real-Time Variance Tracking',
-              desc: 'Compare what was poured vs. what was sold. Instantly spot discrepancies by item, shift, or date range.'
-            },
-            {
-              icon: '◑',
-              title: 'AI-Powered Loss Detection',
-              desc: 'Claude AI analyzes your patterns and surfaces the items most likely to be over-poured or going missing.'
-            },
-            {
-              icon: '⊡',
-              title: 'Invoice Scanning',
-              desc: 'Photograph or upload any invoice — AI extracts line items automatically. No manual data entry.'
-            },
-            {
-              icon: '◐',
-              title: 'Loss Reports',
-              desc: 'Detailed breakdown of every variance event. Export and share with your team or accountant.'
-            },
-            {
-              icon: '⟳',
-              title: 'Smart Reorder Alerts',
-              desc: 'Never run out of top sellers. Automated alerts when items hit your reorder threshold.'
-            },
-            {
-              icon: '⇋',
-              title: 'POS Integration',
-              desc: 'Connect your Square or other POS system to auto-import sales data. Zero manual entry.'
-            },
-          ].map((f) => (
-            <div key={f.title} className="feature-card">
-              <div className="feature-icon">
-                {f.icon}
-              </div>
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>{f.title}</h3>
-              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>{f.desc}</p>
+
+          {/* Real-Time Variance Tracking */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
             </div>
-          ))}
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>Real-Time Variance Tracking</h3>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Compare what was poured vs. what was sold. Instantly spot discrepancies by item, shift, or date range.</p>
+          </div>
+
+          {/* AI-Powered Loss Detection */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5V11h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2v1.5c1.2.7 2 2 2 3.5a4 4 0 0 1-8 0c0-1.5.8-2.8 2-3.5V16H8a2 2 0 0 1-2-2v-1a2 2 0 0 1 2-2h2V9.5C8.8 8.8 8 7.5 8 6a4 4 0 0 1 4-4z" />
+                <circle cx="12" cy="12" r="1" fill="#f59e0b" stroke="none" />
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>AI-Powered Loss Detection</h3>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Claude AI analyzes your patterns and surfaces the items most likely to be over-poured or going missing.</p>
+          </div>
+
+          {/* Invoice Scanning */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+                <line x1="9" y1="17" x2="13" y2="17" />
+                <path d="M17 17l2 2 4-4" strokeWidth="2" />
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>Invoice Scanning</h3>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Photograph or upload any invoice — AI extracts line items automatically. No manual data entry.</p>
+          </div>
+
+          {/* Loss Reports */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+                <line x1="2" y1="20" x2="22" y2="20" />
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>Loss Reports</h3>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Detailed breakdown of every variance event. Export and share with your team or accountant.</p>
+          </div>
+
+          {/* Smart Reorder Alerts */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <line x1="12" y1="2" x2="12" y2="4" />
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>Smart Reorder Alerts</h3>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Never run out of top sellers. Automated alerts when items hit your reorder threshold.</p>
+          </div>
+
+          {/* POS Integration */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+                <path d="M7 8h2m2 0h2m2 0h2" strokeWidth="2" />
+                <path d="M7 11h4" strokeWidth="2" />
+              </svg>
+            </div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, letterSpacing: '-0.3px' }}>POS Integration</h3>
+            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Connect your Square or other POS system to auto-import sales data. Zero manual entry.</p>
+          </div>
+
         </div>
       </section>
 
