@@ -168,7 +168,7 @@ export default function HomePage() {
       <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid #1e293b', borderBottom: '1px solid #1e293b', padding: '32px 24px' }}>
         <div className="stats-grid" style={{ maxWidth: 1120, margin: '0 auto' }}>
           {[
-            { value: '4+ POS Systems', label: 'Square, Clover, Toast & more' },
+            { value: 'Square + Clover', label: 'POS integrations, more coming' },
             { value: 'Easy Setup', label: 'No technical skills needed' },
             { value: '14 days', label: 'Free trial, no card needed' },
             { value: 'Cancel anytime', label: 'No long-term contracts' },

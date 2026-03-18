@@ -287,7 +287,7 @@ export default function FeaturesPage() {
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>POS Integration</h3>
                 <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65 }}>Connect your existing point-of-sale system and let sales data flow in automatically. No double-entry.</p>
                 <ul className="check-list">
-                  {['Square — full OAuth connection', 'Clover — OAuth + catalog import', 'Toast — credential-based sync', 'Lightspeed — OAuth connection', 'Sync sales for any date range on demand', 'View sync history and connection status', 'Real-time webhooks for Square and Clover'].map(f => (
+                  {['Square — full OAuth connection', 'Clover — OAuth + catalog import', 'Sync sales for any date range on demand', 'View sync history and connection status', 'Real-time webhooks for Square and Clover', 'More integrations coming soon'].map(f => (
                     <li key={f}><svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="7.5" fill="rgba(245,158,11,0.15)" /><path d="M4 7.5l2.5 2.5 4.5-4.5" stroke="#f59e0b" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>{f}</li>
                   ))}
                 </ul>
