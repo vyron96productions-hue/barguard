@@ -30,7 +30,7 @@ export default function TermsPage() {
 
         <h2 style={h2Style}>Account Terms</h2>
         <p style={pStyle}>
-          You must be at least 18 years old and have the legal authority to enter into these Terms on behalf of yourself or your business. You are responsible for maintaining the security of your account credentials and for all activity that occurs under your account.
+          You must be of legal drinking age (21 or older in the United States) and have the legal authority to enter into these Terms on behalf of yourself or your business. You are responsible for maintaining the security of your account credentials and for all activity that occurs under your account.
         </p>
         <p style={pStyle}>
           You must provide accurate, current, and complete information when creating your account. One account is provided per business unless you are on the Enterprise plan, which allows up to 5 locations.

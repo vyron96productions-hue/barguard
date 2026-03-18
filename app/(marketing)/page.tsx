@@ -168,10 +168,10 @@ export default function HomePage() {
       <section style={{ position: 'relative', zIndex: 1, borderTop: '1px solid #1e293b', borderBottom: '1px solid #1e293b', padding: '32px 24px' }}>
         <div className="stats-grid" style={{ maxWidth: 1120, margin: '0 auto' }}>
           {[
-            { value: '$2,400+', label: 'Average monthly savings' },
+            { value: '14 days', label: 'Free trial, full access' },
             { value: 'Easy Setup', label: 'No technical skills needed' },
             { value: '14 days', label: 'Free trial, no card needed' },
-            { value: '99.9%', label: 'Uptime guaranteed' },
+            { value: 'Square + Clover', label: 'POS integrations built-in' },
           ].map((stat) => (
             <div key={stat.label} style={{ padding: '8px 0' }}>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#f59e0b', fontFamily: 'var(--font-montserrat)', letterSpacing: '-1px', marginBottom: 4 }}>{stat.value}</p>
@@ -286,7 +286,7 @@ export default function HomePage() {
           </div>
           <div className="steps-grid">
             {[
-              { step: '01', title: 'Add Your Inventory', desc: 'Enter your bottles, kegs, and packs. Set par levels and cost prices. Takes about 15 minutes.' },
+              { step: '01', title: 'Add Your Inventory', desc: 'Enter your bottles, kegs, and packs. Set par levels and cost prices. The more items you carry, the longer it takes — but you only do it once.' },
               { step: '02', title: 'Count & Import', desc: 'Photograph invoices to auto-import purchases. Do stock counts before and after each shift.' },
               { step: '03', title: 'Catch the Losses', desc: "Run calculations and let BarGuard's AI flag what doesn't add up. Take action before it gets worse." },
             ].map((step) => (
@@ -330,7 +330,7 @@ export default function HomePage() {
             Ready to stop the <em style={{ color: '#f59e0b' }}>bleeding?</em>
           </h2>
           <p style={{ fontSize: 16, color: '#64748b', marginBottom: 36, lineHeight: 1.65, maxWidth: 480, margin: '0 auto 36px' }}>
-            Most bars see ROI in the first week. Start your free 14-day trial and find out exactly where your inventory is going.
+            Start your free 14-day trial and find out exactly where your inventory is going. No credit card, no commitment.
           </p>
           <a href="/signup" className="btn-primary" style={{ padding: '16px 36px', fontSize: 16 }}>
             Get Started Free — 14-Day Trial
