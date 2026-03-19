@@ -35,6 +35,8 @@ export default function ReorderPage() {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [openOrderVendor, setOpenOrderVendor] = useState<string | null>(null)
   const [copiedVendor, setCopiedVendor] = useState<string | null>(null)
+  const [sentVendor, setSentVendor] = useState<string | null>(null)
+  const [sendingVendor, setSendingVendor] = useState<string | null>(null)
   const [businessName, setBusinessName] = useState<string>('')
 
   async function analyze() {
@@ -122,6 +124,27 @@ ${businessName || 'My Bar'}`
     await navigator.clipboard.writeText(text)
     setCopiedVendor(vendorKey)
     setTimeout(() => setCopiedVendor(null), 2000)
+  }
+
+  async function sendEmail(vendorKey: string, group: { vendorName: string; vendorEmail: string | null; items: ReorderSuggestion[] }) {
+    if (!group.vendorEmail) return
+    setSendingVendor(vendorKey)
+    const orderText = buildOrderText(vendorKey, group)
+    const res = await fetch('/api/reorder/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vendorEmail: group.vendorEmail,
+        vendorName: group.vendorName,
+        orderText,
+        businessName,
+      }),
+    })
+    setSendingVendor(null)
+    if (res.ok) {
+      setSentVendor(vendorKey)
+      setTimeout(() => setSentVendor(null), 3000)
+    }
   }
 
   const grouped = groupByVendor(displayed)
@@ -275,19 +298,30 @@ ${businessName || 'My Bar'}`
                 <div className="border-t border-slate-800 bg-slate-950/60 px-4 sm:px-5 py-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Order Draft</p>
-                    <button
-                      onClick={() => copyOrder(vendorKey, group)}
-                      className="text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold rounded-lg transition-colors"
-                    >
-                      {copiedVendor === vendorKey ? 'Copied!' : 'Copy to Clipboard'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {group.vendorEmail && vendorKey !== '__unassigned__' && (
+                        <button
+                          onClick={() => sendEmail(vendorKey, group)}
+                          disabled={sendingVendor === vendorKey}
+                          className="text-xs px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {sendingVendor === vendorKey ? 'Sending…' : sentVendor === vendorKey ? 'Sent!' : 'Send Email'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => copyOrder(vendorKey, group)}
+                        className="text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold rounded-lg transition-colors"
+                      >
+                        {copiedVendor === vendorKey ? 'Copied!' : 'Copy to Clipboard'}
+                      </button>
+                    </div>
                   </div>
                   <pre className="text-xs text-slate-400 font-mono whitespace-pre-wrap bg-slate-900 border border-slate-800 rounded-xl p-4 leading-relaxed">
                     {buildOrderText(vendorKey, group)}
                   </pre>
-                  {vendorKey !== '__unassigned__' && (
+                  {vendorKey !== '__unassigned__' && !group.vendorEmail && (
                     <p className="text-[11px] text-slate-700">
-                      When you get a domain, we&apos;ll send this directly via email.
+                      Add a vendor email to send this order directly.
                     </p>
                   )}
                 </div>
