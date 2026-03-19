@@ -159,7 +159,7 @@ export default function FAQPage() {
           </h1>
           <p style={{ fontSize: 16, color: '#64748b', lineHeight: 1.65 }}>
             Can't find what you're looking for? Email us at{' '}
-            <a href="mailto:support@barguard.app" style={{ color: '#f59e0b', textDecoration: 'none' }}>support@barguard.app</a>
+            <a href="mailto:support@barguard.app" data-gtm-event="cta_click" data-gtm-label="faq_header_support_email" style={{ color: '#f59e0b', textDecoration: 'none' }}>support@barguard.app</a>
           </p>
         </div>
 
@@ -186,10 +186,10 @@ export default function FAQPage() {
             We're happy to walk you through anything before you sign up.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-            <a href="mailto:support@barguard.app" className="btn-secondary" style={{ padding: '12px 24px', fontSize: 14 }}>
+            <a href="mailto:support@barguard.app" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="faq_cta_email" style={{ padding: '12px 24px', fontSize: 14 }}>
               Email us
             </a>
-            <a href="/signup" className="btn-primary" style={{ padding: '12px 24px', fontSize: 14 }}>
+            <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="faq_cta_start_trial" style={{ padding: '12px 24px', fontSize: 14 }}>
               Start free trial
             </a>
           </div>

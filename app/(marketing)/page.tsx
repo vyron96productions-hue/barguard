@@ -91,11 +91,11 @@ export default function HomePage() {
         </div>
 
         <div className="hero-buttons">
-          <a href="/signup" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
+          <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="homepage_hero_start_trial" style={{ padding: '14px 28px', fontSize: 15 }}>
             Start Free Trial
             <span style={{ fontSize: 16 }}>→</span>
           </a>
-          <a href="/pricing" className="btn-secondary" style={{ padding: '14px 28px', fontSize: 15 }}>
+          <a href="/pricing" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_hero_view_pricing" style={{ padding: '14px 28px', fontSize: 15 }}>
             View Pricing
           </a>
         </div>
@@ -313,10 +313,10 @@ export default function HomePage() {
             Plans starting at $99/month. Try free for 14 days — no credit card required.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-            <a href="/pricing" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
+            <a href="/pricing" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="homepage_pricing_see_plans" style={{ padding: '14px 28px', fontSize: 15 }}>
               See All Plans
             </a>
-            <a href="/signup" className="btn-secondary" style={{ padding: '14px 28px', fontSize: 15 }}>
+            <a href="/signup" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_pricing_start_trial" style={{ padding: '14px 28px', fontSize: 15 }}>
               Start Free Trial
             </a>
           </div>
@@ -332,7 +332,7 @@ export default function HomePage() {
           <p style={{ fontSize: 16, color: '#64748b', marginBottom: 36, lineHeight: 1.65, maxWidth: 480, margin: '0 auto 36px' }}>
             Start your free 14-day trial and find out exactly where your inventory is going. No credit card, no commitment.
           </p>
-          <a href="/signup" className="btn-primary" style={{ padding: '16px 36px', fontSize: 16 }}>
+          <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="homepage_final_cta" style={{ padding: '16px 36px', fontSize: 16 }}>
             Get Started Free — 14-Day Trial
             <span>→</span>
           </a>

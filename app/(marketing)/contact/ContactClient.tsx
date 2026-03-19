@@ -142,7 +142,7 @@ export default function ContactClient() {
                       <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>
                         {item.desc}{' '}
                         {item.link && item.href && (
-                          <a href={item.href} style={{ color: '#f59e0b', textDecoration: 'none' }}>{item.link}</a>
+                          <a href={item.href} data-gtm-event="cta_click" data-gtm-label={item.href.startsWith('mailto') ? 'contact_support_email' : 'contact_faq_link'} style={{ color: '#f59e0b', textDecoration: 'none' }}>{item.link}</a>
                         )}
                       </p>
                     </div>
@@ -222,6 +222,8 @@ export default function ContactClient() {
                 <button
                   type="submit"
                   disabled={sending}
+                  data-gtm-event="cta_click"
+                  data-gtm-label="contact_form_submit"
                   style={{
                     width: '100%',
                     padding: '14px',

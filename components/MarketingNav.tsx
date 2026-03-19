@@ -40,12 +40,12 @@ export default function MarketingNav() {
           </Link>
 
           <div className="mnav-links">
-            <Link href="/features" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Features</Link>
-            <Link href="/pricing" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
-            <Link href="/about" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Why BarGuard</Link>
-            <Link href="/contact" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Contact</Link>
-            {!isSignedIn && <Link href="/login" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>}
-            <Link href={isSignedIn ? '/dashboard' : '/signup'} className="btn-primary" style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>
+            <Link href="/features" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_features" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Features</Link>
+            <Link href="/pricing" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_pricing" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
+            <Link href="/about" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_why_barguard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Why BarGuard</Link>
+            <Link href="/contact" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_contact" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Contact</Link>
+            {!isSignedIn && <Link href="/login" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_signin" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>}
+            <Link href={isSignedIn ? '/dashboard' : '/signup'} className="btn-primary" data-gtm-event="nav_click" data-gtm-label={isSignedIn ? 'nav_dashboard' : 'nav_get_started'} style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>
               {isSignedIn ? 'Dashboard' : 'Get Started Free'}
             </Link>
 
@@ -97,24 +97,24 @@ export default function MarketingNav() {
 
             {/* Links */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <Link href="/features" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+              <Link href="/features" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_features" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Features
               </Link>
-              <Link href="/pricing" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+              <Link href="/pricing" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_pricing" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Pricing
               </Link>
-              <Link href="/about" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+              <Link href="/about" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_why_barguard" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Why BarGuard
               </Link>
-              <Link href="/contact" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+              <Link href="/contact" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_contact" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Contact
               </Link>
               {!isSignedIn && (
-                <Link href="/login" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+                <Link href="/login" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_signin" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                   Sign in
                 </Link>
               )}
-              <Link href={isSignedIn ? '/dashboard' : '/signup'} onClick={() => setMenuOpen(false)} className="btn-primary" style={{ fontSize: 16, padding: '13px 16px', borderRadius: 10, display: 'block', marginTop: 8, textAlign: 'center' as const }}>
+              <Link href={isSignedIn ? '/dashboard' : '/signup'} onClick={() => setMenuOpen(false)} className="btn-primary" data-gtm-event="nav_click" data-gtm-label={isSignedIn ? 'nav_mobile_dashboard' : 'nav_mobile_get_started'} style={{ fontSize: 16, padding: '13px 16px', borderRadius: 10, display: 'block', marginTop: 8, textAlign: 'center' as const }}>
                 {isSignedIn ? 'Dashboard' : 'Get Started Free'}
               </Link>
             </div>

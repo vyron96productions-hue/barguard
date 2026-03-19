@@ -188,7 +188,7 @@ export default function AboutClient() {
 
                 {/* CTA */}
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                  <a href="/signup" style={{
+                  <a href="/signup" data-gtm-event="cta_click" data-gtm-label="about_cta_start_trial" style={{
                     display: 'inline-block',
                     padding: '14px 28px',
                     background: '#f59e0b',
@@ -201,7 +201,7 @@ export default function AboutClient() {
                   }}>
                     Start Free Trial
                   </a>
-                  <a href="/features" style={{
+                  <a href="/features" data-gtm-event="cta_click" data-gtm-label="about_cta_features" style={{
                     display: 'inline-block',
                     padding: '14px 28px',
                     background: 'transparent',

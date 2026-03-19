@@ -386,10 +386,10 @@ export default function FeaturesPage() {
             </h2>
             <p style={{ fontSize: 16, color: '#64748b', marginBottom: 36, lineHeight: 1.65 }}>No credit card required. Full access to all Pro features during your trial.</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-              <a href="/signup" className="btn-primary" style={{ padding: '14px 30px', fontSize: 15 }}>
+              <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="features_cta_start_trial" style={{ padding: '14px 30px', fontSize: 15 }}>
                 Start Free Trial →
               </a>
-              <a href="/pricing" className="btn-secondary" style={{ padding: '14px 30px', fontSize: 15 }}>
+              <a href="/pricing" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="features_cta_pricing" style={{ padding: '14px 30px', fontSize: 15 }}>
                 View Pricing
               </a>
             </div>

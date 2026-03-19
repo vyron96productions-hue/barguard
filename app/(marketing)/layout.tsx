@@ -44,20 +44,20 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               <div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Product</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/features" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Features</Link>
-                  <Link href="/pricing" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Pricing</Link>
-                  <Link href="/faq" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>FAQ</Link>
-                  <Link href="/about" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Why BarGuard</Link>
-                  <Link href="/contact" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Contact</Link>
-                  <Link href="/dashboard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Dashboard</Link>
+                  <Link href="/features" data-gtm-event="footer_click" data-gtm-label="footer_features" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Features</Link>
+                  <Link href="/pricing" data-gtm-event="footer_click" data-gtm-label="footer_pricing" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Pricing</Link>
+                  <Link href="/faq" data-gtm-event="footer_click" data-gtm-label="footer_faq" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>FAQ</Link>
+                  <Link href="/about" data-gtm-event="footer_click" data-gtm-label="footer_why_barguard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Why BarGuard</Link>
+                  <Link href="/contact" data-gtm-event="footer_click" data-gtm-label="footer_contact" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Contact</Link>
+                  <Link href="/dashboard" data-gtm-event="footer_click" data-gtm-label="footer_dashboard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Dashboard</Link>
                 </div>
               </div>
               <div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Legal</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/privacy" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Privacy Policy</Link>
-                  <Link href="/terms" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Terms of Service</Link>
-                  <Link href="/refund" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Refund Policy</Link>
+                  <Link href="/privacy" data-gtm-event="footer_click" data-gtm-label="footer_privacy" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Privacy Policy</Link>
+                  <Link href="/terms" data-gtm-event="footer_click" data-gtm-label="footer_terms" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Terms of Service</Link>
+                  <Link href="/refund" data-gtm-event="footer_click" data-gtm-label="footer_refund" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Refund Policy</Link>
                 </div>
               </div>
             </div>
