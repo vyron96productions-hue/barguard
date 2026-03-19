@@ -252,6 +252,46 @@ function PricingPageContent() {
 
         </div>
 
+        {/* FREE TRIAL CTA — signed-in users only */}
+        {isSignedIn && (
+          <div style={{
+            margin: '8px 0 40px',
+            padding: '28px 32px',
+            background: 'rgba(245,158,11,0.04)',
+            border: '1px solid rgba(245,158,11,0.15)',
+            borderRadius: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 20,
+          }}>
+            <div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#f8fafc', margin: '0 0 4px' }}>Not ready to pick a plan?</p>
+              <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>Start your free 14-day trial — full access, no credit card required.</p>
+            </div>
+            <a
+              href="/dashboard"
+              data-gtm-event="cta_click"
+              data-gtm-label="pricing_start_free_trial"
+              style={{
+                display: 'inline-block',
+                padding: '12px 28px',
+                background: 'transparent',
+                border: '1px solid rgba(245,158,11,0.4)',
+                color: '#f59e0b',
+                fontWeight: 600,
+                fontSize: 14,
+                borderRadius: 10,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap' as const,
+              }}
+            >
+              Start free trial — no card needed →
+            </a>
+          </div>
+        )}
+
         {/* TRUST STRIP */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 40, flexWrap: 'wrap', borderTop: '1px solid #1e293b', paddingTop: 48, paddingBottom: 80, marginTop: -20 }}>
           {[
