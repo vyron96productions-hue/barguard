@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 const prices = {
   basic: [99, 79],
@@ -25,8 +26,31 @@ export default function PricingPage() {
 
 function PricingPageContent() {
   const [annual, setAnnual] = useState(false)
+  const [isSignedIn, setIsSignedIn] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const expired = searchParams.get('expired') === '1'
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient()
+    supabase.auth.getSession().then(({ data }) => setIsSignedIn(!!data.session))
+  }, [])
+
+  async function handlePlanClick(plan: string) {
+    if (!isSignedIn) {
+      window.location.href = '/signup'
+      return
+    }
+    setCheckoutLoading(plan)
+    const res = await fetch('/api/stripe/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan }),
+    })
+    const data = await res.json()
+    setCheckoutLoading(null)
+    if (data.url) window.location.href = data.url
+  }
 
   const fmt = (key: keyof typeof prices) => annual ? prices[key][1] : prices[key][0]
   const annualNote = (key: keyof typeof prices) =>
@@ -168,9 +192,9 @@ function PricingPageContent() {
                 </li>
               ))}
             </ul>
-            <a href="/signup" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="pricing_basic_get_started" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const }}>
-              Get started free
-            </a>
+            <button onClick={() => handlePlanClick('basic')} disabled={checkoutLoading === 'basic'} className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="pricing_basic_get_started" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const, cursor: 'pointer' }}>
+              {checkoutLoading === 'basic' ? 'Loading…' : 'Get started free'}
+            </button>
           </div>
 
           {/* PRO (FEATURED) */}
@@ -196,9 +220,9 @@ function PricingPageContent() {
                 </li>
               ))}
             </ul>
-            <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="pricing_pro_start_trial" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const }}>
-              Start free trial
-            </a>
+            <button onClick={() => handlePlanClick('pro')} disabled={checkoutLoading === 'pro'} className="btn-primary" data-gtm-event="cta_click" data-gtm-label="pricing_pro_start_trial" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const, cursor: 'pointer' }}>
+              {checkoutLoading === 'pro' ? 'Loading…' : 'Start free trial'}
+            </button>
           </div>
 
           {/* ENTERPRISE */}
