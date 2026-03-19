@@ -67,7 +67,7 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const { adminSupabase } = await getAdminContext()
-    const { business_id, plan, disabled } = await req.json()
+    const { business_id, plan, disabled, bar_name, contact_email } = await req.json()
 
     if (!business_id) {
       return NextResponse.json({ error: 'business_id required' }, { status: 400 })
@@ -76,6 +76,8 @@ export async function PATCH(req: NextRequest) {
     const updates: Record<string, unknown> = {}
     if (plan) updates.plan = plan
     if (typeof disabled === 'boolean') updates.disabled = disabled
+    if (typeof bar_name === 'string' && bar_name.trim()) updates.name = bar_name.trim()
+    if (typeof contact_email === 'string') updates.contact_email = contact_email.trim()
 
     const { error } = await adminSupabase
       .from('businesses')

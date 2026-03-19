@@ -40,6 +40,12 @@ export default function AdminPage() {
   const [search, setSearch] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [expandedAccount, setExpandedAccount] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+  const [resetSending, setResetSending] = useState<string | null>(null)
+  const [resetSent, setResetSent] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/accounts')
@@ -73,6 +79,57 @@ export default function AdminPage() {
       setAccounts((prev) => prev.map((a) => a.business_id === businessId ? { ...a, plan } : a))
     } else {
       setError(data.error ?? 'Failed to update')
+    }
+  }
+
+  function toggleExpand(account: Account) {
+    if (expandedAccount === account.business_id) {
+      setExpandedAccount(null)
+    } else {
+      setExpandedAccount(account.business_id)
+      setEditName(account.bar_name)
+      setEditEmail(account.contact_email ?? '')
+    }
+  }
+
+  async function saveEdit(businessId: string) {
+    setEditSaving(true)
+    const res = await fetch('/api/admin/accounts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_id: businessId, bar_name: editName, contact_email: editEmail }),
+    })
+    const data = await res.json()
+    setEditSaving(false)
+    if (data.ok) {
+      setAccounts((prev) => prev.map((a) => a.business_id === businessId
+        ? { ...a, bar_name: editName, contact_email: editEmail }
+        : a
+      ))
+      setExpandedAccount(null)
+    } else {
+      setError(data.error ?? 'Failed to save')
+    }
+  }
+
+  async function sendPasswordReset(account: Account) {
+    if (!account.contact_email) {
+      setError('This account has no contact email set.')
+      return
+    }
+    setResetSending(account.user_id)
+    const res = await fetch('/api/admin/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: account.user_id, contact_email: account.contact_email }),
+    })
+    const data = await res.json()
+    setResetSending(null)
+    if (data.ok) {
+      setResetSent(account.user_id)
+      setTimeout(() => setResetSent(null), 3000)
+    } else {
+      setError(data.error ?? 'Failed to send reset email')
     }
   }
 
@@ -151,12 +208,13 @@ export default function AdminPage() {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Plan</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Change Plan</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-600 text-sm">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-600 text-sm">
                     No accounts found
                   </td>
                 </tr>
@@ -201,7 +259,63 @@ export default function AdminPage() {
                       <span className="ml-2 text-xs text-slate-500">Saving…</span>
                     )}
                   </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => sendPasswordReset(account)}
+                        disabled={resetSending === account.user_id}
+                        className="text-xs px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {resetSending === account.user_id ? 'Sending…' : resetSent === account.user_id ? 'Sent ✓' : 'Reset Password'}
+                      </button>
+                      <button
+                        onClick={() => toggleExpand(account)}
+                        className="text-xs px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+                      >
+                        {expandedAccount === account.business_id ? 'Close' : 'Edit'}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
+                {expandedAccount === account.business_id && (
+                  <tr className="bg-slate-800/40">
+                    <td colSpan={7} className="px-5 py-4">
+                      <div className="flex items-end gap-3 flex-wrap">
+                        <div>
+                          <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1">Bar Name</label>
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500/50 w-48"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1">Contact Email</label>
+                          <input
+                            type="email"
+                            value={editEmail}
+                            onChange={(e) => setEditEmail(e.target.value)}
+                            className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500/50 w-56"
+                          />
+                        </div>
+                        <button
+                          onClick={() => saveEdit(account.business_id)}
+                          disabled={editSaving}
+                          className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold text-xs rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {editSaving ? 'Saving…' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => setExpandedAccount(null)}
+                          className="px-3 py-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               ))}
             </tbody>
           </table>

@@ -89,6 +89,17 @@ export async function PATCH(req: NextRequest) {
       if (error) throw error
     }
 
+    // Mark onboarding complete if bar name and phone are set
+    if (!user.user_metadata?.onboarding_complete) {
+      const finalName = updates.name ?? body.bar_name
+      const finalPhone = updates.phone ?? body.phone
+      if (finalName && finalPhone) {
+        await adminSupabase.auth.admin.updateUserById(user.id, {
+          user_metadata: { ...(user.user_metadata ?? {}), onboarding_complete: true },
+        })
+      }
+    }
+
     return NextResponse.json({ ok: true })
   } catch (e) {
     return authErrorResponse(e)

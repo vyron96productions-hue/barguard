@@ -41,6 +41,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // Onboarding gate — redirect to profile if not completed
+  const onboardingComplete = user.user_metadata?.onboarding_complete === true
+  const isProfilePath = pathname.startsWith('/profile') || pathname.startsWith('/api/profile')
+  const isPricingPath = pathname.startsWith('/pricing')
+
+  if (!onboardingComplete && !isProfilePath && !isPricingPath) {
+    return NextResponse.redirect(new URL('/profile?new=1', request.url))
+  }
+
   return response
 }
 
