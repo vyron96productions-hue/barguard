@@ -116,8 +116,8 @@ export default function AboutClient() {
                 maxWidth: 360,
                 width: '100%',
               }}>
-                <p style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, margin: '0 0 2px', fontFamily: 'monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Founder</p>
-                <p style={{ fontSize: 14, color: '#cbd5e1', margin: 0, fontWeight: 500 }}>Hospitality Industry Veteran</p>
+                <p style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600, margin: '0 0 2px', fontFamily: 'monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Founder, BarGuard</p>
+                <p style={{ fontSize: 14, color: '#cbd5e1', margin: 0, fontWeight: 500 }}>Hospitality Operator</p>
                 <p style={{ fontSize: 12, color: '#475569', margin: '4px 0 0' }}>Security · Bartending · Promoting · Club Owner</p>
               </div>
             </div>
@@ -126,54 +126,68 @@ export default function AboutClient() {
             <div>
               <div className="about-divider" />
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
-                <p style={{ fontSize: 20, lineHeight: 1.7, color: '#cbd5e1', fontWeight: 500, margin: 0 }}>
-                  Most bar owners are losing money every single day and do not even realize how much.
-                </p>
-
-                <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
-                  It happens in small ways that add up fast. Over pouring. Missed comps. Inventory that does not match what was actually sold. By the end of the week, the numbers look close enough, but the profit is already gone.
-                </p>
-
-                {/* Callout block */}
-                <div style={{
-                  padding: '20px 24px',
-                  background: 'rgba(245,158,11,0.05)',
-                  border: '1px solid rgba(245,158,11,0.15)',
-                  borderLeft: '3px solid #f59e0b',
-                  borderRadius: '0 12px 12px 0',
-                }}>
-                  <p style={{ fontSize: 17, lineHeight: 1.7, color: '#e2e8f0', fontWeight: 500, margin: 0, fontStyle: 'italic' }}>
-                    I know this because I have lived it.
+                {/* Problem */}
+                <div style={{ marginBottom: 36 }}>
+                  <p style={{ fontSize: 20, lineHeight: 1.7, color: '#cbd5e1', fontWeight: 500, margin: '0 0 20px' }}>
+                    Most bar owners are losing thousands every month and do not even realize where it is going.
+                  </p>
+                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
+                    It happens in small ways that add up fast. Over pouring. Missed comps. Inventory that does not match what was actually sold. By the end of the week, the numbers look close enough, but the profit is already gone.
                   </p>
                 </div>
 
-                <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
-                  I have spent my entire adult life in the hospitality industry, from security and bartending to promoting and owning a nightclub. I have seen how hard it is to stay on top of inventory while running everything else, and how easy it is for losses to slip through without clear visibility.
-                </p>
-
-                <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
-                  The problem is not effort. It is the lack of real control.
-                </p>
+                {/* Credibility */}
+                <div style={{ marginBottom: 36 }}>
+                  {/* Callout block */}
+                  <div style={{
+                    padding: '20px 24px',
+                    background: 'rgba(245,158,11,0.05)',
+                    border: '1px solid rgba(245,158,11,0.15)',
+                    borderLeft: '3px solid #f59e0b',
+                    borderRadius: '0 12px 12px 0',
+                    marginBottom: 20,
+                  }}>
+                    <p style={{ fontSize: 17, lineHeight: 1.7, color: '#e2e8f0', fontWeight: 500, margin: 0, fontStyle: 'italic' }}>
+                      I know this because I have lived it on the floor, behind the bar, and as an owner.
+                    </p>
+                  </div>
+                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: '0 0 16px' }}>
+                    I have spent my entire adult life in the hospitality industry, from security and bartending to promoting and owning a nightclub. I have seen how hard it is to stay on top of inventory while running everything else, and how easy it is for losses to slip through without clear visibility.
+                  </p>
+                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
+                    The problem is not effort. It is the lack of real control.
+                  </p>
+                </div>
 
                 {/* Divider */}
-                <div style={{ height: 1, background: 'linear-gradient(90deg, #1e293b, transparent)', margin: '4px 0' }} />
+                <div style={{ height: 1, background: 'linear-gradient(90deg, #1e293b, transparent)', marginBottom: 36 }} />
 
-                <p style={{ fontSize: 18, lineHeight: 1.7, color: '#94a3b8', fontWeight: 600, margin: 0 }}>
-                  BarGuard was built to change that.
-                </p>
+                {/* Solution */}
+                <div style={{ marginBottom: 36 }}>
+                  <p style={{ fontSize: 18, lineHeight: 1.7, color: '#94a3b8', fontWeight: 600, margin: '0 0 16px' }}>
+                    BarGuard was built to change that.
+                  </p>
+                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: '0 0 16px' }}>
+                    It gives you a clear, real time view of what is actually happening in your bar so you can catch losses early, tighten operations, and protect your margins without slowing your team down.
+                  </p>
+                  {/* Product bridge */}
+                  <p style={{ fontSize: 15, lineHeight: 1.8, color: '#475569', margin: 0, borderTop: '1px solid #1e293b', paddingTop: 16 }}>
+                    BarGuard gives you real time control over your inventory so you can track every ounce, reduce loss, and protect your margins.
+                  </p>
+                </div>
 
-                <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
-                  It gives you a clear, real time view of what is actually happening in your bar so you can catch losses early, tighten operations, and protect your margins without slowing your team down.
-                </p>
-
-                <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
-                  This is not built on guesswork or theory. It is built from real experience solving a problem that costs bar owners money every single day.
-                </p>
+                {/* Closing */}
+                <div style={{ marginBottom: 40 }}>
+                  <p style={{ fontSize: 16, lineHeight: 1.8, color: '#64748b', margin: 0 }}>
+                    This is not guesswork. This is not theory.<br />
+                    This is built from real experience solving a problem that costs bar owners money every single day.
+                  </p>
+                </div>
 
                 {/* CTA */}
-                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 8 }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <a href="/signup" style={{
                     display: 'inline-block',
                     padding: '14px 28px',
