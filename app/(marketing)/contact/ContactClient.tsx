@@ -71,7 +71,7 @@ export default function ContactClient() {
           display: block;
           font-size: 12px;
           font-weight: 600;
-          color: #475569;
+          color: #ffffff;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           margin-bottom: 8px;
