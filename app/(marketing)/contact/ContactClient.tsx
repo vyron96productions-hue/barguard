@@ -58,13 +58,14 @@ export default function ContactClient() {
           border-radius: 10px;
           padding: 12px 16px;
           font-size: 15px;
-          color: #f1f5f9;
+          color: #ffffff;
           outline: none;
           transition: border-color 0.2s;
           box-sizing: border-box;
           font-family: inherit;
         }
-        .contact-input::placeholder { color: #334155; }
+        .contact-input::placeholder { color: #475569; }
+        .contact-input option { color: #ffffff; background: #0f172a; }
         .contact-input:focus { border-color: rgba(245,158,11,0.5); }
         .contact-label {
           display: block;
