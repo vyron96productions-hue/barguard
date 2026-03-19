@@ -43,6 +43,7 @@ export default function MarketingNav() {
             <Link href="/features" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Features</Link>
             <Link href="/pricing" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
             <Link href="/about" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Why BarGuard</Link>
+            <Link href="/contact" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Contact</Link>
             <Link href={isSignedIn ? '/dashboard' : '/login'} className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>
               {isSignedIn ? 'Dashboard' : 'Sign in'}
             </Link>
@@ -104,6 +105,9 @@ export default function MarketingNav() {
               </Link>
               <Link href="/about" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Why BarGuard
+              </Link>
+              <Link href="/contact" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+                Contact
               </Link>
               <Link href={isSignedIn ? '/dashboard' : '/login'} onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 {isSignedIn ? 'Dashboard' : 'Sign in'}
