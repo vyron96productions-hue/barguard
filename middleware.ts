@@ -45,15 +45,16 @@ export async function middleware(request: NextRequest) {
   const onboardingComplete = user.user_metadata?.onboarding_complete === true
   const isProfilePath = pathname.startsWith('/profile') || pathname.startsWith('/api/profile')
   const isPricingPath = pathname.startsWith('/pricing')
+  const isWelcomePath = pathname.startsWith('/welcome')
 
-  if (!onboardingComplete && !isProfilePath && !isPricingPath) {
+  if (!onboardingComplete && !isProfilePath && !isPricingPath && !isWelcomePath) {
     return NextResponse.redirect(new URL('/profile?new=1', request.url))
   }
 
   // Trial expiry gate — only for app pages, not API routes, auth/pricing/admin pages
   const isApiPath = pathname.startsWith('/api/')
   const isAdminPath = pathname.startsWith('/admin')
-  const isAppPage = !isApiPath && !isProfilePath && !isPricingPath && !isAdminPath
+  const isAppPage = !isApiPath && !isProfilePath && !isPricingPath && !isAdminPath && !isWelcomePath
 
   if (isAppPage) {
     const { data: ubRow } = await supabase
