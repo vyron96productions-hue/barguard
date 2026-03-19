@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import type { Vendor } from '@/types'
+import { PlanGate } from '@/components/PlanGate'
+import type { Plan } from '@/lib/plans'
 
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([])
   const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState<Plan>('basic')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [repName, setRepName] = useState('')
@@ -19,7 +22,10 @@ export default function VendorsPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
 
-  useEffect(() => { fetchVendors() }, [])
+  useEffect(() => {
+    fetchVendors()
+    fetch('/api/profile').then(r => r.json()).then(d => { if (d.plan) setPlan(d.plan) })
+  }, [])
 
   async function fetchVendors() {
     setLoading(true)
@@ -87,6 +93,7 @@ export default function VendorsPage() {
   }
 
   return (
+    <PlanGate feature="Vendor Management" requiredPlan="basic" currentPlan={plan}>
     <div className="space-y-5 max-w-2xl">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Vendors</h1>
@@ -232,5 +239,6 @@ export default function VendorsPage() {
         </div>
       )}
     </div>
+    </PlanGate>
   )
 }

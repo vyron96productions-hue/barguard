@@ -7,7 +7,7 @@ import { planHasFeature, type Plan } from '@/lib/plans'
 interface PlanGateProps {
   children: React.ReactNode
   feature: string
-  requiredPlan: 'pro' | 'enterprise'
+  requiredPlan: 'basic' | 'pro' | 'enterprise'
   currentPlan: Plan
 }
 
@@ -45,14 +45,16 @@ export function PlanGate({ children, feature, requiredPlan, currentPlan }: PlanG
           <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-3 text-xl">🔒</div>
           <p className="text-sm font-semibold text-slate-100 mb-1">{feature}</p>
           <p className="text-xs text-slate-400 mb-5">
-            Available on <span className="text-amber-400 font-medium">{requiredPlan === 'pro' ? 'Pro ($199/mo)' : 'Enterprise ($399/mo)'}</span> and above
+            Available on <span className="text-amber-400 font-medium">
+              {requiredPlan === 'basic' ? 'Basic ($99/mo)' : requiredPlan === 'pro' ? 'Pro ($199/mo)' : 'Enterprise ($399/mo)'}
+            </span> and above
           </p>
           <button
             onClick={handleUpgrade}
             disabled={loading}
             className="bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-900 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
           >
-            {loading ? 'Redirecting…' : `Upgrade to ${requiredPlan === 'pro' ? 'Pro' : 'Enterprise'}`}
+            {loading ? 'Redirecting…' : `Upgrade to ${requiredPlan === 'basic' ? 'Basic' : requiredPlan === 'pro' ? 'Pro' : 'Enterprise'}`}
           </button>
         </div>
       </div>

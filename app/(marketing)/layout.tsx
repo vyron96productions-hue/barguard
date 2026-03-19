@@ -47,6 +47,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                   <Link href="/features" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Features</Link>
                   <Link href="/pricing" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Pricing</Link>
                   <Link href="/faq" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>FAQ</Link>
+                  <Link href="/about" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Why BarGuard</Link>
                   <Link href="/dashboard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Sign In</Link>
                 </div>
               </div>

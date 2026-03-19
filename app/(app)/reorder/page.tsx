@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { formatQty } from '@/lib/conversions'
 import type { ReorderSuggestion } from '@/app/api/reorder-suggestions/route'
+import { PlanGate } from '@/components/PlanGate'
+import type { Plan } from '@/lib/plans'
 
 type Priority = 'urgent' | 'soon' | 'watch' | 'ok'
 
@@ -38,6 +40,11 @@ export default function ReorderPage() {
   const [sentVendor, setSentVendor] = useState<string | null>(null)
   const [sendingVendor, setSendingVendor] = useState<string | null>(null)
   const [businessName, setBusinessName] = useState<string>('')
+  const [plan, setPlan] = useState<Plan>('basic')
+
+  useEffect(() => {
+    fetch('/api/profile').then(r => r.json()).then(d => { if (d.plan) setPlan(d.plan) })
+  }, [])
 
   async function analyze() {
     setLoading(true)
@@ -151,6 +158,7 @@ ${businessName || 'My Bar'}`
   const totalReorder = suggestions.filter((s) => s.should_reorder).length
 
   return (
+    <PlanGate feature="Smart Reorder" requiredPlan="basic" currentPlan={plan}>
     <div className="space-y-5 max-w-3xl">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Smart Reorder</h1>
@@ -331,5 +339,6 @@ ${businessName || 'My Bar'}`
         </div>
       )}
     </div>
+    </PlanGate>
   )
 }

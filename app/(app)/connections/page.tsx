@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { POS_PROVIDERS, type PosProviderMeta, type PosConnection, type PosSyncLog } from '@/lib/pos/types'
+import { PlanGate } from '@/components/PlanGate'
+import type { Plan } from '@/lib/plans'
 
 interface CloverCatalogItem {
   id: string
@@ -393,6 +395,7 @@ function ConnectionsContent() {
   const [syncTarget, setSyncTarget] = useState<PosProviderMeta | null>(null)
   const [cloverImportModal, setCloverImportModal] = useState(false)
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
+  const [plan, setPlan] = useState<Plan>('basic')
 
   const loadConnections = useCallback(async () => {
     const [connRes, logRes] = await Promise.all([
@@ -405,6 +408,7 @@ function ConnectionsContent() {
 
   useEffect(() => {
     loadConnections()
+    fetch('/api/profile').then(r => r.json()).then(d => { if (d.plan) setPlan(d.plan) })
     const success = searchParams.get('success')
     const error = searchParams.get('error')
     if (success) setBanner({ type: 'success', msg: `${success} connected successfully!` })
@@ -434,6 +438,7 @@ function ConnectionsContent() {
   }
 
   return (
+    <PlanGate feature="POS Integrations" requiredPlan="basic" currentPlan={plan}>
     <div className="space-y-5 max-w-[1200px]">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
@@ -578,5 +583,6 @@ function ConnectionsContent() {
         />
       )}
     </div>
+    </PlanGate>
   )
 }

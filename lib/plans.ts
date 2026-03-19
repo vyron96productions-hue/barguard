@@ -8,7 +8,7 @@ export const PRICE_IDS: Record<string, string> = {
 
 export const PLAN_ORDER: Plan[] = ['basic', 'pro', 'enterprise', 'legacy']
 
-export function planHasFeature(plan: Plan, requiredPlan: 'pro' | 'enterprise') {
+export function planHasFeature(plan: Plan, requiredPlan: 'basic' | 'pro' | 'enterprise') {
   if (plan === 'legacy') return true
   const current = PLAN_ORDER.indexOf(plan)
   const required = PLAN_ORDER.indexOf(requiredPlan)

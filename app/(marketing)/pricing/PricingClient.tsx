@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 const prices = {
   basic: [99, 79],
@@ -18,7 +20,13 @@ function CheckIcon() {
 }
 
 export default function PricingPage() {
+  return <Suspense><PricingPageContent /></Suspense>
+}
+
+function PricingPageContent() {
   const [annual, setAnnual] = useState(false)
+  const searchParams = useSearchParams()
+  const expired = searchParams.get('expired') === '1'
 
   const fmt = (key: keyof typeof prices) => annual ? prices[key][1] : prices[key][0]
   const annualNote = (key: keyof typeof prices) =>
@@ -65,6 +73,26 @@ export default function PricingPage() {
       }} />
 
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
+
+        {/* Trial expired banner */}
+        {expired && (
+          <div style={{
+            margin: '24px 0 -24px',
+            padding: '14px 20px',
+            borderRadius: 12,
+            background: 'rgba(239,68,68,0.08)',
+            border: '1px solid rgba(239,68,68,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 16 }}>⏰</span>
+            <div>
+              <p style={{ color: '#fca5a5', fontSize: 14, fontWeight: 600, margin: 0 }}>Your free trial has expired</p>
+              <p style={{ color: '#f87171', fontSize: 12, margin: '2px 0 0', opacity: 0.8 }}>Choose a plan below to keep using BarGuard.</p>
+            </div>
+          </div>
+        )}
 
         {/* HERO */}
         <section style={{ textAlign: 'center', padding: '72px 0 64px' }}>

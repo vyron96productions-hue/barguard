@@ -5,7 +5,7 @@ const PUBLIC_PATHS_EXACT = ['/']
 const PUBLIC_PREFIXES = [
   '/login', '/signup', '/forgot-password', '/reset-password',
   '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
-  '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq',
+  '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about',
 ]
 
 export async function middleware(request: NextRequest) {
@@ -48,6 +48,30 @@ export async function middleware(request: NextRequest) {
 
   if (!onboardingComplete && !isProfilePath && !isPricingPath) {
     return NextResponse.redirect(new URL('/profile?new=1', request.url))
+  }
+
+  // Trial expiry gate — only for app pages, not API routes, auth/pricing/admin pages
+  const isApiPath = pathname.startsWith('/api/')
+  const isAdminPath = pathname.startsWith('/admin')
+  const isAppPage = !isApiPath && !isProfilePath && !isPricingPath && !isAdminPath
+
+  if (isAppPage) {
+    const { data: ubRow } = await supabase
+      .from('user_businesses')
+      .select('businesses(plan, trial_ends_at, stripe_subscription_id)')
+      .eq('user_id', user.id)
+      .single()
+
+    const biz = (ubRow as any)?.businesses
+    if (
+      biz &&
+      biz.plan !== 'legacy' &&
+      biz.stripe_subscription_id === null &&
+      biz.trial_ends_at &&
+      new Date(biz.trial_ends_at) < new Date()
+    ) {
+      return NextResponse.redirect(new URL('/pricing?expired=1', request.url))
+    }
   }
 
   return response
