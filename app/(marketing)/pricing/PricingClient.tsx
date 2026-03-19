@@ -193,7 +193,7 @@ function PricingPageContent() {
               ))}
             </ul>
             <button onClick={() => handlePlanClick('basic')} disabled={checkoutLoading === 'basic'} className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="pricing_basic_get_started" style={{ display: 'block', width: '100%', padding: '13px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600, textAlign: 'center' as const, boxSizing: 'border-box' as const, cursor: 'pointer' }}>
-              {checkoutLoading === 'basic' ? 'Loading…' : 'Get started free'}
+              {checkoutLoading === 'basic' ? 'Loading…' : 'Start free trial'}
             </button>
           </div>
 

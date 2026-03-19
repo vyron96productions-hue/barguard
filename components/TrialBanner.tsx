@@ -78,7 +78,7 @@ export function TrialBanner({ children }: { children: React.ReactNode }) {
     else setUpgrading(null)
   }
 
-  const isExempt = pathname === '/profile' || pathname === '/upgrade'
+  const isExempt = pathname === '/profile'
 
   const planPicker = (title: string, subtitle: string) => (
     <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-sm flex items-center justify-center p-4">
