@@ -8,7 +8,7 @@ export async function GET() {
 
     const { data: biz } = await supabase
       .from('businesses')
-      .select('name, address, contact_email, plan, stripe_customer_id, stripe_subscription_id, trial_ends_at')
+      .select('name, address, contact_email, phone, bar_type, plan, stripe_customer_id, stripe_subscription_id, trial_ends_at')
       .eq('id', businessId)
       .single()
 
@@ -21,6 +21,8 @@ export async function GET() {
       bar_name: biz?.name ?? '',
       address: biz?.address ?? '',
       contact_email: biz?.contact_email ?? '',
+      phone: (biz as any)?.phone ?? '',
+      bar_type: (biz as any)?.bar_type ?? '',
       plan: biz?.plan ?? 'basic',
       has_subscription: !!biz?.stripe_customer_id,
       trial_ends_at: biz?.trial_ends_at ?? null,
@@ -70,6 +72,12 @@ export async function PATCH(req: NextRequest) {
     }
     if (typeof body.contact_email === 'string') {
       updates.contact_email = body.contact_email.trim()
+    }
+    if (typeof body.phone === 'string') {
+      updates.phone = body.phone.trim()
+    }
+    if (typeof body.bar_type === 'string') {
+      updates.bar_type = body.bar_type.trim()
     }
 
     if (Object.keys(updates).length > 0) {

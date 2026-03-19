@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 function ProfileContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const isNew = searchParams.get('new') === '1'
 
   const [barName, setBarName] = useState('')
   const [address, setAddress] = useState('')
   const [contactEmail, setContactEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [barType, setBarType] = useState('')
   const [username, setUsername] = useState('')
   const [newUsername, setNewUsername] = useState('')
   const [plan, setPlan] = useState('basic')
@@ -34,6 +37,8 @@ function ProfileContent() {
         setBarName(d.bar_name ?? '')
         setAddress(d.address ?? '')
         setContactEmail(d.contact_email ?? '')
+        setPhone(d.phone ?? '')
+        setBarType(d.bar_type ?? '')
         setUsername(d.username ?? '')
         setNewUsername(d.username ?? '')
         setPlan(d.plan ?? 'basic')
@@ -51,7 +56,7 @@ function ProfileContent() {
     const res = await fetch('/api/profile', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bar_name: barName, address, contact_email: contactEmail }),
+      body: JSON.stringify({ bar_name: barName, address, contact_email: contactEmail, phone, bar_type: barType }),
     })
 
     const data = await res.json()
@@ -60,7 +65,11 @@ function ProfileContent() {
     if (!res.ok || data.error) {
       setProfileMsg({ type: 'error', text: data.error ?? 'Failed to save' })
     } else {
-      setProfileMsg({ type: 'success', text: 'Saved!' })
+      if (isNew) {
+        router.push('/pricing')
+      } else {
+        setProfileMsg({ type: 'success', text: 'Saved!' })
+      }
     }
   }
 
@@ -156,6 +165,36 @@ function ProfileContent() {
           </div>
 
           <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Phone Number</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="(555) 555-5555"
+              className="w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Bar Type</label>
+            <select
+              value={barType}
+              onChange={(e) => setBarType(e.target.value)}
+              className="w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+            >
+              <option value="">Select type…</option>
+              <option value="bar">Bar / Pub</option>
+              <option value="sports_bar">Sports Bar</option>
+              <option value="nightclub">Nightclub</option>
+              <option value="restaurant_bar">Restaurant & Bar</option>
+              <option value="hotel_bar">Hotel Bar</option>
+              <option value="brewery">Brewery / Taproom</option>
+              <option value="lounge">Lounge / Cocktail Bar</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
             <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Contact Email</label>
             <input
               type="email"
@@ -182,7 +221,7 @@ function ProfileContent() {
             disabled={saving}
             className="bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-900 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
           >
-            {saving ? 'Saving…' : 'Save Changes'}
+            {saving ? 'Saving…' : isNew ? 'Save & Choose a Plan →' : 'Save Changes'}
           </button>
         </form>
       </div>
