@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 type Plan = 'legacy' | 'basic' | 'pro' | 'enterprise'
@@ -220,7 +220,8 @@ export default function AdminPage() {
                 </tr>
               )}
               {filtered.map((account) => (
-                <tr key={account.business_id} className="hover:bg-slate-800/30 transition-colors">
+                <React.Fragment key={account.business_id}>
+                <tr className="hover:bg-slate-800/30 transition-colors">
                   <td className="px-5 py-4">
                     <p className="font-medium text-slate-100">{account.bar_name}</p>
                     {account.is_admin && (
@@ -316,6 +317,7 @@ export default function AdminPage() {
                     </td>
                   </tr>
                 )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
