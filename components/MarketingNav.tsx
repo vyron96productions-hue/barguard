@@ -44,10 +44,10 @@ export default function MarketingNav() {
             <Link href="/pricing" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
             <Link href="/about" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Why BarGuard</Link>
             <Link href="/contact" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Contact</Link>
-            <Link href={isSignedIn ? '/dashboard' : '/login'} className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>
-              {isSignedIn ? 'Dashboard' : 'Sign in'}
+            {!isSignedIn && <Link href="/login" className="mnav-text-link" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>}
+            <Link href={isSignedIn ? '/dashboard' : '/signup'} className="btn-primary" style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>
+              {isSignedIn ? 'Dashboard' : 'Get Started Free'}
             </Link>
-            {!isSignedIn && <Link href="/signup" className="btn-primary" style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>Get Started Free</Link>}
 
             {/* Hamburger — mobile only */}
             <button
@@ -109,14 +109,14 @@ export default function MarketingNav() {
               <Link href="/contact" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Contact
               </Link>
-              <Link href={isSignedIn ? '/dashboard' : '/login'} onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
-                {isSignedIn ? 'Dashboard' : 'Sign in'}
-              </Link>
               {!isSignedIn && (
-                <Link href="/signup" onClick={() => setMenuOpen(false)} className="btn-primary" style={{ fontSize: 16, padding: '13px 16px', borderRadius: 10, display: 'block', marginTop: 8, textAlign: 'center' as const, justifyContent: 'center' }}>
-                  Get Started Free
+                <Link href="/login" onClick={() => setMenuOpen(false)} style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+                  Sign in
                 </Link>
               )}
+              <Link href={isSignedIn ? '/dashboard' : '/signup'} onClick={() => setMenuOpen(false)} className="btn-primary" style={{ fontSize: 16, padding: '13px 16px', borderRadius: 10, display: 'block', marginTop: 8, textAlign: 'center' as const }}>
+                {isSignedIn ? 'Dashboard' : 'Get Started Free'}
+              </Link>
             </div>
           </div>
         </div>
