@@ -27,7 +27,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ imported: count })
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : 'unknown'
-    return authErrorResponse(e) || NextResponse.json({ error: msg }, { status: 500 })
+    return authErrorResponse(e)
   }
 }

@@ -93,7 +93,7 @@ export async function PATCH(req: NextRequest) {
     if (!user.user_metadata?.onboarding_complete) {
       const finalName = updates.name ?? body.bar_name
       const finalPhone = updates.phone ?? body.phone
-      if (finalName && finalPhone) {
+      if (finalName) {
         await adminSupabase.auth.admin.updateUserById(user.id, {
           user_metadata: { ...(user.user_metadata ?? {}), onboarding_complete: true },
         })
