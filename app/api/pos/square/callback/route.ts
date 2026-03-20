@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? url.origin
 
   if (error) return NextResponse.redirect(`${baseUrl}/connections?error=square_denied`)
-  if (!code) return NextResponse.redirect(`${baseUrl}/connections?error=square_no_code`)
+  if (!code || !state) return NextResponse.redirect(`${baseUrl}/connections?error=square_no_code`)
 
   const cookieStore = await cookies()
   const savedState = cookieStore.get('pos_oauth_state')?.value
@@ -21,11 +21,10 @@ export async function GET(req: Request) {
   }
   cookieStore.delete('pos_oauth_state')
 
-  // Read business_id from cookie — session cookie won't survive the cross-site redirect from Square
-  const businessId = cookieStore.get('pos_oauth_business_id')?.value
-  cookieStore.delete('pos_oauth_business_id')
+  // businessId is encoded in the state: "{nonce}|{businessId}"
+  const businessId = state.split('|')[1]
   if (!businessId) {
-    return NextResponse.redirect(`${baseUrl}/connections?error=square_session_expired`)
+    return NextResponse.redirect(`${baseUrl}/connections?error=square_invalid_state`)
   }
 
   try {
