@@ -46,6 +46,8 @@ export default function AdminPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [resetSending, setResetSending] = useState<string | null>(null)
   const [resetSent, setResetSent] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/accounts')
@@ -109,6 +111,24 @@ export default function AdminPage() {
       setExpandedAccount(null)
     } else {
       setError(data.error ?? 'Failed to save')
+    }
+  }
+
+  async function deleteAccount(account: Account) {
+    setDeleting(account.business_id)
+    setError(null)
+    const res = await fetch('/api/admin/accounts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_id: account.business_id, user_id: account.user_id }),
+    })
+    const data = await res.json()
+    setDeleting(null)
+    setConfirmDelete(null)
+    if (data.ok) {
+      setAccounts((prev) => prev.filter((a) => a.business_id !== account.business_id))
+    } else {
+      setError(data.error ?? 'Failed to delete account')
     }
   }
 
@@ -261,7 +281,7 @@ export default function AdminPage() {
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => sendPasswordReset(account)}
                         disabled={resetSending === account.user_id}
@@ -275,6 +295,31 @@ export default function AdminPage() {
                       >
                         {expandedAccount === account.business_id ? 'Close' : 'Edit'}
                       </button>
+                      {confirmDelete === account.business_id ? (
+                        <>
+                          <span className="text-xs text-red-400 font-medium">Sure?</span>
+                          <button
+                            onClick={() => deleteAccount(account)}
+                            disabled={deleting === account.business_id}
+                            className="text-xs px-2.5 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {deleting === account.business_id ? 'Deleting…' : 'Yes, Delete'}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(null)}
+                            className="text-xs px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDelete(account.business_id)}
+                          className="text-xs px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg transition-colors"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { getAdminContext } from '@/lib/admin-auth'
 import { authErrorResponse } from '@/lib/auth'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function GET() {
   try {
@@ -85,6 +88,43 @@ export async function PATCH(req: NextRequest) {
       .eq('id', business_id)
 
     if (error) throw error
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return authErrorResponse(e)
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { adminSupabase } = await getAdminContext()
+    const { business_id, user_id } = await req.json()
+
+    if (!business_id || !user_id) {
+      return NextResponse.json({ error: 'business_id and user_id required' }, { status: 400 })
+    }
+
+    // Cancel Stripe subscription if one exists
+    const { data: biz } = await adminSupabase
+      .from('businesses')
+      .select('stripe_subscription_id')
+      .eq('id', business_id)
+      .single()
+
+    if (biz?.stripe_subscription_id) {
+      try {
+        await stripe.subscriptions.cancel(biz.stripe_subscription_id)
+      } catch {
+        // Subscription may already be cancelled — continue with deletion
+      }
+    }
+
+    // Delete business row (cascades to inventory, purchases, sales, etc. via FK)
+    await adminSupabase.from('businesses').delete().eq('id', business_id)
+
+    // Delete the auth user
+    const { error: authErr } = await adminSupabase.auth.admin.deleteUser(user_id)
+    if (authErr) throw authErr
+
     return NextResponse.json({ ok: true })
   } catch (e) {
     return authErrorResponse(e)
