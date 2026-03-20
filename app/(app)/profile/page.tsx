@@ -9,13 +9,20 @@ function ProfileContent() {
   const router = useRouter()
   const isNew = searchParams.get('new') === '1'
   const isUpgraded = searchParams.get('upgraded') === '1'
+  const urlPlan = searchParams.get('plan') ?? 'unknown'
+  const urlBilling = searchParams.get('billing') ?? 'monthly'
 
   useEffect(() => {
-    if (isUpgraded) {
-      window.dataLayer = window.dataLayer || []
-      window.dataLayer.push({ event: 'plan_purchased' })
-    }
-  }, [isUpgraded])
+    if (!isUpgraded) return
+    if (sessionStorage.getItem('plan_purchased_fired')) return
+    sessionStorage.setItem('plan_purchased_fired', '1')
+    window.dataLayer = window.dataLayer || []
+    window.dataLayer.push({
+      event: 'plan_purchased',
+      plan_name: urlPlan,
+      billing_period: urlBilling,
+    })
+  }, [isUpgraded, urlPlan, urlBilling])
 
   const [barName, setBarName] = useState('')
   const [address, setAddress] = useState('')

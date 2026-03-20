@@ -3,13 +3,24 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 export default function WelcomePage() {
   const router = useRouter()
 
   useEffect(() => {
-    window.dataLayer = window.dataLayer || []
-    window.dataLayer.push({ event: 'account_created' })
+    if (sessionStorage.getItem('account_created_fired')) return
+    sessionStorage.setItem('account_created_fired', '1')
+
+    const supabase = createSupabaseBrowserClient()
+    supabase.auth.getSession().then(({ data }) => {
+      const provider = data.session?.user?.app_metadata?.provider ?? 'email'
+      window.dataLayer = window.dataLayer || []
+      window.dataLayer.push({
+        event: 'account_created',
+        signup_method: provider === 'google' ? 'google_oauth' : 'email',
+      })
+    })
   }, [])
 
   return (

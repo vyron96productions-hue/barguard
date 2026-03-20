@@ -45,11 +45,17 @@ function PricingPageContent() {
     const res = await fetch('/api/stripe/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, billing: annual ? 'annual' : 'monthly' }),
     })
     const data = await res.json()
     setCheckoutLoading(null)
     if (data.url) window.location.href = data.url
+  }
+
+  function handleTrialClick() {
+    window.dataLayer = window.dataLayer || []
+    window.dataLayer.push({ event: 'trial_started' })
+    window.location.href = '/dashboard'
   }
 
   const fmt = (key: keyof typeof prices) => annual ? prices[key][1] : prices[key][0]
@@ -270,8 +276,8 @@ function PricingPageContent() {
               <p style={{ fontSize: 16, fontWeight: 700, color: '#f8fafc', margin: '0 0 4px' }}>Not ready to pick a plan?</p>
               <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>Start your free 14-day trial — full access, no credit card required.</p>
             </div>
-            <a
-              href="/dashboard"
+            <button
+              onClick={handleTrialClick}
               data-gtm-event="cta_click"
               data-gtm-label="pricing_start_free_trial"
               style={{
@@ -283,12 +289,12 @@ function PricingPageContent() {
                 fontWeight: 600,
                 fontSize: 14,
                 borderRadius: 10,
-                textDecoration: 'none',
+                cursor: 'pointer',
                 whiteSpace: 'nowrap' as const,
               }}
             >
               Start free trial — no card needed →
-            </a>
+            </button>
           </div>
         )}
 

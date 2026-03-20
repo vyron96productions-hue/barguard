@@ -9,7 +9,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 export async function POST(req: NextRequest) {
   try {
     const { supabase, user, businessId } = await getAuthContext()
-    const { plan } = await req.json()
+    const { plan, billing } = await req.json()
 
     const priceId = PRICE_IDS[plan]
     if (!priceId) {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/profile?upgraded=1`,
+      success_url: `${origin}/profile?upgraded=1&plan=${plan}&billing=${billing ?? 'monthly'}`,
       cancel_url: `${origin}/profile`,
       metadata: { business_id: businessId },
     })
