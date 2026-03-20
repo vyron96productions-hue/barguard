@@ -61,9 +61,27 @@ export async function POST(req: NextRequest) {
 
     if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
+    let itemsCreated = 0
+
     const counts = await Promise.all(
       validRows.map(async (r) => {
-        const inventoryItemId = await resolveInventoryItemId(r.item_name, supabase, businessId)
+        let inventoryItemId = await resolveInventoryItemId(r.item_name, supabase, businessId)
+
+        // Auto-create inventory item if it doesn't exist
+        if (!inventoryItemId) {
+          const unit = r.unit_type ?? 'bottle'
+          const { data: newItem } = await supabase
+            .from('inventory_items')
+            .insert({ business_id: businessId, name: r.item_name, unit })
+            .select('id')
+            .single()
+
+          if (newItem) {
+            inventoryItemId = newItem.id
+            itemsCreated++
+          }
+        }
+
         return {
           upload_id: upload.id,
           business_id: businessId,
@@ -81,6 +99,6 @@ export async function POST(req: NextRequest) {
 
     const unresolved = [...new Set(counts.filter((c) => !c.inventory_item_id).map((c) => c.raw_item_name))]
 
-    return NextResponse.json({ upload_id: upload.id, rows_imported: validRows.length, unresolved_aliases: unresolved, row_errors: rowErrors })
+    return NextResponse.json({ upload_id: upload.id, rows_imported: validRows.length, items_created: itemsCreated, unresolved_aliases: unresolved, row_errors: rowErrors })
   } catch (e) { return authErrorResponse(e) }
 }
