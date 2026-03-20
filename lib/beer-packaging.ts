@@ -288,6 +288,8 @@ export function formatPackBreakdown(
   const packs  = Math.floor(units / packSize)
   const rem    = Math.round((units % packSize) * 100) / 100
   const label  = packageType ?? `${packSize}-pack`
-  const packStr = `${packs} × ${label}${rem > 0 ? ` + ${rem}` : ''}`
+  // Don't show "0 × case + N" — just show the remainder as loose units
+  if (packs === 0) return `${totalUnits} units · ${rem} loose`
+  const packStr = `${packs} × ${label}${rem > 0 ? ` + ${rem} loose` : ''}`
   return `${totalUnits} units · ${packStr}`
 }
