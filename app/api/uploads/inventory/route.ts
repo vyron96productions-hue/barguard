@@ -70,9 +70,11 @@ export async function POST(req: NextRequest) {
         // Auto-create inventory item if it doesn't exist
         if (!inventoryItemId) {
           const unit = r.unit_type ?? 'bottle'
+          const foodUnits = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'serving', 'slice', 'tray', 'flat', 'bag', 'jar', 'packet', 'cup', 'tbsp', 'tsp'])
+          const item_type = foodUnits.has(unit) ? 'food' : 'beverage'
           const { data: newItem } = await supabase
             .from('inventory_items')
-            .insert({ business_id: businessId, name: r.item_name, unit })
+            .insert({ business_id: businessId, name: r.item_name, unit, item_type })
             .select('id')
             .single()
 

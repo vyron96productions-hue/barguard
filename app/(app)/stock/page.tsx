@@ -75,7 +75,16 @@ function staleness(item: StockItem): 'fresh' | 'aging' | 'stale' | 'never' {
   return 'stale'
 }
 
-function isFood(item: StockItem) { return item.item_type === 'food' }
+const FOOD_UNIT_SET = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'serving', 'slice', 'tray', 'flat', 'bag', 'jar', 'packet', 'cup', 'tbsp', 'tsp'])
+
+function isFood(item: StockItem) {
+  if (item.item_type === 'food') return true
+  if (item.item_type === 'beverage') return false
+  // Fall back to category/unit when item_type is null (e.g. CSV-imported items)
+  const cat = item.category?.toLowerCase() ?? ''
+  if (FOOD_CATEGORIES.some((fc) => cat === fc.toLowerCase())) return true
+  return FOOD_UNIT_SET.has(item.unit)
+}
 
 export default function StockPage() {
   const [items, setItems] = useState<StockItem[]>([])
