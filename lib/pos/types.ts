@@ -32,6 +32,7 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
       { key: 'restaurantGuid', label: 'Restaurant GUID', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
     ],
     docsUrl: 'https://doc.toasttab.com/openapi/orders',
+    comingSoon: true,
   },
   {
     id: 'clover',
