@@ -8,6 +8,7 @@ export interface PosProviderMeta {
   authType: 'oauth' | 'credentials'
   docsUrl: string
   credentialFields?: { key: string; label: string; placeholder: string; type?: string }[]
+  comingSoon?: boolean
 }
 
 export const POS_PROVIDERS: PosProviderMeta[] = [
@@ -47,6 +48,7 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
     description: 'Pull sales data from Lightspeed Restaurant automatically.',
     authType: 'oauth',
     docsUrl: 'https://developers.lightspeedhq.com',
+    comingSoon: true,
   },
   {
     id: 'focus',
@@ -60,6 +62,7 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
       { key: 'apiSecret', label: 'API Secret', placeholder: '••••••••', type: 'password' },
     ],
     docsUrl: 'https://focuslink.focuspos.com',
+    comingSoon: true,
   },
   {
     id: 'heartland',
@@ -72,6 +75,7 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
       { key: 'apiKey', label: 'API Key', placeholder: '••••••••••••••••', type: 'password' },
     ],
     docsUrl: 'https://dev.retail.heartland.us',
+    comingSoon: true,
   },
 ]
 

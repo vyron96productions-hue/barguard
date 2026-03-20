@@ -134,19 +134,50 @@ function CloverImportModal({ onClose, onImported }: { onClose: () => void; onImp
   )
 }
 
+const PROVIDER_LOGOS: Record<string, string> = {
+  square: '/square-logo.png',
+  clover: '/clover-logo.svg',
+  toast: '/toast-logo.avif',
+  lightspeed: '/lightspeed-logo.jpg',
+  heartland: '/heartland-logo.jpg',
+  focus: '/focus-logo.jpg',
+}
+
+const PROVIDER_COLORS: Record<string, string> = {
+  square: '#00B388', toast: '#FF4F00', clover: '#62BA46', lightspeed: '#E84E1B', heartland: '#E31837', focus: '#1B3A6B',
+}
+
+const PROVIDER_INITIALS: Record<string, string> = {
+  square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS', heartland: 'HL', focus: 'FC',
+}
+
 const ProviderIcon = ({ provider, size = 32 }: { provider: string; size?: number }) => {
-  const icons: Record<string, string> = {
-    square: 'SQ', toast: 'TS', clover: 'CV', lightspeed: 'LS', heartland: 'HL', focus: 'FC',
+  const logo = PROVIDER_LOGOS[provider]
+  const [imgFailed, setImgFailed] = useState(false)
+
+  if (logo && !imgFailed) {
+    return (
+      <div
+        style={{ width: size, height: size, borderRadius: 8, background: '#fff', overflow: 'hidden' }}
+        className="flex items-center justify-center shrink-0 border border-slate-700/40"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logo}
+          alt={provider}
+          style={{ width: size - 8, height: size - 8, objectFit: 'contain' }}
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+    )
   }
-  const colors: Record<string, string> = {
-    square: '#00B388', toast: '#FF4F00', clover: '#62BA46', lightspeed: '#E84E1B', heartland: '#E31837', focus: '#1B3A6B',
-  }
+
   return (
     <div
-      style={{ width: size, height: size, background: colors[provider], borderRadius: 8 }}
+      style={{ width: size, height: size, background: PROVIDER_COLORS[provider], borderRadius: 8 }}
       className="flex items-center justify-center text-white font-black text-xs shrink-0"
     >
-      {icons[provider] ?? '??'}
+      {PROVIDER_INITIALS[provider] ?? '??'}
     </div>
   )
 }
@@ -306,9 +337,15 @@ function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync, onImp
   onImport?: () => void
 }) {
   const connected = !!connection
+  const comingSoon = !!meta.comingSoon
+
   return (
     <div className={`rounded-2xl border p-4 sm:p-5 flex flex-col gap-4 transition-all duration-200 ${
-      connected ? 'bg-slate-900/70 border-emerald-500/20' : 'bg-slate-900/40 border-slate-800/60 hover:border-slate-700/60'
+      comingSoon
+        ? 'bg-slate-900/20 border-slate-800/40 opacity-70'
+        : connected
+          ? 'bg-slate-900/70 border-emerald-500/20'
+          : 'bg-slate-900/40 border-slate-800/60 hover:border-slate-700/60'
     }`}>
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -319,11 +356,13 @@ function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync, onImp
           </div>
         </div>
         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest ${
-          connected
-            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-            : 'bg-slate-800 text-slate-500 border border-slate-700/60'
+          comingSoon
+            ? 'bg-slate-700/60 text-slate-400 border border-slate-600/40'
+            : connected
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              : 'bg-slate-800 text-slate-500 border border-slate-700/60'
         }`}>
-          {connected ? 'Connected' : 'Not Connected'}
+          {comingSoon ? 'Coming Soon' : connected ? 'Connected' : 'Not Connected'}
         </span>
       </div>
 
@@ -346,7 +385,11 @@ function ProviderCard({ meta, connection, onConnect, onDisconnect, onSync, onImp
       )}
 
       <div className="flex gap-2 mt-auto flex-wrap">
-        {connected ? (
+        {comingSoon ? (
+          <div className="flex-1 px-3 py-2.5 sm:py-2 bg-slate-800/40 text-slate-600 font-medium text-xs rounded-xl sm:rounded-lg border border-slate-700/40 text-center cursor-default select-none">
+            Coming Soon
+          </div>
+        ) : connected ? (
           <>
             <button onClick={onSync}
               className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 bg-amber-500 hover:bg-amber-400 active:bg-amber-300 text-slate-900 font-semibold text-xs rounded-xl sm:rounded-lg transition-colors">
