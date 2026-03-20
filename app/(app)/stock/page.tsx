@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
 import { UNIT_LABELS, formatQty } from '@/lib/conversions'
+import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 
 const BEVERAGE_CATEGORIES = [
   'spirits', 'beer', 'wine', 'keg',
@@ -104,6 +105,14 @@ export default function StockPage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
 
+  // AI Categorize
+  const [aiCatMode, setAiCatMode] = useState(false)
+  const [aiCatRows, setAiCatRows] = useState<(AiCategorizeSuggestion & { selected: boolean; editCategory: string })[]>([])
+  const [aiCatLoading, setAiCatLoading] = useState(false)
+  const [aiCatSaving, setAiCatSaving] = useState(false)
+  const [aiCatDone, setAiCatDone] = useState(false)
+  const [aiCatError, setAiCatError] = useState('')
+
   // Bottle scan
   const [scanTarget, setScanTarget] = useState<{ itemId: string; itemName: string; unit: string } | null>(null)
 
@@ -133,6 +142,58 @@ export default function StockPage() {
     setAnalyzing(false)
     setAnalysisResult(null)
     setCountMode(true)
+  }
+
+  async function openAiCategorize() {
+    setAiCatDone(false)
+    setAiCatError('')
+    setAiCatRows([])
+    setAiCatMode(true)
+    setAiCatLoading(true)
+    try {
+      const res = await fetch('/api/inventory-items/ai-categorize')
+      const data = await res.json()
+      if (!res.ok || !Array.isArray(data)) {
+        setAiCatError(data?.error ?? 'Failed to load suggestions')
+        setAiCatLoading(false)
+        return
+      }
+      if (data.length === 0) {
+        setAiCatError('All items already have categories.')
+        setAiCatLoading(false)
+        return
+      }
+      setAiCatRows(data.map((s: AiCategorizeSuggestion) => ({ ...s, selected: true, editCategory: s.suggested_category })))
+    } catch {
+      setAiCatError('Network error')
+    }
+    setAiCatLoading(false)
+  }
+
+  async function saveAiCategories() {
+    const updates = aiCatRows
+      .filter((r) => r.selected && r.editCategory.trim())
+      .map((r) => ({ id: r.id, category: r.editCategory.trim() }))
+    if (updates.length === 0) return
+    setAiCatSaving(true)
+    try {
+      const res = await fetch('/api/inventory-items/bulk-categories', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        setAiCatError(d?.error ?? 'Save failed')
+        setAiCatSaving(false)
+        return
+      }
+      setAiCatDone(true)
+      reload()
+    } catch {
+      setAiCatError('Network error')
+    }
+    setAiCatSaving(false)
   }
 
   async function saveCount() {
@@ -226,6 +287,7 @@ export default function StockPage() {
   }, {})
 
   const countedCount = items.filter((i) => i.count_date !== null).length
+  const uncategorizedCount = items.filter((i) => !i.category).length
   const lastCountDate = items
     .map((i) => i.count_date)
     .filter(Boolean)
@@ -292,7 +354,15 @@ export default function StockPage() {
             {lastCountDate && ` · last count ${new Date(lastCountDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+          {uncategorizedCount > 0 && (
+            <button
+              onClick={openAiCategorize}
+              className="text-xs px-3 py-2 rounded-lg bg-slate-800 border border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400/60 transition-colors font-medium"
+            >
+              ✦ AI Categorize ({uncategorizedCount})
+            </button>
+          )}
           <button
             onClick={openCountMode}
             className="text-sm px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-bold hover:bg-amber-400 active:bg-amber-300 transition-colors"
@@ -399,6 +469,122 @@ export default function StockPage() {
         onConfirm={(fraction) => handleScanConfirm(scanTarget.itemId, fraction)}
         onClose={() => setScanTarget(null)}
       />
+    )}
+
+    {/* ── AI Categorize Overlay ── */}
+    {aiCatMode && (
+      <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+        {/* Header */}
+        <div className="border-b border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0">
+          <div>
+            <h2 className="text-lg font-bold text-slate-100">AI Categorize Inventory</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Review suggested categories. Edit any before saving.</p>
+          </div>
+          <button
+            onClick={() => { setAiCatMode(false); setAiCatDone(false); setAiCatError('') }}
+            className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto">
+          {aiCatLoading ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-3">
+              <div className="w-6 h-6 border-2 border-purple-500/40 border-t-purple-400 rounded-full animate-spin" />
+              <p className="text-sm text-slate-400">Asking AI to categorize your items…</p>
+            </div>
+          ) : aiCatDone ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-3">
+              <p className="text-3xl">✓</p>
+              <p className="text-sm font-semibold text-emerald-400">Categories saved!</p>
+              <p className="text-xs text-slate-500">Your inventory is now organized.</p>
+            </div>
+          ) : aiCatError ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-3 px-8 text-center">
+              <p className="text-sm text-slate-400">{aiCatError}</p>
+            </div>
+          ) : (
+            <>
+              {/* Select all */}
+              <div className="px-4 py-3 border-b border-slate-800 flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={aiCatRows.every((r) => r.selected)}
+                  onChange={(e) => setAiCatRows((prev) => prev.map((r) => ({ ...r, selected: e.target.checked })))}
+                  className="w-4 h-4 rounded accent-purple-500"
+                />
+                <span className="text-xs text-slate-400">{aiCatRows.filter((r) => r.selected).length} of {aiCatRows.length} selected</span>
+              </div>
+
+              {/* Item rows */}
+              <div className="divide-y divide-slate-800/60">
+                {aiCatRows.map((row, idx) => (
+                  <div
+                    key={row.id}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                      row.selected ? '' : 'opacity-40'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={row.selected}
+                      onChange={(e) => setAiCatRows((prev) => prev.map((r, i) => i === idx ? { ...r, selected: e.target.checked } : r))}
+                      className="w-4 h-4 rounded accent-purple-500 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-200 truncate">{row.name}</p>
+                      <p className="text-xs text-slate-600">{row.unit}</p>
+                    </div>
+                    <div className="shrink-0 w-44">
+                      <CategoryCombobox
+                        value={row.editCategory}
+                        categories={[...PRESET_CATEGORIES]}
+                        onChange={(val) => setAiCatRows((prev) => prev.map((r, i) => i === idx ? { ...r, editCategory: val } : r))}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        {!aiCatDone && !aiCatLoading && !aiCatError && (
+          <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
+            <p className="text-xs text-slate-500">
+              {aiCatRows.filter((r) => r.selected).length} item{aiCatRows.filter((r) => r.selected).length !== 1 ? 's' : ''} will be updated
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setAiCatMode(false)}
+                className="text-sm text-slate-500 hover:text-slate-300 transition-colors px-3 py-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveAiCategories}
+                disabled={aiCatSaving || aiCatRows.filter((r) => r.selected).length === 0}
+                className="px-5 py-2 bg-purple-600 text-white font-bold rounded-lg text-sm hover:bg-purple-500 disabled:opacity-40 transition-colors"
+              >
+                {aiCatSaving ? 'Saving…' : `Save ${aiCatRows.filter((r) => r.selected).length} Categories`}
+              </button>
+            </div>
+          </div>
+        )}
+        {aiCatDone && (
+          <div className="border-t border-slate-800 px-4 py-4 flex justify-end shrink-0">
+            <button
+              onClick={() => { setAiCatMode(false); setAiCatDone(false) }}
+              className="px-5 py-2 bg-slate-800 text-slate-200 font-semibold rounded-lg text-sm hover:bg-slate-700 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        )}
+      </div>
     )}
 
     {countMode && (
