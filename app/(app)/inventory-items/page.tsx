@@ -49,6 +49,12 @@ export default function InventoryItemsPage() {
   const [error, setError] = useState<string | null>(null)
   const [autoLinked, setAutoLinked] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'all' | ItemType>('all')
+  // Bulk price editor
+  const [bulkPriceMode, setBulkPriceMode]   = useState(false)
+  const [priceEdits, setPriceEdits]         = useState<Record<string, string>>({})
+  const [bulkPriceSaving, setBulkPriceSaving] = useState(false)
+  const [bulkPriceDone, setBulkPriceDone]   = useState(false)
+
   const [editingId,      setEditingId]      = useState<string | null>(null)
   const [editName,       setEditName]       = useState('')
   const [editUnit,       setEditUnit]       = useState('')
@@ -153,6 +159,44 @@ export default function InventoryItemsPage() {
     if (!res.ok) { setEditError(data.error ?? 'Save failed'); return }
     setEditingId(null)
     fetchItems()
+  }
+
+  function openBulkPriceMode() {
+    const initial: Record<string, string> = {}
+    items.forEach((item) => {
+      initial[item.id] = item.cost_per_unit != null ? String(item.cost_per_unit) : ''
+    })
+    setPriceEdits(initial)
+    setBulkPriceDone(false)
+    setBulkPriceMode(true)
+  }
+
+  async function saveBulkPrices() {
+    const updates = items
+      .filter((item) => {
+        const edited = priceEdits[item.id] ?? ''
+        const original = item.cost_per_unit != null ? String(item.cost_per_unit) : ''
+        return edited !== original
+      })
+      .map((item) => ({
+        id: item.id,
+        cost_per_unit: priceEdits[item.id] !== '' ? parseFloat(priceEdits[item.id]) : null,
+      }))
+
+    if (updates.length === 0) { setBulkPriceMode(false); return }
+
+    setBulkPriceSaving(true)
+    const res = await fetch('/api/inventory-items/bulk-prices', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ updates }),
+    })
+    setBulkPriceSaving(false)
+    if (res.ok) {
+      setBulkPriceDone(true)
+      await fetchItems()
+      setTimeout(() => { setBulkPriceMode(false); setBulkPriceDone(false) }, 1200)
+    }
   }
 
   function handlePackageTypeChange(pt: string) {
@@ -343,9 +387,19 @@ export default function InventoryItemsPage() {
 
   return (
     <div className="space-y-5 max-w-2xl">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Inventory Items</h1>
-        <p className="text-slate-500 mt-1 text-sm">Physical items you track — bottles, kegs, ingredients, food stock.</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Inventory Items</h1>
+          <p className="text-slate-500 mt-1 text-sm">Physical items you track — bottles, kegs, ingredients, food stock.</p>
+        </div>
+        {items.length > 0 && (
+          <button
+            onClick={openBulkPriceMode}
+            className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+          >
+            Edit Prices
+          </button>
+        )}
       </div>
 
       {/* Add form */}
@@ -532,6 +586,94 @@ export default function InventoryItemsPage() {
                   : `Food (${foodItems.length})`}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Bulk Price Editor overlay */}
+      {bulkPriceMode && (
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+          {/* Header */}
+          <div className="border-b border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0">
+            <div>
+              <h2 className="text-lg font-bold text-slate-100">Edit Prices</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Cost per unit — what you pay your supplier. Used for margin calculations.</p>
+            </div>
+            <button onClick={() => setBulkPriceMode(false)} className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1">✕</button>
+          </div>
+
+          {bulkPriceDone ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <p className="text-4xl">✓</p>
+              <p className="text-lg font-semibold text-emerald-400">Prices saved!</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              {/* Column headers */}
+              <div className="sticky top-0 bg-slate-950 border-b border-slate-800 px-4 py-2 hidden sm:grid grid-cols-[1fr_120px_100px_140px] gap-4">
+                {['Item', 'Category', 'Unit', 'Cost Per Unit'].map((h) => (
+                  <p key={h} className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">{h}</p>
+                ))}
+              </div>
+              <div className="divide-y divide-slate-800/60">
+                {items.map((item) => {
+                  const original = item.cost_per_unit != null ? String(item.cost_per_unit) : ''
+                  const current = priceEdits[item.id] ?? ''
+                  const isDirty = current !== original
+                  return (
+                    <div key={item.id} className={`px-4 py-3 flex items-center gap-4 transition-colors ${isDirty ? 'bg-amber-500/5' : ''}`}>
+                      {/* Mobile layout */}
+                      <div className="sm:hidden flex-1 space-y-1">
+                        <p className="text-sm font-medium text-slate-200">{item.name}</p>
+                        <p className="text-xs text-slate-600">{item.category ?? ''} · {UNIT_LABELS[item.unit] ?? item.unit}</p>
+                      </div>
+                      {/* Desktop layout */}
+                      <p className="hidden sm:block flex-1 text-sm font-medium text-slate-200 min-w-0 truncate">{item.name}</p>
+                      <p className="hidden sm:block w-[120px] text-xs text-slate-500 truncate">{item.category ?? '—'}</p>
+                      <p className="hidden sm:block w-[100px] text-xs text-slate-500">{UNIT_LABELS[item.unit] ?? item.unit}</p>
+                      <div className={`relative shrink-0 ${isDirty ? 'sm:w-[140px]' : 'sm:w-[140px]'}`}>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="—"
+                          value={current}
+                          onChange={(e) => setPriceEdits((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                          className={`w-full bg-slate-900 border rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 focus:outline-none transition-colors ${
+                            isDirty ? 'border-amber-500/60 focus:border-amber-500' : 'border-slate-700 focus:border-amber-500/60'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          {!bulkPriceDone && (
+            <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
+              <p className="text-xs text-slate-500">
+                {(() => {
+                  const changed = items.filter((i) => (priceEdits[i.id] ?? '') !== (i.cost_per_unit != null ? String(i.cost_per_unit) : '')).length
+                  return changed > 0 ? `${changed} item${changed !== 1 ? 's' : ''} changed` : 'No changes yet'
+                })()}
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => setBulkPriceMode(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                  Cancel
+                </button>
+                <button
+                  onClick={saveBulkPrices}
+                  disabled={bulkPriceSaving}
+                  className="px-6 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg text-sm hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                >
+                  {bulkPriceSaving ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

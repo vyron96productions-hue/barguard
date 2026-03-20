@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { MenuItem, InventoryItem } from '@/types'
 import type { RecipeSuggestion } from '@/lib/recipe-suggestions'
+import type { AiGenerateSuggestion } from '@/app/api/recipes/ai-generate/route'
 
 type MenuItemWithRecipes = MenuItem & {
   sell_price: number | null
@@ -13,6 +14,16 @@ type MenuItemWithRecipes = MenuItem & {
 
 interface WizardRow extends RecipeSuggestion {
   included: boolean
+  edited_qty: string
+  edited_unit: string
+  edited_inv_id: string
+}
+
+interface AiGenRow extends AiGenerateSuggestion {
+  included: boolean
+  edited_name: string
+  edited_category: string
+  edited_sell_price: string
   edited_qty: string
   edited_unit: string
   edited_inv_id: string
@@ -78,6 +89,14 @@ export default function RecipeMappingPage() {
   const [wizardDone, setWizardDone]           = useState(false)
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
+  // AI Auto-Generate
+  const [showAiGen, setShowAiGen]         = useState(false)
+  const [aiGenRows, setAiGenRows]         = useState<AiGenRow[]>([])
+  const [aiGenLoading, setAiGenLoading]   = useState(false)
+  const [aiGenSaving, setAiGenSaving]     = useState(false)
+  const [aiGenDone, setAiGenDone]         = useState(false)
+  const [aiGenError, setAiGenError]       = useState<string | null>(null)
+
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
@@ -131,6 +150,88 @@ export default function RecipeMappingPage() {
       setWizardDone(false)
       fetchAll()
     }, 1500)
+  }
+
+  async function openAiGen() {
+    setShowAiGen(true)
+    setAiGenLoading(true)
+    setAiGenError(null)
+    setAiGenDone(false)
+    setAiGenRows([])
+    try {
+      const res = await fetch('/api/recipes/ai-generate')
+      const data = await res.json()
+      if (!res.ok) { setAiGenError(data.error ?? 'Failed to generate suggestions'); setAiGenLoading(false); return }
+      const sugs: AiGenerateSuggestion[] = Array.isArray(data) ? data : []
+      setAiGenRows(sugs.map((s) => ({
+        ...s,
+        included: true,
+        edited_name: s.menu_item_name,
+        edited_category: s.category,
+        edited_sell_price: s.sell_price != null ? s.sell_price.toString() : '',
+        edited_qty: s.quantity.toString(),
+        edited_unit: s.unit,
+        edited_inv_id: s.inventory_item_id,
+      })))
+    } catch {
+      setAiGenError('Something went wrong. Try again.')
+    }
+    setAiGenLoading(false)
+  }
+
+  async function confirmAiGen() {
+    const selected = aiGenRows.filter((r) => r.included && r.edited_name.trim() && r.edited_inv_id && r.edited_qty)
+    if (selected.length === 0) return
+    setAiGenSaving(true)
+
+    // Step 1: bulk create menu items
+    const bulkRes = await fetch('/api/menu-items/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: selected.map((r) => ({
+          name: r.edited_name.trim(),
+          category: r.edited_category || null,
+          item_type: r.item_type,
+          sell_price: r.edited_sell_price !== '' ? parseFloat(r.edited_sell_price) : null,
+        })),
+      }),
+    })
+    const bulkData = await bulkRes.json()
+    if (!bulkRes.ok) { setAiGenError(bulkData.error ?? 'Failed to create menu items'); setAiGenSaving(false); return }
+
+    const createdItems: Array<{ id: string; name: string }> = bulkData.created ?? []
+    const nameToId = new Map(createdItems.map((i) => [i.name.toLowerCase().trim(), i.id]))
+
+    // Step 2: bulk create recipes
+    const recipes = selected
+      .map((r) => {
+        const menuItemId = nameToId.get(r.edited_name.toLowerCase().trim())
+        if (!menuItemId) return null
+        return {
+          menu_item_id: menuItemId,
+          inventory_item_id: r.edited_inv_id,
+          quantity: parseFloat(r.edited_qty),
+          unit: r.edited_unit,
+        }
+      })
+      .filter(Boolean)
+
+    if (recipes.length > 0) {
+      await fetch('/api/recipes/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipes }),
+      })
+    }
+
+    setAiGenSaving(false)
+    setAiGenDone(true)
+    setTimeout(() => {
+      setShowAiGen(false)
+      setAiGenDone(false)
+      fetchAll()
+    }, 1800)
   }
 
   async function handleAddMenuItem(e: React.FormEvent) {
@@ -543,21 +644,41 @@ export default function RecipeMappingPage() {
         {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
       </form>
 
-      {/* Auto-match banner */}
-      {menuItems.length > 0 && inventoryItems.length > 0 && (
-        <div className="flex items-center justify-between gap-3 bg-amber-500/5 border border-amber-500/20 rounded-2xl px-4 sm:px-5 py-3.5">
-          <div>
-            <p className="text-sm font-semibold text-amber-400">Auto-Match Recipes</p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              BarGuard can automatically link your menu items to inventory — no manual setup needed.
-            </p>
+      {/* AI Auto-Generate + Auto-Match banner */}
+      {inventoryItems.length > 0 && (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl px-4 sm:px-5 py-4 space-y-3">
+          {/* AI Generate row */}
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-amber-400">AI Auto-Generate</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                No menu items yet? Let AI build your entire recipe list from your inventory in one click.
+              </p>
+            </div>
+            <button
+              onClick={openAiGen}
+              className="shrink-0 px-4 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors"
+            >
+              AI Generate
+            </button>
           </div>
-          <button
-            onClick={openWizard}
-            className="shrink-0 px-4 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors"
-          >
-            Auto-Match
-          </button>
+          {/* Auto-match row — only show if menu items already exist */}
+          {menuItems.length > 0 && (
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-amber-500/10">
+              <div>
+                <p className="text-sm font-semibold text-slate-400">Auto-Match Existing</p>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Link existing menu items to inventory items by name matching.
+                </p>
+              </div>
+              <button
+                onClick={openWizard}
+                className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+              >
+                Auto-Match
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -616,6 +737,143 @@ export default function RecipeMappingPage() {
           <a href="/profit-intelligence" className="text-slate-600 hover:text-slate-400 underline underline-offset-2">Profit Intelligence</a>
           {' '}pages.
         </p>
+      )}
+
+      {/* AI Auto-Generate overlay */}
+      {showAiGen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-100">AI Auto-Generate Recipes</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    Review AI-suggested menu items. Edit names, prices, or quantities before saving.
+                  </p>
+                </div>
+                <button onClick={() => setShowAiGen(false)} className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1 mt-1">✕</button>
+              </div>
+
+              {aiGenLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+                  <p className="text-slate-500 text-sm">AI is building your recipe list…</p>
+                </div>
+              ) : aiGenDone ? (
+                <div className="text-center py-16 space-y-2">
+                  <p className="text-4xl">✓</p>
+                  <p className="text-lg font-semibold text-emerald-400">Menu items & recipes saved!</p>
+                </div>
+              ) : aiGenError ? (
+                <div className="text-center py-16 border border-red-500/20 rounded-2xl">
+                  <p className="text-red-400 text-sm">{aiGenError}</p>
+                  <button onClick={openAiGen} className="mt-4 text-xs text-amber-400 hover:underline">Try again</button>
+                </div>
+              ) : aiGenRows.length === 0 ? (
+                <div className="text-center py-16 border border-slate-800 border-dashed rounded-2xl text-slate-600">
+                  <p className="text-3xl mb-3">◉</p>
+                  <p className="text-sm">No new menu items to generate.</p>
+                  <p className="text-xs mt-1 text-slate-700">All inventory items may already have menu items linked.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {/* Column headers — desktop */}
+                  <div className="hidden sm:grid grid-cols-[24px_1fr_100px_90px_1fr_80px_80px] gap-2 px-3 pb-1">
+                    {['', 'Menu Item Name', 'Category', 'Sell Price', '→ Inventory Item', 'Qty', 'Unit'].map((h) => (
+                      <p key={h} className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">{h}</p>
+                    ))}
+                  </div>
+                  {aiGenRows.map((row, idx) => (
+                    <div key={idx} className={`bg-slate-900 border rounded-xl p-3 transition-colors ${row.included ? 'border-slate-700' : 'border-slate-800/60 opacity-40'}`}>
+                      {/* Mobile */}
+                      <div className="sm:hidden space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <input
+                            type="checkbox"
+                            checked={row.included}
+                            onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, included: e.target.checked } : r))}
+                            className="w-4 h-4 accent-amber-500 shrink-0"
+                          />
+                          <input
+                            value={row.edited_name}
+                            onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_name: e.target.value } : r))}
+                            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <select
+                            value={row.edited_category}
+                            onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_category: e.target.value } : r))}
+                            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
+                          >
+                            {(row.item_type === 'food' ? FOOD_CATEGORIES : DRINK_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <div className="relative w-24">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
+                            <input type="number" min="0" step="0.5" value={row.edited_sell_price} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_sell_price: e.target.value } : r))} placeholder="Price" className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-5 pr-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 items-center text-xs text-slate-500">
+                          <span>→</span>
+                          <select value={row.edited_inv_id} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_inv_id: e.target.value } : r))} className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+                            {inventoryItems.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                          </select>
+                          <input type="number" step="0.01" value={row.edited_qty} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_qty: e.target.value } : r))} className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60" />
+                          <select value={row.edited_unit} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_unit: e.target.value } : r))} className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+                            {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      {/* Desktop */}
+                      <div className="hidden sm:grid grid-cols-[24px_1fr_100px_90px_1fr_80px_80px] gap-2 items-center">
+                        <input type="checkbox" checked={row.included} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, included: e.target.checked } : r))} className="w-4 h-4 accent-amber-500" />
+                        <input value={row.edited_name} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_name: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 w-full" />
+                        <select value={row.edited_category} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_category: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60 w-full">
+                          {(row.item_type === 'food' ? FOOD_CATEGORIES : DRINK_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <div className="relative">
+                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
+                          <input type="number" min="0" step="0.5" value={row.edited_sell_price} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_sell_price: e.target.value } : r))} placeholder="—" className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-5 pr-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
+                        </div>
+                        <select value={row.edited_inv_id} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_inv_id: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 w-full">
+                          {inventoryItems.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                        <input type="number" step="0.01" value={row.edited_qty} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_qty: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 w-full" />
+                        <select value={row.edited_unit} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_unit: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 w-full">
+                          {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sticky footer */}
+          {!aiGenLoading && !aiGenDone && aiGenRows.length > 0 && (
+            <div className="border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-4">
+              <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <p className="text-xs text-slate-500">{aiGenRows.filter((r) => r.included).length} of {aiGenRows.length} selected</p>
+                  <button onClick={() => setAiGenRows((prev) => prev.map((r) => ({ ...r, included: true })))} className="text-xs text-amber-400 hover:underline">Select all</button>
+                  <button onClick={() => setAiGenRows((prev) => prev.map((r) => ({ ...r, included: false })))} className="text-xs text-slate-600 hover:text-slate-400">Deselect all</button>
+                </div>
+                <div className="flex gap-3">
+                  {aiGenError && <p className="text-xs text-red-400">{aiGenError}</p>}
+                  <button onClick={() => setShowAiGen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">Cancel</button>
+                  <button
+                    onClick={confirmAiGen}
+                    disabled={aiGenSaving || aiGenRows.filter((r) => r.included).length === 0}
+                    className="px-6 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg text-sm hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {aiGenSaving ? 'Saving…' : `Save ${aiGenRows.filter((r) => r.included).length} Items`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Auto-match wizard overlay */}
