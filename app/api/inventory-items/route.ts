@@ -26,10 +26,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'name and unit are required' }, { status: 400 })
     }
 
-    const packSizeVal = pack_size ? parseInt(pack_size, 10) : null
+    const unitPackDefaults: Record<string, { pack_size: number; package_type: string }> = {
+      case: { pack_size: 24, package_type: 'case' },
+      keg: { pack_size: 165, package_type: 'keg' },
+      halfkeg: { pack_size: 82, package_type: 'half keg' },
+      quarterkeg: { pack_size: 62, package_type: 'quarter keg' },
+      sixthkeg: { pack_size: 41, package_type: 'sixth keg' },
+    }
+    const unitDefaults = unitPackDefaults[unit?.toLowerCase?.() ?? ''] ?? null
+    const packSizeVal = pack_size ? parseInt(pack_size, 10) : (unitDefaults?.pack_size ?? null)
     if (packSizeVal !== null && (isNaN(packSizeVal) || packSizeVal < 1)) {
       return NextResponse.json({ error: 'pack_size must be a positive integer' }, { status: 400 })
     }
+    const packageTypeVal = package_type || unitDefaults?.package_type || null
 
     const costPerUnit = body.cost_per_unit !== undefined && body.cost_per_unit !== ''
       ? parseFloat(body.cost_per_unit) : null
@@ -44,7 +53,7 @@ export async function POST(req: NextRequest) {
         unit,
         category: category || null,
         pack_size: packSizeVal,
-        package_type: package_type || null,
+        package_type: packageTypeVal,
         cost_per_unit: costPerUnit !== null && !isNaN(costPerUnit) ? costPerUnit : null,
         reorder_level: reorderLevel !== null && !isNaN(reorderLevel) ? reorderLevel : null,
         item_type: item_type || 'beverage',

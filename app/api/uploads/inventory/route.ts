@@ -72,9 +72,16 @@ export async function POST(req: NextRequest) {
           const unit = r.unit_type ?? 'bottle'
           const foodUnits = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'serving', 'slice', 'tray', 'flat', 'bag', 'jar', 'packet', 'cup', 'tbsp', 'tsp'])
           const item_type = foodUnits.has(unit) ? 'food' : 'beverage'
+          const packMeta: { pack_size: number; package_type: string } | null =
+            unit === 'case' ? { pack_size: 24, package_type: 'case' } :
+            unit === 'keg' ? { pack_size: 165, package_type: 'keg' } :
+            unit === 'halfkeg' ? { pack_size: 82, package_type: 'half keg' } :
+            unit === 'quarterkeg' ? { pack_size: 62, package_type: 'quarter keg' } :
+            unit === 'sixthkeg' ? { pack_size: 41, package_type: 'sixth keg' } :
+            null
           const { data: newItem } = await supabase
             .from('inventory_items')
-            .insert({ business_id: businessId, name: r.item_name, unit, item_type })
+            .insert({ business_id: businessId, name: r.item_name, unit, item_type, ...packMeta })
             .select('id')
             .single()
 
