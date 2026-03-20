@@ -79,11 +79,12 @@ const FOOD_UNIT_SET = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'ser
 
 function isFood(item: StockItem) {
   if (item.item_type === 'food') return true
-  if (item.item_type === 'beverage') return false
-  // Fall back to category/unit when item_type is null (e.g. CSV-imported items)
+  // Category always wins — setting category to a food category overrides item_type
   const cat = item.category?.toLowerCase() ?? ''
   if (FOOD_CATEGORIES.some((fc) => cat === fc.toLowerCase())) return true
-  return FOOD_UNIT_SET.has(item.unit)
+  // For items with no explicit type, fall back to unit
+  if (!item.item_type || item.item_type === 'other') return FOOD_UNIT_SET.has(item.unit)
+  return false
 }
 
 export default function StockPage() {

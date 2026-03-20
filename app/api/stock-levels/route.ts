@@ -166,10 +166,18 @@ export async function PATCH(req: NextRequest) {
     const { id, name, unit, category, quantity_on_hand } = await req.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
+    const FOOD_CATS = new Set(['food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods', 'sauces', 'condiments', 'dessert', 'supply'])
+    const BEV_CATS = new Set(['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac'])
+
     const itemUpdates: Record<string, string | null> = {}
     if (name !== undefined) itemUpdates.name = name.trim()
     if (unit !== undefined) itemUpdates.unit = unit
-    if (category !== undefined) itemUpdates.category = category || null
+    if (category !== undefined) {
+      itemUpdates.category = category || null
+      const catLower = (category || '').toLowerCase()
+      if (FOOD_CATS.has(catLower)) itemUpdates.item_type = 'food'
+      else if (BEV_CATS.has(catLower)) itemUpdates.item_type = 'beverage'
+    }
 
     if (Object.keys(itemUpdates).length > 0) {
       const { error } = await supabase
