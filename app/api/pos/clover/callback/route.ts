@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { exchangeCloverCode } from '@/lib/pos/clover'
-import { getAuthContext } from '@/lib/auth'
 import { adminSupabase } from '@/lib/supabase/admin'
 
 export async function GET(req: Request) {
@@ -23,12 +22,11 @@ export async function GET(req: Request) {
   }
   cookieStore.delete('pos_oauth_state')
 
-  let businessId: string
-  try {
-    const ctx = await getAuthContext()
-    businessId = ctx.businessId
-  } catch {
-    return NextResponse.redirect(`${baseUrl}/connections?error=clover_auth_required`)
+  // Read business_id from cookie — session cookie won't survive the cross-site redirect from Clover
+  const businessId = cookieStore.get('pos_oauth_business_id')?.value
+  cookieStore.delete('pos_oauth_business_id')
+  if (!businessId) {
+    return NextResponse.redirect(`${baseUrl}/connections?error=clover_session_expired`)
   }
 
   try {

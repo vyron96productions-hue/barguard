@@ -5,6 +5,7 @@ const PUBLIC_PATHS_EXACT = ['/']
 const PUBLIC_PREFIXES = [
   '/login', '/signup', '/forgot-password', '/reset-password', '/check-email', '/verify-email',
   '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
+  '/api/pos/square/callback', '/api/pos/clover/callback',
   '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
 ]
 
