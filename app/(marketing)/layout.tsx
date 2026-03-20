@@ -64,7 +64,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           </div>
           <div style={{ borderTop: '1px solid #1e293b', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 13, color: '#334155' }}>© 2026 BarGuard. All rights reserved.</p>
-            <p style={{ fontSize: 13, color: '#334155' }}>Made for bars that care about their bottom line.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <a href="https://www.facebook.com/profile.php?id=61577657877985" target="_blank" rel="noreferrer" data-gtm-event="footer_click" data-gtm-label="footer_facebook" aria-label="BarGuard on Facebook" style={{ color: '#475569', transition: 'color 0.2s' }} onMouseOver={e => (e.currentTarget.style.color = '#f59e0b')} onMouseOut={e => (e.currentTarget.style.color = '#475569')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+              </a>
+              <a href="https://x.com/BarguardLLC" target="_blank" rel="noreferrer" data-gtm-event="footer_click" data-gtm-label="footer_x" aria-label="BarGuard on X" style={{ color: '#475569', transition: 'color 0.2s' }} onMouseOver={e => (e.currentTarget.style.color = '#f59e0b')} onMouseOut={e => (e.currentTarget.style.color = '#475569')}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.912-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+            </div>
           </div>
         </div>
       </footer>
