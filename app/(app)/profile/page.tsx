@@ -8,6 +8,14 @@ function ProfileContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const isNew = searchParams.get('new') === '1'
+  const isUpgraded = searchParams.get('upgraded') === '1'
+
+  useEffect(() => {
+    if (isUpgraded) {
+      window.dataLayer = window.dataLayer || []
+      window.dataLayer.push({ event: 'plan_purchased' })
+    }
+  }, [isUpgraded])
 
   const [barName, setBarName] = useState('')
   const [address, setAddress] = useState('')

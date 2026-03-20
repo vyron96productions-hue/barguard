@@ -1,10 +1,16 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function WelcomePage() {
   const router = useRouter()
+
+  useEffect(() => {
+    window.dataLayer = window.dataLayer || []
+    window.dataLayer.push({ event: 'account_created' })
+  }, [])
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
