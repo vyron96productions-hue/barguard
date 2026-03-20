@@ -20,6 +20,7 @@ export default function SignupPage() {
   const router = useRouter()
   const [barName, setBarName] = useState('')
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -33,7 +34,7 @@ export default function SignupPage() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bar_name: barName, username, password }),
+      body: JSON.stringify({ bar_name: barName, username, email, password }),
     })
 
     const data = await res.json()
@@ -44,7 +45,7 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/welcome')
+    router.push('/check-email')
   }
 
   async function handleGoogleSignUp() {
@@ -143,7 +144,21 @@ export default function SignupPage() {
                 title="Letters, numbers, underscores, and hyphens only"
                 className="w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
               />
-              <p className="mt-1.5 text-xs text-slate-700">No email needed. Letters, numbers, _ and - only.</p>
+              <p className="mt-1.5 text-xs text-slate-700">Letters, numbers, _ and - only.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                className="w-full bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
+              />
+              <p className="mt-1.5 text-xs text-slate-700">Used for password resets and account recovery.</p>
             </div>
 
             <div>

@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const PUBLIC_PATHS_EXACT = ['/']
 const PUBLIC_PREFIXES = [
-  '/login', '/signup', '/forgot-password', '/reset-password',
+  '/login', '/signup', '/forgot-password', '/reset-password', '/check-email', '/verify-email',
   '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
   '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
 ]
@@ -39,6 +39,12 @@ export async function middleware(request: NextRequest) {
   if (!user) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Email verification gate — check app_metadata (set server-side, no extra DB query needed)
+  const emailVerified = user.app_metadata?.email_verified !== false
+  if (!emailVerified) {
+    return NextResponse.redirect(new URL('/check-email', request.url))
   }
 
   // Onboarding gate — redirect to profile if not completed

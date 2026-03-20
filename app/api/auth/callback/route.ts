@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
     const { data: business } = await adminSupabase
       .from('businesses')
-      .insert({ name: displayName, contact_email: data.user.email, trial_ends_at: trialEndsAt })
+      .insert({ name: displayName, contact_email: data.user.email, trial_ends_at: trialEndsAt, email_verified: true })
       .select()
       .single()
 
@@ -45,6 +45,11 @@ export async function GET(req: NextRequest) {
         .from('user_businesses')
         .insert({ user_id: data.user.id, business_id: business.id, role: 'owner' })
     }
+
+    // Google emails are pre-verified by Google — mark verified in app_metadata
+    await adminSupabase.auth.admin.updateUserById(data.user.id, {
+      app_metadata: { email_verified: true },
+    })
 
     // Send new users to profile to set their bar name
     return NextResponse.redirect(`${origin}/profile?new=1`)
