@@ -4,9 +4,8 @@ import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { PRICE_IDS } from '@/lib/plans'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
   try {
     const { supabase, user, businessId } = await getAuthContext()
     const { plan, billing } = await req.json()

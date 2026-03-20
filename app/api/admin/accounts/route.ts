@@ -3,8 +3,6 @@ import Stripe from 'stripe'
 import { getAdminContext } from '@/lib/admin-auth'
 import { authErrorResponse } from '@/lib/auth'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
 export async function GET() {
   try {
     const { adminSupabase } = await getAdminContext()
@@ -96,6 +94,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
     const { adminSupabase } = await getAdminContext()
     const { business_id, user_id } = await req.json()
 

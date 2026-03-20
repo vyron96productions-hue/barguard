@@ -3,8 +3,6 @@ import Stripe from 'stripe'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { PRICE_IDS } from '@/lib/plans'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
 function getPlanFromPriceId(priceId: string) {
   for (const [plan, id] of Object.entries(PRICE_IDS)) {
     if (id === priceId) return plan
@@ -13,6 +11,7 @@ function getPlanFromPriceId(priceId: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
   const body = await req.text()
   const sig = req.headers.get('stripe-signature')
 
