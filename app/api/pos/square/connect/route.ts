@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSquareAuthUrl } from '@/lib/pos/square'
 import { getAuthContext } from '@/lib/auth'
-import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
 export async function GET(req: Request) {
@@ -12,9 +11,8 @@ export async function GET(req: Request) {
   // Grab business_id before leaving — session cookie won't survive the cross-site redirect back
   const { businessId } = await getAuthContext()
 
-  const cookieStore = await cookies()
-  cookieStore.set('pos_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/', sameSite: 'lax' })
-  cookieStore.set('pos_oauth_business_id', businessId, { httpOnly: true, maxAge: 600, path: '/', sameSite: 'lax' })
-
-  return NextResponse.redirect(getSquareAuthUrl(state, redirectUri))
+  const response = NextResponse.redirect(getSquareAuthUrl(state, redirectUri))
+  response.cookies.set('pos_oauth_state', state, { httpOnly: true, maxAge: 600, path: '/', sameSite: 'lax' })
+  response.cookies.set('pos_oauth_business_id', businessId, { httpOnly: true, maxAge: 600, path: '/', sameSite: 'lax' })
+  return response
 }
