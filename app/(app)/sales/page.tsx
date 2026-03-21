@@ -71,10 +71,10 @@ export default function SalesLogPage() {
     return items.filter((i) => i.item_type === 'food')
   }
 
-  const hasRevenue = days.some((d) => d.total_revenue != null)
-  const totalRevenue = days.reduce((s, d) => s + (d.total_revenue ?? 0), 0)
-  const totalQty = days.reduce((s, d) => s + d.total_qty, 0)
   const allItems = days.flatMap((d) => filterItems(d.items))
+  const hasRevenue = allItems.some((i) => i.gross_sales != null)
+  const totalRevenue = allItems.reduce((s, i) => s + (i.gross_sales ?? 0), 0)
+  const totalQty = allItems.reduce((s, i) => s + i.qty_sold, 0)
   const hasMultipleDays = days.length > 1
 
   const stationOptions = [
@@ -247,6 +247,24 @@ export default function SalesLogPage() {
               <p className="text-[10px] text-slate-600 mt-0.5">unique items</p>
             </div>
           </div>
+
+          {/* Empty state when type filter hides all items */}
+          {allItems.length === 0 && days.length > 0 && (
+            <div className="text-center py-12 border border-slate-800 border-dashed rounded-2xl text-slate-600">
+              <p className="text-sm">
+                No {typeFilter === 'food' ? 'food' : typeFilter === 'drink' ? 'drink' : ''} items found
+                {stationFilter !== 'all' ? ` for ${stationFilter === 'none' ? 'unassigned' : stationFilter}` : ''} on this date.
+              </p>
+              {typeFilter !== 'all' && (
+                <button
+                  onClick={() => setTypeFilter('all')}
+                  className="mt-2 text-xs text-amber-500 hover:text-amber-400"
+                >
+                  Show all types →
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Per-day sections */}
           <div className="space-y-4">
