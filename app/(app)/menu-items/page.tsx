@@ -88,6 +88,7 @@ export default function RecipeMappingPage() {
   const [wizardSaving, setWizardSaving]       = useState(false)
   const [wizardDone, setWizardDone]           = useState(false)
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
+  const [aiMatchLoading, setAiMatchLoading]   = useState(false)
 
   // AI Auto-Generate
   const [showAiGen, setShowAiGen]         = useState(false)
@@ -113,18 +114,41 @@ export default function RecipeMappingPage() {
   async function openWizard() {
     setShowWizard(true)
     setSuggestionsLoading(true)
+    setAiMatchLoading(false)
+
+    // Step 1: fast word-match suggestions
     const res = await fetch('/api/recipes/suggestions')
     const data = await res.json()
-    const sugs: RecipeSuggestion[] = Array.isArray(data) ? data : []
-    setSuggestions(sugs)
-    setWizardRows(sugs.map((s) => ({
+    const wordSugs: RecipeSuggestion[] = Array.isArray(data) ? data : []
+    setSuggestions(wordSugs)
+
+    const toRows = (sugs: RecipeSuggestion[]) => sugs.map((s) => ({
       ...s,
       included: true,
       edited_qty: s.suggested_quantity.toString(),
       edited_unit: s.suggested_unit,
       edited_inv_id: s.inventory_item_id,
-    })))
+    }))
+
+    setWizardRows(toRows(wordSugs))
     setSuggestionsLoading(false)
+
+    // Step 2: AI match for items the word algorithm missed
+    setAiMatchLoading(true)
+    try {
+      const aiRes = await fetch('/api/recipes/ai-match')
+      const aiData = await aiRes.json()
+      const aiSugs: RecipeSuggestion[] = Array.isArray(aiData) ? aiData : []
+
+      // Merge: keep word-match for items it found, add AI for the rest
+      const wordMatchedIds = new Set(wordSugs.map((s) => s.menu_item_id))
+      const aiOnly = aiSugs.filter((s) => !wordMatchedIds.has(s.menu_item_id))
+
+      const merged = [...wordSugs, ...aiOnly]
+      setSuggestions(merged)
+      setWizardRows(toRows(merged))
+    } catch { /* AI match failing silently is fine — word-match results still show */ }
+    setAiMatchLoading(false)
   }
 
   async function confirmWizard() {
@@ -899,6 +923,16 @@ export default function RecipeMappingPage() {
 
               {suggestionsLoading ? (
                 <p className="text-slate-500 text-sm py-8 text-center">Finding matches…</p>
+              ) : aiMatchLoading ? (
+                <div className="py-6 text-center space-y-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-purple-500/40 border-t-purple-400 rounded-full animate-spin" />
+                    <p className="text-sm text-purple-300">AI matching cocktails and recipes…</p>
+                  </div>
+                  {wizardRows.length > 0 && (
+                    <p className="text-xs text-slate-600">{wizardRows.length} word-match results found · checking for more…</p>
+                  )}
+                </div>
               ) : wizardDone ? (
                 <div className="text-center py-16 space-y-2">
                   <p className="text-4xl">✓</p>
@@ -956,11 +990,15 @@ export default function RecipeMappingPage() {
                             >
                               {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                             </select>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
-                              row.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                              row.confidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                              'bg-slate-800 text-slate-500 border border-slate-700'
-                            }`}>{row.confidence}</span>
+                            {row.ai_suggested ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">AI</span>
+                            ) : (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                                row.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                row.confidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                'bg-slate-800 text-slate-500 border border-slate-700'
+                              }`}>{row.confidence}</span>
+                            )}
                           </div>
                         </div>
 
@@ -995,11 +1033,15 @@ export default function RecipeMappingPage() {
                           >
                             {RECIPE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                           </select>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${
-                            row.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                            row.confidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                            'bg-slate-800 text-slate-500 border border-slate-700'
-                          }`}>{row.confidence}</span>
+                          {row.ai_suggested ? (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 bg-purple-500/10 text-purple-400 border border-purple-500/20">AI</span>
+                          ) : (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${
+                              row.confidence === 'high' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                              row.confidence === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                              'bg-slate-800 text-slate-500 border border-slate-700'
+                            }`}>{row.confidence}</span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1010,7 +1052,7 @@ export default function RecipeMappingPage() {
           </div>
 
           {/* Sticky footer */}
-          {!suggestionsLoading && !wizardDone && wizardRows.length > 0 && (
+          {!suggestionsLoading && !aiMatchLoading && !wizardDone && wizardRows.length > 0 && (
             <div className="border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-4">
               <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
                 <p className="text-xs text-slate-500">

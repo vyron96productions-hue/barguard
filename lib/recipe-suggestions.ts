@@ -23,6 +23,7 @@ export interface RecipeSuggestion {
   suggested_quantity: number
   suggested_unit: string
   confidence: 'high' | 'medium' | 'low'
+  ai_suggested?: boolean
 }
 
 // Words to strip from menu item names before matching
