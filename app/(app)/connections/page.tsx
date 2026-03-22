@@ -464,11 +464,16 @@ function ConnectionsContent() {
 
   async function disconnect(provider: string) {
     if (!confirm(`Disconnect ${provider}?`)) return
-    await fetch('/api/pos/connections', {
+    const res = await fetch('/api/pos/connections', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ provider }),
     })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setBanner({ type: 'error', msg: d?.error ?? 'Failed to disconnect — please try again' })
+      return
+    }
     loadConnections()
   }
 

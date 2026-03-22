@@ -75,6 +75,8 @@ export default function RecipeMappingPage() {
   const [editRecipeQty, setEditRecipeQty]     = useState('')
   const [editRecipeUnit, setEditRecipeUnit]   = useState('oz')
   const [editRecipeSaving, setEditRecipeSaving] = useState(false)
+  const [editRecipeErr, setEditRecipeErr]     = useState<string | null>(null)
+  const [recipeActionErr, setRecipeActionErr] = useState<string | null>(null)
 
   // Inline sell price editing
   const [editPriceId, setEditPriceId]   = useState<string | null>(null)
@@ -325,7 +327,13 @@ export default function RecipeMappingPage() {
   }
 
   async function handleDeleteRecipe(id: string) {
-    await fetch(`/api/recipes?id=${id}`, { method: 'DELETE' })
+    setRecipeActionErr(null)
+    const res = await fetch(`/api/recipes?id=${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setRecipeActionErr(d?.error ?? 'Failed to delete ingredient')
+      return
+    }
     fetchAll()
   }
 
@@ -339,24 +347,33 @@ export default function RecipeMappingPage() {
   async function saveEditRecipe() {
     if (!editingRecipeId) return
     setEditRecipeSaving(true)
-    await fetch(`/api/recipes?id=${editingRecipeId}`, {
+    setEditRecipeErr(null)
+    const res = await fetch(`/api/recipes?id=${editingRecipeId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ inventory_item_id: editRecipeInvId, quantity: parseFloat(editRecipeQty), unit: editRecipeUnit }),
     })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setEditRecipeErr(d?.error ?? 'Save failed — please try again')
+      setEditRecipeSaving(false)
+      return
+    }
     setEditingRecipeId(null)
+    setEditRecipeErr(null)
     setEditRecipeSaving(false)
     fetchAll()
   }
 
   async function saveSellPrice(menuItemId: string) {
     setPriceSaving(true)
-    await fetch('/api/menu-items', {
+    const res = await fetch('/api/menu-items', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: menuItemId, sell_price: editPriceVal || null }),
     })
     setPriceSaving(false)
+    if (!res.ok) return // keep edit open so user can retry
     setEditPriceId(null)
     setMenuItems((prev) => prev.map((i) =>
       i.id === menuItemId
@@ -522,11 +539,12 @@ export default function RecipeMappingPage() {
                       {editRecipeSaving ? '…' : 'Save'}
                     </button>
                     <button
-                      onClick={() => setEditingRecipeId(null)}
+                      onClick={() => { setEditingRecipeId(null); setEditRecipeErr(null) }}
                       className="text-xs text-slate-500 hover:text-slate-300 transition-colors shrink-0"
                     >
                       Cancel
                     </button>
+                    {editRecipeErr && <p className="text-xs text-red-400 w-full">{editRecipeErr}</p>}
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -600,6 +618,7 @@ export default function RecipeMappingPage() {
               </button>
             </div>
             {inlineErr && <p className="text-red-400 text-xs mt-2">{inlineErr}</p>}
+            {recipeActionErr && <p className="text-red-400 text-xs mt-2">{recipeActionErr}</p>}
           </div>
         )}
       </div>

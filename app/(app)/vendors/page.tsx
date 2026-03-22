@@ -29,9 +29,12 @@ export default function VendorsPage() {
 
   async function fetchVendors() {
     setLoading(true)
-    const res = await fetch('/api/vendors')
-    const data = await res.json()
-    setVendors(Array.isArray(data) ? data : [])
+    try {
+      const res = await fetch('/api/vendors')
+      if (!res.ok) { setLoading(false); return }
+      const data = await res.json()
+      setVendors(Array.isArray(data) ? data : [])
+    } catch { /* network error — vendors list stays empty */ }
     setLoading(false)
   }
 
