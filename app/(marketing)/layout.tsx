@@ -55,6 +55,13 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
               <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Partners</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Link href="/partners" data-gtm-event="footer_click" data-gtm-label="footer_partners" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Partner Program</Link>
+                  <Link href="/partner-login" data-gtm-event="footer_click" data-gtm-label="footer_partner_login" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Partner Login</Link>
+                </div>
+              </div>
+              <div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Legal</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <Link href="/privacy" data-gtm-event="footer_click" data-gtm-label="footer_privacy" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Privacy Policy</Link>
