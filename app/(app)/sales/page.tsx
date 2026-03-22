@@ -47,7 +47,7 @@ export default function SalesLogPage() {
       const params = new URLSearchParams({ date_start: start, date_end: end })
       if (station !== 'all') params.set('station', station)
       const res = await fetch(`/api/reports/sales-log?${params}`)
-      if (!res.ok) { setFetchError('Failed to load sales data — please try again'); setLoading(false); return }
+      if (!res.ok) { setFetchError('Failed to load sales data — please try again'); setDays([]); setLoading(false); return }
       const data = await res.json()
       if (data && Array.isArray(data.days)) {
         setDays(data.days)
@@ -58,6 +58,7 @@ export default function SalesLogPage() {
       }
     } catch {
       setFetchError('Network error — please check your connection')
+      setDays([])
     }
     setLoading(false)
   }, [])

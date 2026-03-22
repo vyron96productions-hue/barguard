@@ -54,6 +54,7 @@ export default function InventoryItemsPage() {
   const [priceEdits, setPriceEdits]         = useState<Record<string, string>>({})
   const [bulkPriceSaving, setBulkPriceSaving] = useState(false)
   const [bulkPriceDone, setBulkPriceDone]   = useState(false)
+  const [bulkPriceError, setBulkPriceError] = useState<string | null>(null)
 
   const [editingId,      setEditingId]      = useState<string | null>(null)
   const [editName,       setEditName]       = useState('')
@@ -186,6 +187,7 @@ export default function InventoryItemsPage() {
     if (updates.length === 0) { setBulkPriceMode(false); return }
 
     setBulkPriceSaving(true)
+    setBulkPriceError(null)
     const res = await fetch('/api/inventory-items/bulk-prices', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -196,6 +198,9 @@ export default function InventoryItemsPage() {
       setBulkPriceDone(true)
       await fetchItems()
       setTimeout(() => { setBulkPriceMode(false); setBulkPriceDone(false) }, 1200)
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setBulkPriceError(d?.error ?? 'Failed to save prices — please try again')
     }
   }
 
@@ -654,12 +659,15 @@ export default function InventoryItemsPage() {
           {/* Footer */}
           {!bulkPriceDone && (
             <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
+              <div className="flex flex-col gap-0.5">
               <p className="text-xs text-slate-500">
                 {(() => {
                   const changed = items.filter((i) => (priceEdits[i.id] ?? '') !== (i.cost_per_unit != null ? String(i.cost_per_unit) : '')).length
                   return changed > 0 ? `${changed} item${changed !== 1 ? 's' : ''} changed` : 'No changes yet'
                 })()}
               </p>
+              {bulkPriceError && <p className="text-xs text-red-400">{bulkPriceError}</p>}
+              </div>
               <div className="flex gap-3">
                 <button onClick={() => setBulkPriceMode(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">
                   Cancel

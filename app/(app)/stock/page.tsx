@@ -239,8 +239,12 @@ export default function StockPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ counts: countsWithExpected }),
         })
-        const data = await res.json()
-        setAnalysisResult(data)
+        if (!res.ok) {
+          setAnalysisResult({ findings: [], summary: 'Analysis failed — please try again.' })
+        } else {
+          const data = await res.json()
+          setAnalysisResult(data)
+        }
       } catch {
         setAnalysisResult({ findings: [], summary: 'Analysis failed — please try again.' })
       }

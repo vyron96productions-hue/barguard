@@ -247,7 +247,7 @@ export default function DashboardPage() {
       const se  = resolvedWindow?.shiftEnd        ?? customShiftWindow?.shiftEnd   ?? null
       fetchData(start, end, sl, ss, se)
     } else {
-      setCalcMsg(data.error)
+      setCmdError(data.error ?? 'Calculation failed — please try again')
     }
   }
 

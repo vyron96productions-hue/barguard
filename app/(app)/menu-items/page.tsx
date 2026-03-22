@@ -258,11 +258,16 @@ export default function RecipeMappingPage() {
       .filter(Boolean)
 
     if (recipes.length > 0) {
-      await fetch('/api/recipes/bulk', {
+      const recipeRes = await fetch('/api/recipes/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipes }),
       })
+      if (!recipeRes.ok) {
+        setAiGenError('Menu items created but recipes failed to save — please add recipes manually from Recipe Mapping.')
+        setAiGenSaving(false)
+        return
+      }
     }
 
     setAiGenSaving(false)
@@ -295,7 +300,7 @@ export default function RecipeMappingPage() {
     const res = await fetch(`/api/menu-items?id=${id}`, { method: 'DELETE' })
     if (!res.ok) {
       const data = await res.json()
-      setError(JSON.stringify(data))
+      setError(data?.error ?? 'Delete failed — please try again')
       return
     }
     fetchAll()

@@ -112,6 +112,14 @@ export default function ModifierRulesPage() {
 
   async function saveRow(name: string) {
     const state = getRowState(name)
+    if (['add', 'remove'].includes(state.action) && !state.inventory_item_id) {
+      setError(`Select an inventory item for the "${state.action}" action on "${name}"`)
+      return
+    }
+    if (state.action === 'multiply' && (!state.multiply_factor || parseFloat(state.multiply_factor) <= 0)) {
+      setError(`Enter a valid multiplier greater than 0 for "${name}"`)
+      return
+    }
     setRowState((prev) => ({ ...prev, [name]: { ...state, saving: true } }))
     setError(null)
 
@@ -138,7 +146,13 @@ export default function ModifierRulesPage() {
 
   async function deleteRule(id: string, name: string) {
     setRowState((prev) => ({ ...prev, [name]: { ...getRowState(name), saving: true } }))
-    await fetch('/api/modifier-rules', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    const res = await fetch('/api/modifier-rules', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      setError(d?.error ?? 'Failed to delete rule')
+      setRowState((prev) => ({ ...prev, [name]: { ...getRowState(name), saving: false } }))
+      return
+    }
     await load()
     setRowState((prev) => { const n = { ...prev }; delete n[name]; return n })
   }
