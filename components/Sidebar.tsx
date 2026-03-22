@@ -45,11 +45,15 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [businessName, setBusinessName] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then((r) => r.json())
-      .then((d) => { if (d.business_name) setBusinessName(d.business_name) })
+      .then((d) => {
+        if (d.business_name) setBusinessName(d.business_name)
+        if (d.is_admin) setIsAdmin(true)
+      })
       .catch(() => {})
   }, [])
 
@@ -106,6 +110,35 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Admin section — only visible to admins */}
+      {isAdmin && (
+        <div className="px-3 pb-2 border-t border-slate-800/60 pt-3">
+          <p className="px-3 mb-1.5 text-[9px] font-semibold text-red-700 uppercase tracking-[0.15em]">Admin</p>
+          <div className="space-y-0.5">
+            {[
+              { href: '/admin', label: 'Accounts' },
+              { href: '/admin/partners', label: 'Partners' },
+            ].map((item) => {
+              const active = pathname.startsWith(item.href) && (item.href === '/admin' ? pathname === '/admin' : true)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 group ${
+                    active
+                      ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                      : 'text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 border border-transparent'
+                  }`}
+                >
+                  <span className={`text-xs font-mono ${active ? 'text-red-400' : 'text-slate-700 group-hover:text-slate-500'}`}>⬡</span>
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-slate-800/60 space-y-2">
