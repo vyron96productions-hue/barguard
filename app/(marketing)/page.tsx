@@ -1,6 +1,32 @@
 export default function HomePage() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'BarGuard',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    url: 'https://barguard.app',
+    description: 'AI-powered bar inventory loss detection. Track shrinkage, over-pouring, and stock discrepancies before they cost you thousands.',
+    screenshot: 'https://barguard.app/images/Dashboard.png',
+    featureList: [
+      'AI invoice scanning',
+      'Variance reports',
+      'POS integration with Square and Clover',
+      'Smart reorder alerts',
+      'Profit intelligence',
+      'Stock level tracking',
+      'Sales analytics',
+    ],
+    offers: [
+      { '@type': 'Offer', name: 'Basic', price: '99', priceCurrency: 'USD', description: 'Core inventory workflow, AI invoice scanning, variance reports' },
+      { '@type': 'Offer', name: 'Pro', price: '199', priceCurrency: 'USD', description: 'Full POS integration, vendor management, automated reorder' },
+      { '@type': 'Offer', name: 'Enterprise', price: '399', priceCurrency: 'USD', description: 'Multi-location, priority support, custom onboarding' },
+    ],
+  }
+
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', overflow: 'hidden' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; }
         .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -95,7 +121,10 @@ export default function HomePage() {
             Start Free Trial
             <span style={{ fontSize: 16 }}>→</span>
           </a>
-          <a href="/pricing" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_hero_view_pricing" style={{ padding: '14px 28px', fontSize: 15 }}>
+          <a href="/screenshots" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_hero_screenshots" style={{ padding: '14px 28px', fontSize: 15 }}>
+            See it in action
+          </a>
+          <a href="/pricing" data-gtm-event="cta_click" data-gtm-label="homepage_hero_view_pricing" style={{ padding: '14px 28px', fontSize: 15, color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
             View Pricing
           </a>
         </div>

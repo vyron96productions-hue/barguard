@@ -3,6 +3,7 @@ import '../globals.css'
 import Link from 'next/link'
 import { Montserrat } from 'next/font/google'
 import MarketingNav from '@/components/MarketingNav'
+import ChatWidget from '@/components/ChatWidget'
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['800'], variable: '--font-montserrat' })
 
@@ -28,6 +29,22 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           .footer-links { gap: 32px; }
         }
       `}</style>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'BarGuard',
+          url: 'https://barguard.app',
+          logo: 'https://barguard.app/barguard_icon.png',
+          description: 'AI-powered inventory loss detection for bars and restaurants.',
+          email: 'support@barguard.app',
+          sameAs: [
+            'https://www.facebook.com/profile.php?id=61577657877985',
+            'https://x.com/BarguardLLC',
+          ],
+        }) }}
+      />
       <MarketingNav />
       <div className={montserrat.variable} style={{ paddingTop: 64 }}>
         {children}
@@ -85,6 +102,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </footer>
+      <ChatWidget />
     </>
   )
 }
