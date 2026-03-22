@@ -35,22 +35,29 @@ export default function SalesLogPage() {
   const [days, setDays] = useState<SalesLogDay[]>([])
   const [stations, setStations] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [stationFilter, setStationFilter] = useState<string>('all') // 'all' | 'none' | station name
 
   const fetchData = useCallback(async (start: string, end: string, station: string) => {
     if (!start || !end) return
     setLoading(true)
-    const params = new URLSearchParams({ date_start: start, date_end: end })
-    if (station !== 'all') params.set('station', station)
-    const res = await fetch(`/api/reports/sales-log?${params}`)
-    const data = await res.json()
-    if (data && Array.isArray(data.days)) {
-      setDays(data.days)
-      // Only update stations list when not filtering (so we can always show all options)
-      if (station === 'all') setStations(data.stations ?? [])
-    } else {
-      setDays([])
+    setFetchError(null)
+    try {
+      const params = new URLSearchParams({ date_start: start, date_end: end })
+      if (station !== 'all') params.set('station', station)
+      const res = await fetch(`/api/reports/sales-log?${params}`)
+      if (!res.ok) { setFetchError('Failed to load sales data — please try again'); setLoading(false); return }
+      const data = await res.json()
+      if (data && Array.isArray(data.days)) {
+        setDays(data.days)
+        // Only update stations list when not filtering (so we can always show all options)
+        if (station === 'all') setStations(data.stations ?? [])
+      } else {
+        setDays([])
+      }
+    } catch {
+      setFetchError('Network error — please check your connection')
     }
     setLoading(false)
   }, [])
@@ -211,6 +218,10 @@ export default function SalesLogPage() {
 
       {loading ? (
         <p className="text-slate-500 text-sm">Loading…</p>
+      ) : fetchError ? (
+        <div className="text-center py-16 border border-red-900/40 border-dashed rounded-2xl">
+          <p className="text-sm text-red-400">{fetchError}</p>
+        </div>
       ) : days.length === 0 ? (
         <div className="text-center py-16 border border-slate-800 border-dashed rounded-2xl text-slate-700">
           <p className="text-3xl mb-3">◎</p>

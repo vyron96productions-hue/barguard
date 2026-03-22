@@ -79,6 +79,7 @@ export default function ProfitIntelligencePage() {
   const [typeFilter,  setTypeFilter]    = useState<'all' | 'drink' | 'food'>('all')
   const [loading,     setLoading]       = useState(false)
   const [calculating, setCalculating]   = useState(false)
+  const [calcError,   setCalcError]     = useState<string | null>(null)
   const [hasData,     setHasData]       = useState(false)
   const [lastCalcAt,  setLastCalcAt]    = useState<string | null>(null)
   const [sortBy,      setSortBy]        = useState<SortKey>('profit')
@@ -100,18 +101,24 @@ export default function ProfitIntelligencePage() {
   const loadSummaries = useCallback(async () => {
     setCalculating(true)
     setLoading(true)
+    setCalcError(null)
     setInsight(null)
-    await fetch('/api/calculations/profit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
-    })
-    const res = await fetch(`/api/reports/profit?period_start=${periodStart}&period_end=${periodEnd}`)
-    const data = await res.json()
-    const rows: DrinkProfitSummary[] = Array.isArray(data) ? data : []
-    setAllSummaries(rows)
-    setHasData(rows.length > 0)
-    setLastCalcAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+    try {
+      await fetch('/api/calculations/profit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
+      })
+      const res = await fetch(`/api/reports/profit?period_start=${periodStart}&period_end=${periodEnd}`)
+      if (!res.ok) { setCalcError('Failed to load profit data — please try again'); setCalculating(false); setLoading(false); return }
+      const data = await res.json()
+      const rows: DrinkProfitSummary[] = Array.isArray(data) ? data : []
+      setAllSummaries(rows)
+      setHasData(rows.length > 0)
+      setLastCalcAt(new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))
+    } catch {
+      setCalcError('Network error — please try again')
+    }
     setCalculating(false)
     setLoading(false)
   }, [periodStart, periodEnd])
@@ -270,8 +277,16 @@ export default function ProfitIntelligencePage() {
 
       {loading && <p className="text-slate-600 text-sm">Loading…</p>}
 
+      {/* ── Error state ─────────────────────────────────────────────────────── */}
+      {!loading && calcError && (
+        <div className="text-center py-12 border border-red-900/40 border-dashed rounded-2xl">
+          <p className="text-sm text-red-400 mb-3">{calcError}</p>
+          <button onClick={loadSummaries} className="text-xs text-slate-500 hover:text-slate-300 underline">Retry</button>
+        </div>
+      )}
+
       {/* ── Empty state ─────────────────────────────────────────────────────── */}
-      {!loading && !hasData && (
+      {!loading && !calcError && !hasData && (
         <div className="bg-slate-900/40 border border-slate-800/60 border-dashed rounded-2xl p-12 text-center">
           <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700/60 flex items-center justify-center mx-auto mb-4">
             <span className="text-slate-500 text-lg">◑</span>

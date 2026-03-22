@@ -39,6 +39,7 @@ export default function ReorderPage() {
   const [copiedVendor, setCopiedVendor] = useState<string | null>(null)
   const [sentVendor, setSentVendor] = useState<string | null>(null)
   const [sendingVendor, setSendingVendor] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
   const [businessName, setBusinessName] = useState<string>('')
   const [plan, setPlan] = useState<Plan>('basic')
 
@@ -136,22 +137,30 @@ ${businessName || 'My Bar'}`
   async function sendEmail(vendorKey: string, group: { vendorName: string; vendorEmail: string | null; items: ReorderSuggestion[] }) {
     if (!group.vendorEmail) return
     setSendingVendor(vendorKey)
-    const orderText = buildOrderText(vendorKey, group)
-    const res = await fetch('/api/reorder/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        vendorEmail: group.vendorEmail,
-        vendorName: group.vendorName,
-        orderText,
-        businessName,
-      }),
-    })
-    setSendingVendor(null)
-    if (res.ok) {
-      setSentVendor(vendorKey)
-      setTimeout(() => setSentVendor(null), 3000)
+    setEmailError(null)
+    try {
+      const orderText = buildOrderText(vendorKey, group)
+      const res = await fetch('/api/reorder/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vendorEmail: group.vendorEmail,
+          vendorName: group.vendorName,
+          orderText,
+          businessName,
+        }),
+      })
+      if (res.ok) {
+        setSentVendor(vendorKey)
+        setTimeout(() => setSentVendor(null), 3000)
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setEmailError(d?.error ?? 'Failed to send email — please try again')
+      }
+    } catch {
+      setEmailError('Network error — email not sent')
     }
+    setSendingVendor(null)
   }
 
   const grouped = groupByVendor(displayed)
@@ -323,6 +332,7 @@ ${businessName || 'My Bar'}`
                         {copiedVendor === vendorKey ? 'Copied!' : 'Copy to Clipboard'}
                       </button>
                     </div>
+                    {emailError && <p className="text-xs text-red-400">{emailError}</p>}
                   </div>
                   <pre className="text-xs text-slate-400 font-mono whitespace-pre-wrap bg-slate-900 border border-slate-800 rounded-xl p-4 leading-relaxed">
                     {buildOrderText(vendorKey, group)}

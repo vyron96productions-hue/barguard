@@ -8,6 +8,7 @@ import type { InventoryUsageSummary } from '@/types'
 export default function VarianceReportsPage() {
   const [summaries, setSummaries] = useState<InventoryUsageSummary[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [periodStart, setPeriodStart] = useState('')
   const [periodEnd, setPeriodEnd] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -17,12 +18,18 @@ export default function VarianceReportsPage() {
 
   async function fetchReports() {
     setLoading(true)
-    const params = new URLSearchParams()
-    if (periodStart) params.set('period_start', periodStart)
-    if (periodEnd) params.set('period_end', periodEnd)
-    const res = await fetch(`/api/reports/variance?${params}`)
-    const data = await res.json()
-    setSummaries(Array.isArray(data) ? data : [])
+    setFetchError(null)
+    try {
+      const params = new URLSearchParams()
+      if (periodStart) params.set('period_start', periodStart)
+      if (periodEnd) params.set('period_end', periodEnd)
+      const res = await fetch(`/api/reports/variance?${params}`)
+      if (!res.ok) { setFetchError('Failed to load reports — please try again'); setLoading(false); return }
+      const data = await res.json()
+      setSummaries(Array.isArray(data) ? data : [])
+    } catch {
+      setFetchError('Network error — please check your connection and try again')
+    }
     setLoading(false)
   }
 
@@ -142,6 +149,11 @@ export default function VarianceReportsPage() {
       {/* Data */}
       {loading ? (
         <p className="text-slate-500 text-sm">Loading…</p>
+      ) : fetchError ? (
+        <div className="text-center py-16 border border-red-900/40 border-dashed rounded-2xl">
+          <p className="text-sm text-red-400 mb-3">{fetchError}</p>
+          <button onClick={fetchReports} className="text-xs text-slate-500 hover:text-slate-300 underline">Retry</button>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-slate-700 border border-slate-800 border-dashed rounded-2xl">
           <p className="text-3xl mb-3">◉</p>
