@@ -121,7 +121,7 @@ export default function HomePage() {
             Start Free Trial
             <span style={{ fontSize: 16 }}>→</span>
           </a>
-          <a href="/screenshots" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_hero_screenshots" style={{ padding: '14px 28px', fontSize: 15 }}>
+          <a href="/how-it-works" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_hero_screenshots" style={{ padding: '14px 28px', fontSize: 15 }}>
             See it in action
           </a>
           <a href="/pricing" data-gtm-event="cta_click" data-gtm-label="homepage_hero_view_pricing" style={{ padding: '14px 28px', fontSize: 15, color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>

@@ -169,7 +169,7 @@ export default function ScreenshotsClient() {
         <section style={{ textAlign: 'center', padding: '72px 0 64px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 100, padding: '5px 14px', marginBottom: 28, fontFamily: 'monospace', fontSize: 11, fontWeight: 500, color: '#f59e0b', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
             <span style={{ width: 6, height: 6, background: '#f59e0b', borderRadius: '50%', display: 'inline-block' }} />
-            App Screenshots
+            How It Works
           </div>
           <h1 style={{ fontFamily: 'var(--font-montserrat)', fontSize: 'clamp(28px, 5vw, 50px)', lineHeight: 1.08, letterSpacing: '-1px', color: '#f8fafc', maxWidth: 680, margin: '0 auto 20px', fontWeight: 800 }}>
             See BarGuard <em style={{ color: '#f59e0b', fontStyle: 'italic' }}>in action</em>
@@ -178,10 +178,10 @@ export default function ScreenshotsClient() {
             A real look at every feature — no marketing fluff, just the actual product your bar will use every day.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
-            <Link href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="screenshots_hero_start_trial" style={{ fontSize: 15, padding: '11px 24px', borderRadius: 10 }}>
+            <Link href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="howitworks_hero_start_trial" style={{ fontSize: 15, padding: '11px 24px', borderRadius: 10 }}>
               Start Free Trial
             </Link>
-            <Link href="/features" data-gtm-event="cta_click" data-gtm-label="screenshots_hero_view_features" style={{ fontSize: 15, padding: '11px 24px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid #1e293b', color: '#94a3b8', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+            <Link href="/features" data-gtm-event="cta_click" data-gtm-label="howitworks_hero_view_features" style={{ fontSize: 15, padding: '11px 24px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid #1e293b', color: '#94a3b8', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
               View All Features
             </Link>
           </div>
@@ -233,7 +233,7 @@ export default function ScreenshotsClient() {
             <p style={{ fontSize: 16, color: '#64748b', maxWidth: 440, margin: '0 auto 28px', lineHeight: 1.6 }}>
               Start your free trial and see every one of these features working with your own data.
             </p>
-            <Link href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="screenshots_cta_get_started" style={{ fontSize: 15, padding: '12px 28px', borderRadius: 10 }}>
+            <Link href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="howitworks_cta_get_started" style={{ fontSize: 15, padding: '12px 28px', borderRadius: 10 }}>
               Get Started Free
             </Link>
           </div>

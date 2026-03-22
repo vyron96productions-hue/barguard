@@ -65,7 +65,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <Link href="/features" data-gtm-event="footer_click" data-gtm-label="footer_features" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Features</Link>
                   <Link href="/pricing" data-gtm-event="footer_click" data-gtm-label="footer_pricing" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Pricing</Link>
-                  <Link href="/screenshots" data-gtm-event="footer_click" data-gtm-label="footer_screenshots" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Screenshots</Link>
+                  <Link href="/how-it-works" data-gtm-event="footer_click" data-gtm-label="footer_screenshots" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>How It Works</Link>
                   <Link href="/faq" data-gtm-event="footer_click" data-gtm-label="footer_faq" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>FAQ</Link>
                   <Link href="/about" data-gtm-event="footer_click" data-gtm-label="footer_why_barguard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Why BarGuard</Link>
                   <Link href="/contact" data-gtm-event="footer_click" data-gtm-label="footer_contact" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Contact</Link>

@@ -41,7 +41,7 @@ export default function MarketingNav() {
 
           <div className="mnav-links">
             <Link href="/features" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_features" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Features</Link>
-            <Link href="/screenshots" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_screenshots" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Screenshots</Link>
+            <Link href="/how-it-works" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_screenshots" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>How It Works</Link>
             <Link href="/pricing" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_pricing" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
             <Link href="/about" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_why_barguard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Why BarGuard</Link>
             <Link href="/contact" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_contact" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Contact</Link>
@@ -102,8 +102,8 @@ export default function MarketingNav() {
               <Link href="/features" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_features" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Features
               </Link>
-              <Link href="/screenshots" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_screenshots" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
-                Screenshots
+              <Link href="/how-it-works" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_screenshots" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+                How It Works
               </Link>
               <Link href="/pricing" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_pricing" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Pricing
