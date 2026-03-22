@@ -22,8 +22,10 @@ export interface ModifierRule {
   action: 'add' | 'remove' | 'multiply' | 'ignore'
   /** Inventory item to add/remove (for add/remove actions) */
   inventory_item_id?: string | null
-  /** Oz to add or remove per unit sold (for add/remove actions) */
+  /** Quantity to add or remove per unit sold */
   qty_delta?: number | null
+  /** Unit for qty_delta — oz, ml, each, slice, piece, etc. Defaults to oz */
+  qty_unit?: string | null
   /** Multiplier applied to all base recipe ingredients (for multiply action, e.g. 2 = double) */
   multiply_factor?: number | null
 }
@@ -68,14 +70,12 @@ export function calculateExpectedUsage(
         if (!rule || rule.action === 'ignore') continue
 
         if (rule.action === 'remove' && rule.inventory_item_id && rule.qty_delta) {
-          // Remove qty_delta oz of a specific ingredient from expected usage
-          const deltaOz = rule.qty_delta * sale.quantity_sold
+          const deltaOz = convertToOz(rule.qty_delta, rule.qty_unit ?? 'oz') * sale.quantity_sold
           expected[rule.inventory_item_id] = Math.max(0, (expected[rule.inventory_item_id] ?? 0) - deltaOz)
         }
 
         if (rule.action === 'add' && rule.inventory_item_id && rule.qty_delta) {
-          // Add qty_delta oz of a specific ingredient to expected usage
-          const deltaOz = rule.qty_delta * sale.quantity_sold
+          const deltaOz = convertToOz(rule.qty_delta, rule.qty_unit ?? 'oz') * sale.quantity_sold
           expected[rule.inventory_item_id] = (expected[rule.inventory_item_id] ?? 0) + deltaOz
         }
 

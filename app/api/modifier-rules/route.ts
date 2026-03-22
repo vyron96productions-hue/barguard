@@ -9,7 +9,7 @@ export async function GET() {
     const [rulesResult, salesResult] = await Promise.all([
       supabase
         .from('modifier_rules')
-        .select('id, modifier_name, action, inventory_item_id, qty_delta, multiply_factor, notes')
+        .select('id, modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes')
         .eq('business_id', businessId)
         .order('modifier_name'),
       supabase
@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
-    const { modifier_name, action, inventory_item_id, qty_delta, multiply_factor, notes } = body
+    const { modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes } = body
 
     if (!modifier_name || !action) {
       return NextResponse.json({ error: 'modifier_name and action are required' }, { status: 400 })
@@ -56,6 +56,7 @@ export async function PUT(req: NextRequest) {
           action,
           inventory_item_id: inventory_item_id ?? null,
           qty_delta: qty_delta ?? null,
+          qty_unit: qty_unit ?? null,
           multiply_factor: multiply_factor ?? null,
           notes: notes ?? null,
         },

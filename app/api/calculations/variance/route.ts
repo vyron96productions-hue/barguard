@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     if (!isShiftMode) {
       const { data: modRulesData } = await supabase
         .from('modifier_rules')
-        .select('modifier_name, action, inventory_item_id, qty_delta, multiply_factor')
+        .select('modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor')
         .eq('business_id', businessId)
       if (modRulesData?.length) {
         modifierRuleMap = {}
@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
             action: r.action as 'add' | 'remove' | 'multiply' | 'ignore',
             inventory_item_id: r.inventory_item_id,
             qty_delta: r.qty_delta,
+            qty_unit: r.qty_unit,
             multiply_factor: r.multiply_factor,
           }
         }

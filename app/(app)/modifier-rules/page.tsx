@@ -2,12 +2,19 @@
 
 import { useEffect, useState, useCallback } from 'react'
 
+const COMMON_UNITS = [
+  'oz', 'ml', 'cl',
+  'each', 'piece', 'slice', 'strip', 'portion', 'serving',
+  'lb', 'g', 'cup', 'tbsp', 'tsp',
+]
+
 interface ModifierRule {
   id: string
   modifier_name: string
   action: 'add' | 'remove' | 'multiply' | 'ignore'
   inventory_item_id: string | null
   qty_delta: number | null
+  qty_unit: string | null
   multiply_factor: number | null
   notes: string | null
 }
@@ -37,6 +44,7 @@ interface RowState {
   action: 'add' | 'remove' | 'multiply' | 'ignore'
   inventory_item_id: string
   qty_delta: string
+  qty_unit: string
   multiply_factor: string
   notes: string
   dirty: boolean
@@ -82,10 +90,12 @@ export default function ModifierRulesPage() {
   function getRowState(name: string): RowState {
     if (rowState[name]) return rowState[name]
     const rule = getRuleForName(name)
+    const selectedItem = inventoryItems.find((i) => i.id === rule?.inventory_item_id)
     return {
       action: rule?.action ?? 'ignore',
       inventory_item_id: rule?.inventory_item_id ?? '',
       qty_delta: rule?.qty_delta != null ? String(rule.qty_delta) : '',
+      qty_unit: rule?.qty_unit ?? selectedItem?.unit ?? 'oz',
       multiply_factor: rule?.multiply_factor != null ? String(rule.multiply_factor) : '2',
       notes: rule?.notes ?? '',
       dirty: false,
@@ -110,6 +120,7 @@ export default function ModifierRulesPage() {
       action: state.action,
       inventory_item_id: ['add', 'remove'].includes(state.action) ? (state.inventory_item_id || null) : null,
       qty_delta: ['add', 'remove'].includes(state.action) && state.qty_delta ? parseFloat(state.qty_delta) : null,
+      qty_unit: ['add', 'remove'].includes(state.action) ? (state.qty_unit || 'oz') : null,
       multiply_factor: state.action === 'multiply' && state.multiply_factor ? parseFloat(state.multiply_factor) : null,
       notes: state.notes || null,
     }
@@ -250,7 +261,14 @@ export default function ModifierRulesPage() {
                     <>
                       <select
                         value={state.inventory_item_id}
-                        onChange={(e) => updateRow(name, { inventory_item_id: e.target.value })}
+                        onChange={(e) => {
+                          const item = inventoryItems.find((i) => i.id === e.target.value)
+                          updateRow(name, {
+                            inventory_item_id: e.target.value,
+                            // Auto-set unit to match the inventory item's unit
+                            qty_unit: item?.unit ?? state.qty_unit ?? 'oz',
+                          })
+                        }}
                         className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-amber-500/50 max-w-[220px]"
                       >
                         <option value="">— select ingredient —</option>
@@ -268,7 +286,15 @@ export default function ModifierRulesPage() {
                           placeholder="0.0"
                           className="w-20 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-amber-500/50"
                         />
-                        <span className="text-xs text-slate-600">oz</span>
+                        <select
+                          value={state.qty_unit}
+                          onChange={(e) => updateRow(name, { qty_unit: e.target.value })}
+                          className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-amber-500/50"
+                        >
+                          {COMMON_UNITS.map((u) => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                        </select>
                       </div>
                     </>
                   )}
@@ -324,12 +350,12 @@ export default function ModifierRulesPage() {
                 {/* Helper text */}
                 {state.action === 'remove' && state.inventory_item_id && state.qty_delta && (
                   <p className="mt-2 text-[11px] text-slate-600">
-                    When &quot;{name}&quot; is applied, BarGuard will expect <span className="text-slate-500">{state.qty_delta} oz less</span> of the selected ingredient per sale.
+                    When &quot;{name}&quot; is applied, BarGuard will expect <span className="text-slate-500">{state.qty_delta} {state.qty_unit} less</span> of the selected ingredient per sale.
                   </p>
                 )}
                 {state.action === 'add' && state.inventory_item_id && state.qty_delta && (
                   <p className="mt-2 text-[11px] text-slate-600">
-                    When &quot;{name}&quot; is applied, BarGuard will expect <span className="text-slate-500">{state.qty_delta} oz more</span> of the selected ingredient per sale.
+                    When &quot;{name}&quot; is applied, BarGuard will expect <span className="text-slate-500">{state.qty_delta} {state.qty_unit} more</span> of the selected ingredient per sale.
                   </p>
                 )}
                 {state.action === 'multiply' && state.multiply_factor && (
