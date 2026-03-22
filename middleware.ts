@@ -7,6 +7,7 @@ const PUBLIC_PREFIXES = [
   '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
   '/api/pos/square/callback', '/api/pos/clover/callback',
   '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
+  '/screenshots', '/partners',
 ]
 
 export async function middleware(request: NextRequest) {
