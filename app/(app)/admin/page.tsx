@@ -15,6 +15,17 @@ interface Account {
   user_id: string
   username: string | null
   is_admin: boolean
+  partner_id: string | null
+  partner_name: string | null
+  partner_code: string | null
+  account_type: string
+}
+
+interface PartnerOption {
+  id: string
+  name: string
+  partner_code: string
+  status: string
 }
 
 interface Stats {
@@ -35,9 +46,11 @@ const PLAN_COLORS: Record<Plan, string> = {
 export default function AdminPage() {
   const router = useRouter()
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [partners, setPartners] = useState<PartnerOption[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [partnerFilter, setPartnerFilter] = useState<string>('all') // 'all' | 'none' | partner_id
   const [saving, setSaving] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [expandedAccount, setExpandedAccount] = useState<string | null>(null)
@@ -62,6 +75,7 @@ export default function AdminPage() {
         if (!d) return
         setAccounts(d.accounts ?? [])
         setStats(d.stats ?? null)
+        setPartners(d.partners ?? [])
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -153,11 +167,30 @@ export default function AdminPage() {
     }
   }
 
-  const filtered = accounts.filter((a) =>
+  // Apply partner filter then search
+  const partnerFiltered = accounts.filter((a) => {
+    if (partnerFilter === 'all') return true
+    if (partnerFilter === 'none') return !a.partner_id
+    return a.partner_id === partnerFilter
+  })
+
+  const filtered = partnerFiltered.filter((a) =>
     a.bar_name.toLowerCase().includes(search.toLowerCase()) ||
     a.username?.toLowerCase().includes(search.toLowerCase()) ||
     a.contact_email?.toLowerCase().includes(search.toLowerCase())
   )
+
+  // Count labels for filter tabs
+  const directCount = accounts.filter((a) => !a.partner_id).length
+  const filterLabel = partnerFilter === 'all'
+    ? `All (${accounts.length})`
+    : partnerFilter === 'none'
+    ? `Direct (${directCount})`
+    : (() => {
+        const p = partners.find((p) => p.id === partnerFilter)
+        const count = accounts.filter((a) => a.partner_id === partnerFilter).length
+        return `${p?.name ?? 'Partner'} (${count})`
+      })()
 
   if (loading) {
     return (
@@ -175,9 +208,17 @@ export default function AdminPage() {
           <h1 className="text-xl font-bold text-slate-100">Admin Panel</h1>
           <p className="text-sm text-slate-500 mt-0.5">Manage all BarGuard accounts</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-          <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Admin Only</span>
+        <div className="flex items-center gap-3">
+          <a
+            href="/admin/partners"
+            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700/60 text-slate-300 text-xs font-medium rounded-xl transition-colors"
+          >
+            Partner Management →
+          </a>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Admin Only</span>
+          </div>
         </div>
       </div>
 
@@ -205,8 +246,33 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="mb-4">
+      {/* Partner filter + Search */}
+      <div className="flex flex-col gap-3 mb-4">
+        {/* Partner filter tabs */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-slate-500 mr-1">Filter by:</span>
+          {[
+            { value: 'all', label: `All Accounts (${accounts.length})` },
+            { value: 'none', label: `Direct / No Partner (${directCount})` },
+            ...partners.map((p) => ({
+              value: p.id,
+              label: `${p.name} (${accounts.filter((a) => a.partner_id === p.id).length})`,
+            })),
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setPartnerFilter(opt.value)}
+              className={`px-3 py-1.5 text-xs rounded-lg border transition-colors whitespace-nowrap ${
+                partnerFilter === opt.value
+                  ? 'bg-amber-500 border-amber-500 text-slate-900 font-semibold'
+                  : 'bg-slate-900 border-slate-700/60 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         <input
           type="text"
           value={search}
@@ -215,6 +281,20 @@ export default function AdminPage() {
           className="w-full bg-slate-900 border border-slate-800/60 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 transition-colors"
         />
       </div>
+
+      {/* Active filter label */}
+      {partnerFilter !== 'all' && (
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-xs text-slate-500">Showing:</span>
+          <span className="text-xs text-amber-400 font-medium">{filterLabel}</span>
+          <button
+            onClick={() => setPartnerFilter('all')}
+            className="text-xs text-slate-600 hover:text-slate-400 transition-colors ml-1"
+          >
+            Clear filter
+          </button>
+        </div>
+      )}
 
       {/* Accounts table */}
       <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
@@ -225,6 +305,7 @@ export default function AdminPage() {
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Bar</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Username</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Partner</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Plan</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Change Plan</th>
@@ -234,7 +315,7 @@ export default function AdminPage() {
             <tbody className="divide-y divide-slate-800/60">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-slate-600 text-sm">
+                  <td colSpan={8} className="px-5 py-8 text-center text-slate-600 text-sm">
                     No accounts found
                   </td>
                 </tr>
@@ -253,6 +334,19 @@ export default function AdminPage() {
                   </td>
                   <td className="px-5 py-4 text-slate-400">
                     {account.contact_email ?? '—'}
+                  </td>
+                  <td className="px-5 py-4">
+                    {account.partner_name ? (
+                      <button
+                        onClick={() => setPartnerFilter(account.partner_id!)}
+                        className="text-xs px-2 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-colors font-mono whitespace-nowrap"
+                        title={`Filter by ${account.partner_name}`}
+                      >
+                        {account.partner_code}
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-600">Direct</span>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-slate-500 text-xs">
                     {account.created_at
@@ -325,7 +419,7 @@ export default function AdminPage() {
                 </tr>
                 {expandedAccount === account.business_id && (
                   <tr className="bg-slate-800/40">
-                    <td colSpan={7} className="px-5 py-4">
+                    <td colSpan={8} className="px-5 py-4">
                       <div className="flex items-end gap-3 flex-wrap">
                         <div>
                           <label className="block text-[10px] text-slate-500 uppercase tracking-wider mb-1">Bar Name</label>

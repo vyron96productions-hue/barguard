@@ -11,11 +11,11 @@ export async function GET() {
     const { data: usersData } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 })
     const users = usersData?.users ?? []
 
-    // Get all businesses with their user links
+    // Get all businesses with their user links (include partner_id)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: linksRaw } = await (adminSupabase as any)
       .from('user_businesses')
-      .select('user_id, business_id, role, is_admin, businesses(id, name, plan, contact_email, created_at, stripe_subscription_id)')
+      .select('user_id, business_id, role, is_admin, businesses(id, name, plan, contact_email, created_at, stripe_subscription_id, partner_id, account_type)')
 
     const links = (linksRaw ?? []) as unknown as Array<{
       user_id: string
@@ -25,8 +25,19 @@ export async function GET() {
       businesses: {
         id: string; name: string; plan: string; contact_email: string | null
         created_at: string; stripe_subscription_id: string | null
+        partner_id: string | null; account_type: string | null
       } | null
     }>
+
+    // Get all partners for name lookup
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: partnersRaw } = await (adminSupabase as any)
+      .from('partners')
+      .select('id, name, partner_code, status')
+
+    const partnerMap = new Map<string, { name: string; partner_code: string; status: string }>(
+      (partnersRaw ?? []).map((p: { id: string; name: string; partner_code: string; status: string }) => [p.id, p])
+    )
 
     // Build account list
     const accounts = links.map((link) => {
@@ -35,6 +46,7 @@ export async function GET() {
       const username = (authUser?.user_metadata?.username as string | undefined)
         ?? authUser?.email?.replace('@barguard.app', '')
         ?? null
+      const partnerInfo = biz?.partner_id ? partnerMap.get(biz.partner_id) : null
 
       return {
         business_id: biz?.id,
@@ -47,6 +59,10 @@ export async function GET() {
         username,
         is_admin: link.is_admin ?? false,
         role: link.role,
+        partner_id: biz?.partner_id ?? null,
+        partner_name: partnerInfo?.name ?? null,
+        partner_code: partnerInfo?.partner_code ?? null,
+        account_type: biz?.account_type ?? 'direct',
       }
     })
 
@@ -59,7 +75,7 @@ export async function GET() {
       enterprise: accounts.filter((a) => a.plan === 'enterprise').length,
     }
 
-    return NextResponse.json({ accounts, stats })
+    return NextResponse.json({ accounts, stats, partners: Array.from(partnerMap.entries()).map(([id, p]) => ({ id, ...p })) })
   } catch (e) {
     return authErrorResponse(e)
   }

@@ -42,6 +42,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // Partner account gate — partner users only access /partner/* routes
+  const isPartner = user.user_metadata?.role === 'partner'
+  const isPartnerPath = pathname.startsWith('/partner') || pathname.startsWith('/api/partner/')
+  if (isPartner) {
+    if (isPartnerPath) return response
+    const isApiPath = pathname.startsWith('/api/')
+    if (!isApiPath) return NextResponse.redirect(new URL('/partner/dashboard', request.url))
+    return response
+  }
+
   // Email verification gate — check app_metadata (set server-side, no extra DB query needed)
   const emailVerified = user.app_metadata?.email_verified !== false
   if (!emailVerified) {
