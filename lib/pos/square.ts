@@ -100,6 +100,9 @@ export async function fetchSquareSales(
       const saleDate = (order.created_at as string).slice(0, 10)
       for (const li of order.line_items ?? []) {
         if (!li.name) continue
+        const modifiers = Array.isArray(li.modifiers)
+          ? (li.modifiers as any[]).map((m) => m.name).filter(Boolean) as string[]
+          : null
         items.push({
           sale_date: saleDate,
           raw_item_name: li.name as string,
@@ -107,6 +110,7 @@ export async function fetchSquareSales(
           gross_sales: li.total_money?.amount != null
             ? (li.total_money.amount as number) / 100
             : null,
+          modifiers: modifiers?.length ? modifiers : null,
         })
       }
     }

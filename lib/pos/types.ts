@@ -87,6 +87,7 @@ export interface NormalizedSaleItem {
   quantity_sold: number
   gross_sales: number | null
   station?: string | null  // bartender, register, terminal name, etc.
+  modifiers?: string[] | null  // raw modifier names from POS e.g. ["No Bacon", "Extra Shot"]
 }
 
 export interface PosTokenResponse {

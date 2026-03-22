@@ -146,11 +146,15 @@ export async function fetchCloverSales(
       for (const li of order.lineItems?.elements ?? []) {
         const name = li.item?.name ?? li.name
         if (!name) continue
+        const modifiers = Array.isArray(li.modifications?.elements)
+          ? (li.modifications.elements as any[]).map((m) => m.modifier?.name ?? m.name).filter(Boolean) as string[]
+          : null
         items.push({
           sale_date: saleDate,
           raw_item_name: name as string,
           quantity_sold: typeof li.unitQty === 'number' ? li.unitQty / 1000 : 1,
           gross_sales: typeof li.price === 'number' ? li.price / 100 : null,
+          modifiers: modifiers?.length ? modifiers : null,
         })
       }
     }

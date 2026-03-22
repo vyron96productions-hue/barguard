@@ -8,6 +8,7 @@ import {
   estimateGuestCount,
   type RecipeMap,
   type SaleRecord,
+  type ModifierRuleMap,
 } from '@/lib/calculations'
 import { convertToOz } from '@/lib/conversions'
 
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
       quantity_sold: number
       gross_sales: number | null
       guest_count: number | null
+      modifiers?: string[] | null
     }> | null = null
     let salesError: { message: string } | null = null
 
@@ -44,7 +46,7 @@ export async function POST(req: NextRequest) {
     } else {
       const { data, error } = await supabase
         .from('sales_transactions')
-        .select('menu_item_id, quantity_sold, gross_sales, guest_count')
+        .select('menu_item_id, quantity_sold, gross_sales, guest_count, modifiers')
         .eq('business_id', businessId)
         .gte('sale_date', period_start)
         .lte('sale_date', period_end)
@@ -80,9 +82,30 @@ export async function POST(req: NextRequest) {
       quantity_sold: s.quantity_sold,
       gross_sales: s.gross_sales,
       guest_count: s.guest_count,
+      modifiers: Array.isArray(s.modifiers) ? s.modifiers : null,
     }))
 
-    const expectedUsage  = calculateExpectedUsage(sales, recipeMap, itemUnits)
+    // Load modifier rules — only for non-shift mode (shift RPC doesn't return modifiers column)
+    let modifierRuleMap: ModifierRuleMap | undefined
+    if (!isShiftMode) {
+      const { data: modRulesData } = await supabase
+        .from('modifier_rules')
+        .select('modifier_name, action, inventory_item_id, qty_delta, multiply_factor')
+        .eq('business_id', businessId)
+      if (modRulesData?.length) {
+        modifierRuleMap = {}
+        for (const r of modRulesData) {
+          modifierRuleMap[r.modifier_name.toLowerCase().trim()] = {
+            action: r.action as 'add' | 'remove' | 'multiply' | 'ignore',
+            inventory_item_id: r.inventory_item_id,
+            qty_delta: r.qty_delta,
+            multiply_factor: r.multiply_factor,
+          }
+        }
+      }
+    }
+
+    const expectedUsage  = calculateExpectedUsage(sales, recipeMap, itemUnits, modifierRuleMap)
     const totalRevenue   = aggregateRevenue(sales)
     const guestEstimate  = estimateGuestCount(sales)
 

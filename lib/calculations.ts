@@ -14,7 +14,22 @@ export interface SaleRecord {
   gross_sales?: number | null
   /** Guest / cover count for this transaction, if available from POS */
   guest_count?: number | null
+  /** Raw modifier names from POS (e.g. ["No Bacon", "Extra Shot"]) */
+  modifiers?: string[] | null
 }
+
+export interface ModifierRule {
+  action: 'add' | 'remove' | 'multiply' | 'ignore'
+  /** Inventory item to add/remove (for add/remove actions) */
+  inventory_item_id?: string | null
+  /** Oz to add or remove per unit sold (for add/remove actions) */
+  qty_delta?: number | null
+  /** Multiplier applied to all base recipe ingredients (for multiply action, e.g. 2 = double) */
+  multiply_factor?: number | null
+}
+
+/** Keyed by lowercase-trimmed modifier name */
+export type ModifierRuleMap = Record<string, ModifierRule>
 
 export interface RecipeMap {
   [menu_item_id: string]: RecipeIngredient[]
@@ -31,7 +46,8 @@ export interface InventoryItemUnit {
 export function calculateExpectedUsage(
   sales: SaleRecord[],
   recipeMap: RecipeMap,
-  itemUnits: InventoryItemUnit
+  itemUnits: InventoryItemUnit,
+  modifierRules?: ModifierRuleMap
 ): Record<string, number> {
   const expected: Record<string, number> = {}
 
@@ -39,9 +55,40 @@ export function calculateExpectedUsage(
     const ingredients = recipeMap[sale.menu_item_id]
     if (!ingredients) continue
 
+    // Base recipe usage
     for (const ingredient of ingredients) {
       const usageOz = convertToOz(ingredient.quantity, ingredient.unit) * sale.quantity_sold
       expected[ingredient.inventory_item_id] = (expected[ingredient.inventory_item_id] ?? 0) + usageOz
+    }
+
+    // Apply modifier adjustments — only when rules are loaded and sale has modifiers
+    if (modifierRules && sale.modifiers?.length) {
+      for (const modName of sale.modifiers) {
+        const rule = modifierRules[modName.toLowerCase().trim()]
+        if (!rule || rule.action === 'ignore') continue
+
+        if (rule.action === 'remove' && rule.inventory_item_id && rule.qty_delta) {
+          // Remove qty_delta oz of a specific ingredient from expected usage
+          const deltaOz = rule.qty_delta * sale.quantity_sold
+          expected[rule.inventory_item_id] = Math.max(0, (expected[rule.inventory_item_id] ?? 0) - deltaOz)
+        }
+
+        if (rule.action === 'add' && rule.inventory_item_id && rule.qty_delta) {
+          // Add qty_delta oz of a specific ingredient to expected usage
+          const deltaOz = rule.qty_delta * sale.quantity_sold
+          expected[rule.inventory_item_id] = (expected[rule.inventory_item_id] ?? 0) + deltaOz
+        }
+
+        if (rule.action === 'multiply' && rule.multiply_factor && rule.multiply_factor !== 1) {
+          // Multiply all base recipe ingredients by the factor (e.g. "double" = 2x)
+          // Add the extra usage on top of what was already counted above
+          const extraFactor = rule.multiply_factor - 1
+          for (const ingredient of ingredients) {
+            const extraOz = convertToOz(ingredient.quantity, ingredient.unit) * extraFactor * sale.quantity_sold
+            expected[ingredient.inventory_item_id] = (expected[ingredient.inventory_item_id] ?? 0) + extraOz
+          }
+        }
+      }
     }
   }
 
