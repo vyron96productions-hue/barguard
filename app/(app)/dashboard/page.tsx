@@ -220,6 +220,10 @@ export default function DashboardPage() {
   async function runCalculation() {
     const { start, end } = effectivePeriod()
     if (!start || !end) { setCmdError('Select a period first'); return }
+    if (end < start) { setCmdError('End date must be after start date'); return }
+    if (customShiftWindow && customShiftWindow.shiftEnd <= customShiftWindow.shiftStart) {
+      setCmdError('End time must be after start time'); return
+    }
     setCmdError('')
     setCalcMsg('Calculating…')
     setSummaries([])

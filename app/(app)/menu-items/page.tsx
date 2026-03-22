@@ -281,7 +281,7 @@ export default function RecipeMappingPage() {
     const res = await fetch('/api/menu-items', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, category, item_type: itemType, sell_price: sellPrice || null }),
+      body: JSON.stringify({ name, category, item_type: itemType, sell_price: sellPrice ? parseFloat(sellPrice) : null }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
@@ -307,7 +307,11 @@ export default function RecipeMappingPage() {
   }
 
   async function handleAddIngredient(menuItemId: string) {
-    if (!inlineInvId || !inlineQty) { setInlineErr('Select an ingredient and enter a quantity.'); return }
+    const parsedQty = parseFloat(inlineQty)
+    if (!inlineInvId || !inlineQty || isNaN(parsedQty) || parsedQty <= 0) {
+      setInlineErr('Select an ingredient and enter a valid quantity greater than 0.')
+      return
+    }
     setInlineSaving(true); setInlineErr(null)
     const res = await fetch('/api/recipes', {
       method: 'POST',
@@ -315,7 +319,7 @@ export default function RecipeMappingPage() {
       body: JSON.stringify({
         menu_item_id: menuItemId,
         inventory_item_id: inlineInvId,
-        quantity: parseFloat(inlineQty),
+        quantity: parsedQty,
         unit: inlineUnit,
       }),
     })
@@ -346,12 +350,17 @@ export default function RecipeMappingPage() {
 
   async function saveEditRecipe() {
     if (!editingRecipeId) return
+    const parsedQty = parseFloat(editRecipeQty)
+    if (!editRecipeInvId || isNaN(parsedQty) || parsedQty <= 0) {
+      setEditRecipeErr('Select an ingredient and enter a valid quantity greater than 0.')
+      return
+    }
     setEditRecipeSaving(true)
     setEditRecipeErr(null)
     const res = await fetch(`/api/recipes?id=${editingRecipeId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inventory_item_id: editRecipeInvId, quantity: parseFloat(editRecipeQty), unit: editRecipeUnit }),
+      body: JSON.stringify({ inventory_item_id: editRecipeInvId, quantity: parsedQty, unit: editRecipeUnit }),
     })
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))

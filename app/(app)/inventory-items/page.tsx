@@ -98,9 +98,9 @@ export default function InventoryItemsPage() {
         category,
         item_type: itemType,
         package_type: packageType || null,
-        pack_size: packSize || null,
-        cost_per_unit: costPerUnit || null,
-        reorder_level: reorderLevel || null,
+        pack_size: packSize ? parseFloat(packSize) : null,
+        cost_per_unit: costPerUnit ? parseFloat(costPerUnit) : null,
+        reorder_level: reorderLevel ? parseFloat(reorderLevel) : null,
         vendor_id: vendorId || null,
       }),
     })
@@ -149,8 +149,8 @@ export default function InventoryItemsPage() {
         name: editName,
         unit: editUnit,
         category: editCat || null,
-        cost_per_unit: editCost !== '' ? editCost : null,
-        reorder_level: editReorderLevel !== '' ? editReorderLevel : null,
+        cost_per_unit: editCost !== '' ? parseFloat(editCost) : null,
+        reorder_level: editReorderLevel !== '' ? parseFloat(editReorderLevel) : null,
         vendor_id: editVendorId || null,
       }),
     })
