@@ -278,7 +278,7 @@ export default function DashboardPage() {
     })
     const data = await res.json()
     if (res.ok) setAiSummary(data)
-    else alert(data.error)
+    else setCmdError(data.error ?? 'Failed to generate summary')
     setGenerating(false)
   }
 

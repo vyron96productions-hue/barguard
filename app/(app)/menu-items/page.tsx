@@ -87,6 +87,7 @@ export default function RecipeMappingPage() {
   const [wizardRows, setWizardRows]           = useState<WizardRow[]>([])
   const [wizardSaving, setWizardSaving]       = useState(false)
   const [wizardDone, setWizardDone]           = useState(false)
+  const [wizardError, setWizardError]         = useState<string | null>(null)
   const [suggestionsLoading, setSuggestionsLoading] = useState(false)
   const [aiMatchLoading, setAiMatchLoading]   = useState(false)
 
@@ -155,18 +156,31 @@ export default function RecipeMappingPage() {
     const selected = wizardRows.filter((r) => r.included && r.edited_inv_id && r.edited_qty)
     if (selected.length === 0) return
     setWizardSaving(true)
-    await fetch('/api/recipes/bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        recipes: selected.map((r) => ({
-          menu_item_id: r.menu_item_id,
-          inventory_item_id: r.edited_inv_id,
-          quantity: parseFloat(r.edited_qty),
-          unit: r.edited_unit,
-        })),
-      }),
-    })
+    setWizardError(null)
+    try {
+      const res = await fetch('/api/recipes/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipes: selected.map((r) => ({
+            menu_item_id: r.menu_item_id,
+            inventory_item_id: r.edited_inv_id,
+            quantity: parseFloat(r.edited_qty),
+            unit: r.edited_unit,
+          })),
+        }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setWizardError(d?.error ?? 'Save failed — please try again')
+        setWizardSaving(false)
+        return
+      }
+    } catch {
+      setWizardError('Network error — please try again')
+      setWizardSaving(false)
+      return
+    }
     setWizardSaving(false)
     setWizardDone(true)
     setTimeout(() => {
@@ -1055,9 +1069,12 @@ export default function RecipeMappingPage() {
           {!suggestionsLoading && !aiMatchLoading && !wizardDone && wizardRows.length > 0 && (
             <div className="border-t border-slate-800 bg-slate-950/95 backdrop-blur px-4 py-4">
               <div className="max-w-3xl mx-auto flex items-center justify-between gap-4">
-                <p className="text-xs text-slate-500">
-                  {wizardRows.filter((r) => r.included).length} of {wizardRows.length} selected
-                </p>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs text-slate-500">
+                    {wizardRows.filter((r) => r.included).length} of {wizardRows.length} selected
+                  </p>
+                  {wizardError && <p className="text-xs text-red-400">{wizardError}</p>}
+                </div>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowWizard(false)}

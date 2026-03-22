@@ -150,7 +150,7 @@ export default function ModifierRulesPage() {
     setNewModifierName('')
     setRowState((prev) => ({
       ...prev,
-      [name]: { action: 'ignore', inventory_item_id: '', qty_delta: '', multiply_factor: '2', notes: '', dirty: true, saving: false },
+      [name]: { action: 'ignore', inventory_item_id: '', qty_delta: '', qty_unit: 'oz', multiply_factor: '2', notes: '', dirty: true, saving: false },
     }))
     // Scroll to new row (just re-render is enough since it'll appear in the list)
     setSeenModifiers((prev) => Array.from(new Set([...prev, name])).sort())

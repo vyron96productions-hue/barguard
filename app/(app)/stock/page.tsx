@@ -112,6 +112,7 @@ export default function StockPage() {
   const [aiCatSaving, setAiCatSaving] = useState(false)
   const [aiCatDone, setAiCatDone] = useState(false)
   const [aiCatError, setAiCatError] = useState('')
+  const [aiCatInfo, setAiCatInfo] = useState('')
 
   // Bottle scan
   const [scanTarget, setScanTarget] = useState<{ itemId: string; itemName: string; unit: string } | null>(null)
@@ -147,6 +148,7 @@ export default function StockPage() {
   async function openAiCategorize() {
     setAiCatDone(false)
     setAiCatError('')
+    setAiCatInfo('')
     setAiCatRows([])
     setAiCatMode(true)
     setAiCatLoading(true)
@@ -159,7 +161,7 @@ export default function StockPage() {
         return
       }
       if (data.length === 0) {
-        setAiCatError('All items already have categories.')
+        setAiCatInfo('All items already have categories.')
         setAiCatLoading(false)
         return
       }
@@ -240,7 +242,7 @@ export default function StockPage() {
         const data = await res.json()
         setAnalysisResult(data)
       } catch {
-        setAnalysisResult({ findings: [], summary: null })
+        setAnalysisResult({ findings: [], summary: 'Analysis failed — please try again.' })
       }
       setAnalyzing(false)
     } else {
@@ -481,7 +483,7 @@ export default function StockPage() {
             <p className="text-xs text-slate-500 mt-0.5">Review suggested categories. Edit any before saving.</p>
           </div>
           <button
-            onClick={() => { setAiCatMode(false); setAiCatDone(false); setAiCatError('') }}
+            onClick={() => { setAiCatMode(false); setAiCatDone(false); setAiCatError(''); setAiCatInfo('') }}
             className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1"
           >
             ✕
@@ -501,9 +503,20 @@ export default function StockPage() {
               <p className="text-sm font-semibold text-emerald-400">Categories saved!</p>
               <p className="text-xs text-slate-500">Your inventory is now organized.</p>
             </div>
+          ) : aiCatInfo ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-3 px-8 text-center">
+              <p className="text-3xl">✓</p>
+              <p className="text-sm font-semibold text-emerald-400">{aiCatInfo}</p>
+            </div>
           ) : aiCatError ? (
             <div className="flex flex-col items-center justify-center h-64 gap-3 px-8 text-center">
-              <p className="text-sm text-slate-400">{aiCatError}</p>
+              <p className="text-sm text-red-400">{aiCatError}</p>
+              <button
+                onClick={() => setAiCatError('')}
+                className="text-xs text-slate-500 hover:text-slate-300 underline"
+              >
+                Dismiss
+              </button>
             </div>
           ) : (
             <>
@@ -552,7 +565,7 @@ export default function StockPage() {
         </div>
 
         {/* Footer */}
-        {!aiCatDone && !aiCatLoading && !aiCatError && (
+        {!aiCatDone && !aiCatLoading && !aiCatError && !aiCatInfo && (
           <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
             <p className="text-xs text-slate-500">
               {aiCatRows.filter((r) => r.selected).length} item{aiCatRows.filter((r) => r.selected).length !== 1 ? 's' : ''} will be updated
