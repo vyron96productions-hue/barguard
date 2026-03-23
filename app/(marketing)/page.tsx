@@ -96,6 +96,7 @@ export default function HomePage() {
           width={1920}
           height={800}
           priority
+          fetchPriority="high"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
         <div style={{ padding: '48px 24px 80px' }}>
