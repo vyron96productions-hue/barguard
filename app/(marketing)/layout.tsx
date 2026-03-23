@@ -85,6 +85,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                   <Link href="/privacy" data-gtm-event="footer_click" data-gtm-label="footer_privacy" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Privacy Policy</Link>
                   <Link href="/terms" data-gtm-event="footer_click" data-gtm-label="footer_terms" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Terms of Service</Link>
                   <Link href="/refund" data-gtm-event="footer_click" data-gtm-label="footer_refund" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Refund Policy</Link>
+                  <Link href="/status" data-gtm-event="footer_click" data-gtm-label="footer_status" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>System Status</Link>
                 </div>
               </div>
             </div>
