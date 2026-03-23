@@ -36,7 +36,7 @@ export default function MarketingNav() {
       }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <Image src="/barguard_icon.png" alt="BarGuard" width={56} height={56} style={{ height: 56, width: 'auto', display: 'block' }} priority />
+            <Image src="/barguard_icon.png" alt="" width={56} height={56} style={{ height: 56, width: 'auto', display: 'block' }} priority />
             <span style={{ fontWeight: 700, fontSize: 16, color: '#f8fafc', letterSpacing: '-0.3px' }}>BarGuard</span>
           </Link>
 
@@ -84,7 +84,7 @@ export default function MarketingNav() {
             {/* Header row */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Image src="/barguard_icon.png" alt="BarGuard" width={52} height={52} style={{ height: 52, width: 'auto' }} />
+                <Image src="/barguard_icon.png" alt="" width={52} height={52} style={{ height: 52, width: 'auto' }} />
                 <span style={{ fontWeight: 700, fontSize: 16, color: '#f8fafc' }}>BarGuard</span>
               </div>
               <button

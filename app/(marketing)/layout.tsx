@@ -47,52 +47,52 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         }) }}
       />
       <MarketingNav />
-      <div className={montserrat.variable} style={{ paddingTop: 64 }}>
+      <main className={montserrat.variable} style={{ paddingTop: 64 }}>
         {children}
-      </div>
+      </main>
       <footer style={{ borderTop: '1px solid #1e293b', backgroundColor: '#020817', padding: '48px 0 32px' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px' }}>
           <div className="footer-grid">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <Image src="/barguard_icon.png" alt="BarGuard" width={48} height={48} style={{ height: 48, width: 'auto', display: 'block' }} />
+                <Image src="/barguard_icon.png" alt="" width={48} height={48} style={{ height: 48, width: 'auto', display: 'block' }} />
                 <span style={{ fontWeight: 700, fontSize: 15, color: '#f8fafc' }}>BarGuard</span>
               </div>
-              <p style={{ fontSize: 13, color: '#475569', maxWidth: 240, lineHeight: 1.6 }}>AI-powered inventory loss detection for bars and restaurants.</p>
+              <p style={{ fontSize: 13, color: '#64748b', maxWidth: 240, lineHeight: 1.6 }}>AI-powered inventory loss detection for bars and restaurants.</p>
             </div>
             <div className="footer-links">
               <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Product</p>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Product</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/features" data-gtm-event="footer_click" data-gtm-label="footer_features" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Features</Link>
-                  <Link href="/pricing" data-gtm-event="footer_click" data-gtm-label="footer_pricing" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Pricing</Link>
-                  <Link href="/how-it-works" data-gtm-event="footer_click" data-gtm-label="footer_screenshots" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>How It Works</Link>
-                  <Link href="/faq" data-gtm-event="footer_click" data-gtm-label="footer_faq" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>FAQ</Link>
-                  <Link href="/about" data-gtm-event="footer_click" data-gtm-label="footer_why_barguard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Why BarGuard</Link>
-                  <Link href="/contact" data-gtm-event="footer_click" data-gtm-label="footer_contact" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Contact</Link>
-                  <Link href="/dashboard" data-gtm-event="footer_click" data-gtm-label="footer_dashboard" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Dashboard</Link>
+                  <Link href="/features" data-gtm-event="footer_click" data-gtm-label="footer_features" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Features</Link>
+                  <Link href="/pricing" data-gtm-event="footer_click" data-gtm-label="footer_pricing" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Pricing</Link>
+                  <Link href="/how-it-works" data-gtm-event="footer_click" data-gtm-label="footer_screenshots" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>How It Works</Link>
+                  <Link href="/faq" data-gtm-event="footer_click" data-gtm-label="footer_faq" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>FAQ</Link>
+                  <Link href="/about" data-gtm-event="footer_click" data-gtm-label="footer_why_barguard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Why BarGuard</Link>
+                  <Link href="/contact" data-gtm-event="footer_click" data-gtm-label="footer_contact" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Contact</Link>
+                  <Link href="/dashboard" data-gtm-event="footer_click" data-gtm-label="footer_dashboard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Dashboard</Link>
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Partners</p>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Partners</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/partners" data-gtm-event="footer_click" data-gtm-label="footer_partners" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Partner Program</Link>
-                  <Link href="/partner-login" data-gtm-event="footer_click" data-gtm-label="footer_partner_login" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Partner Login</Link>
+                  <Link href="/partners" data-gtm-event="footer_click" data-gtm-label="footer_partners" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Partner Program</Link>
+                  <Link href="/partner-login" data-gtm-event="footer_click" data-gtm-label="footer_partner_login" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Partner Login</Link>
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: 11, fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Legal</p>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Legal</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/privacy" data-gtm-event="footer_click" data-gtm-label="footer_privacy" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Privacy Policy</Link>
-                  <Link href="/terms" data-gtm-event="footer_click" data-gtm-label="footer_terms" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Terms of Service</Link>
-                  <Link href="/refund" data-gtm-event="footer_click" data-gtm-label="footer_refund" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>Refund Policy</Link>
-                  <Link href="/status" data-gtm-event="footer_click" data-gtm-label="footer_status" style={{ fontSize: 14, color: '#64748b', textDecoration: 'none' }}>System Status</Link>
+                  <Link href="/privacy" data-gtm-event="footer_click" data-gtm-label="footer_privacy" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Privacy Policy</Link>
+                  <Link href="/terms" data-gtm-event="footer_click" data-gtm-label="footer_terms" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Terms of Service</Link>
+                  <Link href="/refund" data-gtm-event="footer_click" data-gtm-label="footer_refund" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Refund Policy</Link>
+                  <Link href="/status" data-gtm-event="footer_click" data-gtm-label="footer_status" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>System Status</Link>
                 </div>
               </div>
             </div>
           </div>
           <div style={{ borderTop: '1px solid #1e293b', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-            <p style={{ fontSize: 13, color: '#334155' }}>© 2026 BarGuard. All rights reserved.</p>
+            <p style={{ fontSize: 13, color: '#64748b' }}>© 2026 BarGuard. All rights reserved.</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <a href="https://www.facebook.com/profile.php?id=61577657877985" target="_blank" rel="noreferrer" data-gtm-event="footer_click" data-gtm-label="footer_facebook" aria-label="BarGuard on Facebook" className="footer-social">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
