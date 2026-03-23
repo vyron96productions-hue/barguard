@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function AboutClient() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh' }}>
@@ -93,9 +95,11 @@ export default function AboutClient() {
                 maxWidth: 360,
                 width: '100%',
               }}>
-                <img
+                <Image
                   src="/Headshot2.png"
                   alt="BarGuard founder"
+                  width={360}
+                  height={480}
                   style={{
                     width: '100%',
                     height: '100%',

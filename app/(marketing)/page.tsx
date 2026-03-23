@@ -118,6 +118,8 @@ export default function HomePage() {
             <img
               src="/clover-logo.svg"
               alt="Clover"
+              width={120}
+              height={52}
               style={{ height: 52, width: 'auto', opacity: 0.85 }}
             />
           </div>
