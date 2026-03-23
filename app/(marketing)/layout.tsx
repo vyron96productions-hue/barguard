@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '../globals.css'
 import Link from 'next/link'
 import Image from 'next/image'
+import { cookies } from 'next/headers'
 import { Montserrat } from 'next/font/google'
 import MarketingNav from '@/components/MarketingNav'
 import ChatWidget from '@/components/ChatWidget'
@@ -17,7 +18,12 @@ export const metadata: Metadata = {
   },
 }
 
-export default function MarketingLayout({ children }: { children: React.ReactNode }) {
+export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies()
+  const isSignedIn = cookieStore.getAll().some(
+    (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+  )
+
   return (
     <>
       <style>{`
@@ -46,7 +52,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           ],
         }) }}
       />
-      <MarketingNav />
+      <MarketingNav isSignedIn={isSignedIn} />
       <main className={montserrat.variable} style={{ paddingTop: 64 }}>
         {children}
       </main>

@@ -1,20 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
-export default function MarketingNav() {
+export default function MarketingNav({ isSignedIn }: { isSignedIn: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [isSignedIn, setIsSignedIn] = useState(false)
-
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient()
-    supabase.auth.getSession().then(({ data }) => {
-      setIsSignedIn(!!data.session)
-    })
-  }, [])
 
   return (
     <>

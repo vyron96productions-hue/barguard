@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 const prices = {
   basic: [99, 79],
@@ -20,21 +19,15 @@ function CheckIcon() {
   )
 }
 
-export default function PricingPage() {
-  return <Suspense><PricingPageContent /></Suspense>
+export default function PricingPage({ isSignedIn }: { isSignedIn: boolean }) {
+  return <Suspense><PricingPageContent isSignedIn={isSignedIn} /></Suspense>
 }
 
-function PricingPageContent() {
+function PricingPageContent({ isSignedIn }: { isSignedIn: boolean }) {
   const [annual, setAnnual] = useState(false)
-  const [isSignedIn, setIsSignedIn] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const expired = searchParams.get('expired') === '1'
-
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient()
-    supabase.auth.getSession().then(({ data }) => setIsSignedIn(!!data.session))
-  }, [])
 
   async function handlePlanClick(plan: string) {
     if (!isSignedIn) {

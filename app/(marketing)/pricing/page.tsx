@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import PricingClient from './PricingClient'
 
 export const metadata: Metadata = {
@@ -7,6 +8,10 @@ export const metadata: Metadata = {
   openGraph: { url: 'https://barguard.app/pricing' },
 }
 
-export default function PricingPage() {
-  return <PricingClient />
+export default async function PricingPage() {
+  const cookieStore = await cookies()
+  const isSignedIn = cookieStore.getAll().some(
+    (c) => c.name.startsWith('sb-') && c.name.endsWith('-auth-token')
+  )
+  return <PricingClient isSignedIn={isSignedIn} />
 }
