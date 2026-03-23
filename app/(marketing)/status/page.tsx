@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 type Service = {
   name: string
@@ -64,7 +65,7 @@ export default function StatusPage() {
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <img src="/barguard_icon.png" alt="BarGuard" style={{ height: 48, width: 'auto' }} />
+            <Image src="/barguard_icon.png" alt="BarGuard" width={48} height={48} style={{ height: 48, width: 'auto' }} />
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: '#f8fafc', margin: '0 0 8px' }}>System Status</h1>
           <p style={{ fontSize: 14, color: '#64748b', margin: 0 }}>Live status for all BarGuard services</p>

@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function HomePage() {
   const schema = {
     '@context': 'https://schema.org',
@@ -88,9 +90,12 @@ export default function HomePage() {
 
       {/* HERO */}
       <section style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <img
+        <Image
           src="/Barguard_web_banner.webp"
           alt="BarGuard — Stop losing money to invisible inventory shrinkage"
+          width={1920}
+          height={800}
+          priority
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
         <div style={{ padding: '48px 24px 80px' }}>
@@ -102,9 +107,11 @@ export default function HomePage() {
             <span style={{ color: '#f59e0b' }}>More integrations coming soon.</span>
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
-            <img
+            <Image
               src="/square-logo.png"
               alt="Square"
+              width={120}
+              height={48}
               style={{ height: 48, width: 'auto', filter: 'invert(1)', opacity: 0.85 }}
             />
             <span style={{ width: 1, height: 36, background: '#1e293b' }} />
@@ -371,7 +378,7 @@ export default function HomePage() {
                   </th>
                   <th style={{ width: '24%', borderBottom: '1px solid rgba(245,158,11,0.3)', borderLeft: '1px solid rgba(245,158,11,0.15)', borderRight: '1px solid rgba(245,158,11,0.15)' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f59e0b' }}>
-                      <img src="/barguard_icon.png" alt="" style={{ height: 18, width: 'auto' }} /> BarGuard
+                      <Image src="/barguard_icon.png" alt="" width={18} height={18} style={{ height: 18, width: 'auto' }} /> BarGuard
                     </span>
                   </th>
                 </tr>
