@@ -1,7 +1,4 @@
 User-agent: *
-Allow: /
-
-# Block app routes from indexing
 Disallow: /dashboard
 Disallow: /inventory
 Disallow: /sales
