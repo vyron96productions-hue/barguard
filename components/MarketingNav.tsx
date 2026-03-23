@@ -37,6 +37,7 @@ export default function MarketingNav({ isSignedIn }: { isSignedIn: boolean }) {
             <Link href="/pricing" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_pricing" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Pricing</Link>
             <Link href="/about" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_why_barguard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Why BarGuard</Link>
             <Link href="/contact" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_contact" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Contact</Link>
+            <Link href="/blog" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_blog" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Blog</Link>
             <Link href="/partners" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_partners" style={{ fontSize: 14, color: '#f59e0b', textDecoration: 'none', padding: '8px 14px', borderRadius: 8, fontWeight: 500 }}>Partners</Link>
             {!isSignedIn && <Link href="/login" className="mnav-text-link" data-gtm-event="nav_click" data-gtm-label="nav_signin" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none', padding: '8px 14px', borderRadius: 8 }}>Sign in</Link>}
             <Link href={isSignedIn ? '/dashboard' : '/signup'} className="btn-primary" data-gtm-event="nav_click" data-gtm-label={isSignedIn ? 'nav_dashboard' : 'nav_get_started'} style={{ fontSize: 14, padding: '8px 18px', borderRadius: 8 }}>
@@ -105,6 +106,9 @@ export default function MarketingNav({ isSignedIn }: { isSignedIn: boolean }) {
               </Link>
               <Link href="/contact" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_contact" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
                 Contact
+              </Link>
+              <Link href="/blog" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_blog" style={{ fontSize: 16, color: '#94a3b8', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block' }}>
+                Blog
               </Link>
               <Link href="/partners" onClick={() => setMenuOpen(false)} data-gtm-event="nav_click" data-gtm-label="nav_mobile_partners" style={{ fontSize: 16, color: '#f59e0b', textDecoration: 'none', padding: '12px 16px', borderRadius: 10, display: 'block', fontWeight: 600 }}>
                 Partners

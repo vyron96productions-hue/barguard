@@ -1,0 +1,63 @@
+date,item_name,quantity_sold,gross_sales,station,bartender
+2026-03-19,Tito's Vodka Shot,5,35.00,Bar 1,Bartender 1
+2026-03-19,Vodka Soda,7,56.00,Bar 1,Bartender 1
+2026-03-19,Margarita,6,54.00,Bar 1,Bartender 1
+2026-03-19,Bud Light,10,60.00,Bar 1,Bartender 1
+2026-03-19,Corona,4,28.00,Bar 1,Bartender 1
+2026-03-19,Jack Daniel's Shot,4,28.00,Bar 1,Bartender 1
+2026-03-19,Rum & Coke,5,40.00,Bar 1,Bartender 1
+2026-03-19,Aperol Spritz,3,27.00,Bar 1,Bartender 1
+2026-03-19,Espresso Martini,4,44.00,Bar 1,Bartender 1
+2026-03-19,Miller Lite Draft,8,48.00,Bar 1,Bartender 1
+2026-03-19,Patron Shot,4,36.00,Bar 1,Bartender 2
+2026-03-19,Margarita,8,72.00,Bar 1,Bartender 2
+2026-03-19,Old Fashioned,5,50.00,Bar 1,Bartender 2
+2026-03-19,Blue Moon Draft,6,42.00,Bar 1,Bartender 2
+2026-03-19,Vodka Soda,9,72.00,Bar 1,Bartender 2
+2026-03-19,Hennessy Shot,4,44.00,Bar 1,Bartender 2
+2026-03-19,Whiskey Sour,6,54.00,Bar 1,Bartender 2
+2026-03-19,House Red Glass,5,55.00,Bar 1,Bartender 2
+2026-03-19,Paloma,4,36.00,Bar 1,Bartender 2
+2026-03-19,Gin & Tonic,5,45.00,Bar 1,Bartender 2
+2026-03-19,Bud Light,5,30.00,Bar 1,Bartender 2
+2026-03-19,Dark & Stormy,3,30.00,Bar 1,Bartender 2
+2026-03-19,Negroni,4,44.00,Bar 1,Bartender 2
+2026-03-19,Rum & Coke,4,32.00,Bar 1,Bartender 2
+2026-03-19,Tito's Vodka Shot,6,42.00,Bar 2,Bartender 3
+2026-03-19,Vodka Soda,8,64.00,Bar 2,Bartender 3
+2026-03-19,Rum & Coke,7,56.00,Bar 2,Bartender 3
+2026-03-19,Margarita,5,45.00,Bar 2,Bartender 3
+2026-03-19,Coors Light,11,66.00,Bar 2,Bartender 3
+2026-03-19,Jack Daniel's Shot,6,42.00,Bar 2,Bartender 3
+2026-03-19,Old Fashioned,4,40.00,Bar 2,Bartender 3
+2026-03-19,Gin & Tonic,6,54.00,Bar 2,Bartender 3
+2026-03-19,Lemon Drop,5,45.00,Bar 2,Bartender 3
+2026-03-19,House Red Glass,5,55.00,Bar 2,Bartender 3
+2026-03-19,Blue Moon Draft,7,49.00,Bar 2,Bartender 3
+2026-03-19,Patron Shot,5,45.00,Bar 2,Bartender 3
+2026-03-19,Vodka Soda,6,48.00,Bar 2,Bartender 4
+2026-03-19,Whiskey Sour,5,45.00,Bar 2,Bartender 4
+2026-03-19,Moscow Mule,7,70.00,Bar 2,Bartender 4
+2026-03-19,Tequila Shot,6,42.00,Bar 2,Bartender 4
+2026-03-19,Bud Light,8,48.00,Bar 2,Bartender 4
+2026-03-19,Miller Lite Draft,6,36.00,Bar 2,Bartender 4
+2026-03-19,Margarita,7,63.00,Bar 2,Bartender 4
+2026-03-19,House White Glass,4,44.00,Bar 2,Bartender 4
+2026-03-19,Rum & Coke,5,40.00,Bar 2,Bartender 4
+2026-03-19,Long Island Iced Tea,5,50.00,Bar 2,Bartender 4
+2026-03-19,Corona,6,42.00,Bar 2,Bartender 4
+2026-03-19,Coors Light,5,30.00,Bar 2,Bartender 4
+2026-03-19,Chicken Wings,9,126.00,Kitchen,Kitchen
+2026-03-19,Burger,7,105.00,Kitchen,Kitchen
+2026-03-19,Nachos,8,104.00,Kitchen,Kitchen
+2026-03-19,French Fries,12,84.00,Kitchen,Kitchen
+2026-03-19,Caesar Salad,5,65.00,Kitchen,Kitchen
+2026-03-19,Mozzarella Sticks,6,66.00,Kitchen,Kitchen
+2026-03-19,Pretzel Bites,7,63.00,Kitchen,Kitchen
+2026-03-19,Quesadilla,5,65.00,Kitchen,Kitchen
+2026-03-19,Loaded Fries,6,90.00,Kitchen,Kitchen
+2026-03-19,Fish Tacos,4,60.00,Kitchen,Kitchen
+2026-03-19,Chicken Sandwich,5,75.00,Kitchen,Kitchen
+2026-03-19,Street Tacos,6,78.00,Kitchen,Kitchen
+2026-03-19,Spinach Dip,4,52.00,Kitchen,Kitchen
+2026-03-19,Buffalo Chicken Wrap,3,45.00,Kitchen,Kitchen
