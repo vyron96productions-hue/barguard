@@ -17,7 +17,7 @@ const BENEFITS = [
   {
     icon: '💼',
     title: 'Flexible partnership structures',
-    desc: 'We work with resellers, MSPs, and merchant service providers. Whether you want a revenue share or a wholesale model, we will structure something that works.',
+    desc: 'We work with resellers, MSPs, and merchant service providers. We can structure a plan that fits you.',
   },
   {
     icon: '⚡',
