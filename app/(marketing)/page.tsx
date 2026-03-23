@@ -331,6 +331,129 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* COMPARISON */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '96px 24px' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center' as const, marginBottom: 56 }}>
+            <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#f59e0b', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 16 }}>Why BarGuard</p>
+            <h2 style={{ fontFamily: 'var(--font-montserrat)', fontSize: 'clamp(24px, 3vw, 38px)', color: '#f8fafc', letterSpacing: '-0.5px', fontWeight: 800, marginBottom: 16 }}>
+              Stop guessing.<br /><em style={{ color: '#f59e0b' }}>Start knowing.</em>
+            </h2>
+            <p style={{ fontSize: 16, color: '#64748b', maxWidth: 460, margin: '0 auto' }}>Most bars rely on tools never built for this. Here's the difference.</p>
+          </div>
+
+          <style>{`
+            .comparison-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+            .comparison-table th, .comparison-table td { padding: 14px 20px; text-align: left; border-bottom: 1px solid #1e293b; }
+            .comparison-table th { font-size: 13px; font-weight: 700; padding-top: 20px; padding-bottom: 20px; }
+            .comparison-table td { font-size: 14px; color: #94a3b8; line-height: 1.5; vertical-align: top; }
+            .comparison-table tr:last-child td { border-bottom: none; }
+            .col-barguard td:nth-child(3), .col-barguard th:nth-child(3) { background: rgba(245,158,11,0.04); }
+            @media (max-width: 640px) {
+              .comparison-table th, .comparison-table td { padding: 12px 12px; font-size: 13px; }
+            }
+          `}</style>
+
+          <div style={{ borderRadius: 18, border: '1px solid #1e293b', overflow: 'hidden', background: '#0f172a' }}>
+            <table className="comparison-table col-barguard">
+              <thead>
+                <tr style={{ background: '#080e1a' }}>
+                  <th style={{ color: '#475569', width: '28%', borderBottom: '1px solid #1e293b' }}>Feature</th>
+                  <th style={{ color: '#64748b', width: '24%', borderBottom: '1px solid #1e293b' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>📊</span> Spreadsheets
+                    </span>
+                  </th>
+                  <th style={{ color: '#64748b', width: '24%', borderBottom: '1px solid #1e293b' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>🖥️</span> POS Only
+                    </span>
+                  </th>
+                  <th style={{ width: '24%', borderBottom: '1px solid rgba(245,158,11,0.3)', borderLeft: '1px solid rgba(245,158,11,0.15)', borderRight: '1px solid rgba(245,158,11,0.15)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f59e0b' }}>
+                      <img src="/barguard_icon.png" alt="" style={{ height: 18, width: 'auto' }} /> BarGuard
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    feature: 'Variance detection',
+                    spreadsheet: 'Manual math — errors guaranteed',
+                    pos: 'Sales only — no inventory side',
+                    barguard: 'Automatic — poured vs. sold, every item',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'Loss alerts',
+                    spreadsheet: 'None — you find it when it\'s too late',
+                    pos: 'None',
+                    barguard: 'Real-time flags when something looks off',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'Invoice entry',
+                    spreadsheet: 'Typed in by hand',
+                    pos: 'Not supported',
+                    barguard: 'Scan a photo — AI fills it in',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'AI insights',
+                    spreadsheet: 'None',
+                    pos: 'None',
+                    barguard: 'Flags patterns, suggests fixes',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'Stock counts',
+                    spreadsheet: 'Paper or manual entry',
+                    pos: 'Limited or unavailable',
+                    barguard: 'Built-in count workflow, before & after shift',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'Reorder alerts',
+                    spreadsheet: 'None — you notice when you run out',
+                    pos: 'Basic low-stock only',
+                    barguard: 'Smart alerts at your set thresholds',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'Time to set up',
+                    spreadsheet: 'Hours of building formulas',
+                    pos: 'Already have it',
+                    barguard: '30 minutes or less',
+                    barguardGood: true,
+                  },
+                  {
+                    feature: 'Built for bars',
+                    spreadsheet: '✗',
+                    pos: '✗',
+                    barguard: '✓  Spirits, kegs, pack sizes, modifiers',
+                    barguardGood: true,
+                  },
+                ].map((row) => (
+                  <tr key={row.feature}>
+                    <td style={{ color: '#cbd5e1', fontWeight: 500 }}>{row.feature}</td>
+                    <td style={{ color: '#475569' }}>{row.spreadsheet}</td>
+                    <td style={{ color: '#475569' }}>{row.pos}</td>
+                    <td style={{ color: '#22c55e', fontWeight: 500, borderLeft: '1px solid rgba(245,158,11,0.1)', borderRight: '1px solid rgba(245,158,11,0.1)' }}>{row.barguard}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ textAlign: 'center' as const, marginTop: 40 }}>
+            <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="homepage_comparison_cta" style={{ padding: '14px 32px', fontSize: 15 }}>
+              Try BarGuard Free for 14 Days →
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING CTA */}
       <section style={{ position: 'relative', zIndex: 1, padding: '96px 24px', textAlign: 'center' as const }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
