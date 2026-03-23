@@ -8,6 +8,7 @@ const PUBLIC_PREFIXES = [
   '/api/pos/square/callback', '/api/pos/clover/callback',
   '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
   '/how-it-works', '/partners', '/api/chat', '/api/partner/interest', '/status', '/api/status',
+  '/blog', '/sitemap.xml', '/robots.txt',
 ]
 
 export async function middleware(request: NextRequest) {
