@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# Block app routes from indexing
+Disallow: /dashboard
+Disallow: /inventory
+Disallow: /sales
+Disallow: /reports
+Disallow: /settings
+Disallow: /profile
+Disallow: /partner/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /welcome
+
+Sitemap: https://barguard.app/sitemap.xml
