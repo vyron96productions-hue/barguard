@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { convertToOz, UNIT_TO_OZ } from '@/lib/conversions'
+import { getUpcomingHolidays } from '@/lib/seasonal-patterns'
 
 export interface ReorderSuggestion {
   item_id: string
@@ -197,6 +198,78 @@ export async function GET() {
       }
     })
 
+    // --- Seasonal / holiday pattern detection ---
+    const upcomingHolidays = getUpcomingHolidays(new Date(), 35)
+    const seasonalAlerts: Array<{
+      holiday: string
+      days_until: number
+      items: Array<{ item_name: string; surge_pct: number }>
+    }> = []
+
+    for (const holiday of upcomingHolidays) {
+      // Query sales from same ±7 day window last year
+      const { data: historicalSales } = await supabase
+        .from('sales_transactions')
+        .select('menu_item_id, quantity_sold')
+        .eq('business_id', businessId)
+        .gte('sale_date', holiday.lastYearStart)
+        .lte('sale_date', holiday.lastYearEnd)
+        .not('menu_item_id', 'is', null)
+
+      if (!historicalSales || historicalSales.length === 0) continue
+
+      // Aggregate last year's sales per menu_item_id
+      const historicalMenuSales: Record<string, number> = {}
+      for (const s of historicalSales) {
+        if (!s.menu_item_id) continue
+        historicalMenuSales[s.menu_item_id] = (historicalMenuSales[s.menu_item_id] ?? 0) + (s.quantity_sold ?? 0)
+      }
+
+      const windowDays = 8 // 7 days before + day of
+      const surges: Array<{ item_name: string; surge_pct: number }> = []
+
+      for (const item of itemPayload) {
+        if (item.avg_daily_usage === 0) continue
+        const recipeList = recipesByInvItem[item.item_id] ?? []
+        if (recipeList.length === 0) continue
+
+        let historicalDailyOz = 0
+        for (const recipe of recipeList) {
+          const sold = historicalMenuSales[recipe.menu_item_id] ?? 0
+          historicalDailyOz += (sold / windowDays) * recipe.oz_per_sale
+        }
+
+        const unitFactor = UNIT_TO_OZ[item.unit?.toLowerCase()?.trim() ?? ''] ?? 1
+        const historicalDailyNative = historicalDailyOz / unitFactor
+        const surgeMultiplier = historicalDailyNative / item.avg_daily_usage
+
+        if (surgeMultiplier > 1.25) {
+          surges.push({
+            item_name: item.item_name,
+            surge_pct: Math.round((surgeMultiplier - 1) * 100),
+          })
+        }
+      }
+
+      if (surges.length > 0) {
+        seasonalAlerts.push({
+          holiday: holiday.name,
+          days_until: holiday.daysUntil,
+          items: surges.sort((a, b) => b.surge_pct - a.surge_pct).slice(0, 8),
+        })
+      }
+    }
+
+    const seasonalSection = seasonalAlerts.length > 0
+      ? `\n\nSEASONAL ALERTS (based on last year's actual sales data for this business):
+${seasonalAlerts.map((a) =>
+  `- ${a.holiday} is in ${a.days_until} day${a.days_until !== 1 ? 's' : ''}. Last year these items had significantly higher usage that week:\n` +
+  a.items.map((i) => `    ${i.item_name}: +${i.surge_pct}% above normal`).join('\n')
+).join('\n')}
+
+For items with seasonal surge data, increase suggested_qty to account for the spike and mention the upcoming holiday in your reasoning.`
+      : ''
+
     // --- Call Claude for suggestions ---
     const prompt = `You are a bar inventory management assistant. Analyze the following inventory items and determine which ones need to be reordered.
 
@@ -212,6 +285,7 @@ For each item, determine:
 
 Inventory items:
 ${JSON.stringify(itemPayload, null, 2)}
+${seasonalSection}
 
 Respond with ONLY a valid JSON object in this exact format (no markdown, no explanation):
 {
