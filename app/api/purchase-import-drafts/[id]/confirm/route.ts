@@ -143,6 +143,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     }
 
+    // ── Update cost_per_unit on inventory items when invoice has a price ────
+    const priceLines = approvedLines.filter((l) => l.inventory_item_id && l.unit_cost != null && l.unit_cost > 0)
+    for (const line of priceLines) {
+      await supabase
+        .from('inventory_items')
+        .update({ cost_per_unit: line.unit_cost })
+        .eq('id', line.inventory_item_id!)
+        .eq('business_id', businessId)
+    }
+
     const { error: draftUpdateError } = await supabase
       .from('purchase_import_drafts')
       .update({ status: 'confirmed', vendor_name: body.vendor_name, purchase_date: purchaseDate, confirmed_at: new Date().toISOString() })

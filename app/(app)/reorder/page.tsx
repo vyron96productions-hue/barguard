@@ -414,12 +414,12 @@ ${businessName || 'My Bar'}`
                   </div>
                 </div>
               ) : (
-                <div className="px-4 sm:px-5 py-2 border-t border-slate-800/50">
+                <div className="px-4 sm:px-5 py-3 border-t border-slate-800/50">
                   <button
                     onClick={() => setAddingToVendor(vendorKey)}
-                    className="text-xs text-slate-600 hover:text-amber-400 transition-colors flex items-center gap-1"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 hover:border-amber-500/50 text-amber-400 hover:text-amber-300 text-sm font-medium rounded-lg transition-colors"
                   >
-                    <span className="text-base leading-none">+</span> Add item to order
+                    <span className="text-lg leading-none">+</span> Add item to order
                   </button>
                 </div>
               )}
