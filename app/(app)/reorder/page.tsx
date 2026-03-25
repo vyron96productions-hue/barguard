@@ -42,6 +42,11 @@ export default function ReorderPage() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const [businessName, setBusinessName] = useState<string>('')
   const [plan, setPlan] = useState<Plan>('basic')
+  const [extraItems, setExtraItems] = useState<Record<string, Array<{ id: string; name: string; qty: number; unit: string }>>>({})
+  const [addingToVendor, setAddingToVendor] = useState<string | null>(null)
+  const [newItemName, setNewItemName] = useState('')
+  const [newItemQty, setNewItemQty] = useState('1')
+  const [newItemUnit, setNewItemUnit] = useState('bottle')
 
   useEffect(() => {
     fetch('/api/profile').then(r => r.json()).then(d => { if (d.plan) setPlan(d.plan) })
@@ -110,10 +115,13 @@ export default function ReorderPage() {
 
   function buildOrderText(vendorKey: string, group: { vendorName: string; vendorEmail: string | null; items: ReorderSuggestion[] }) {
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const lines = group.items
+    const aiLines = group.items
       .filter((s) => (quantities[s.item_id] ?? s.suggested_qty) > 0)
       .map((s) => `- ${s.item_name} x ${quantities[s.item_id] ?? s.suggested_qty} (${s.unit})`)
-      .join('\n')
+    const extraLines = (extraItems[vendorKey] ?? [])
+      .filter((i) => i.qty > 0)
+      .map((i) => `- ${i.name} x ${i.qty} (${i.unit})`)
+    const lines = [...aiLines, ...extraLines].join('\n')
 
     return `TO: ${group.vendorName}${group.vendorEmail ? ` <${group.vendorEmail}>` : ''}
 RE: Purchase Order - ${businessName || 'My Bar'}
@@ -161,6 +169,29 @@ ${businessName || 'My Bar'}`
       setEmailError('Network error — email not sent')
     }
     setSendingVendor(null)
+  }
+
+  function addExtraItem(vendorKey: string) {
+    if (!newItemName.trim()) return
+    setExtraItems((prev) => ({
+      ...prev,
+      [vendorKey]: [...(prev[vendorKey] ?? []), {
+        id: `extra-${Date.now()}`,
+        name: newItemName.trim(),
+        qty: parseInt(newItemQty) || 1,
+        unit: newItemUnit,
+      }],
+    }))
+    setNewItemName('')
+    setNewItemQty('1')
+    setAddingToVendor(null)
+  }
+
+  function removeExtraItem(vendorKey: string, itemId: string) {
+    setExtraItems((prev) => ({
+      ...prev,
+      [vendorKey]: (prev[vendorKey] ?? []).filter((i) => i.id !== itemId),
+    }))
   }
 
   const grouped = groupByVendor(displayed)
@@ -309,6 +340,89 @@ ${businessName || 'My Bar'}`
                   </div>
                 ))}
               </div>
+
+              {/* Manually added items */}
+              {(extraItems[vendorKey] ?? []).map((item) => (
+                <div key={item.id} className="px-4 sm:px-5 py-3 bg-slate-800/20">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-slate-600 text-sm">+</span>
+                      <p className="text-sm text-slate-300 font-medium truncate">{item.name}</p>
+                      <span className="text-xs text-slate-600 shrink-0">{item.unit}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input
+                        type="number"
+                        min="0"
+                        value={item.qty}
+                        onChange={(e) => setExtraItems((prev) => ({
+                          ...prev,
+                          [vendorKey]: (prev[vendorKey] ?? []).map((i) =>
+                            i.id === item.id ? { ...i, qty: parseInt(e.target.value) || 0 } : i
+                          ),
+                        }))}
+                        className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200 text-right focus:outline-none focus:border-amber-500/60"
+                      />
+                      <button
+                        onClick={() => removeExtraItem(vendorKey, item.id)}
+                        className="text-slate-700 hover:text-red-400 transition-colors text-lg leading-none"
+                        title="Remove"
+                      >×</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Add item row */}
+              {addingToVendor === vendorKey ? (
+                <div className="px-4 sm:px-5 py-3 border-t border-slate-800/50 bg-slate-800/10">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Item name"
+                      value={newItemName}
+                      onChange={(e) => setNewItemName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') addExtraItem(vendorKey); if (e.key === 'Escape') setAddingToVendor(null) }}
+                      className="flex-1 min-w-32 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="Qty"
+                      value={newItemQty}
+                      onChange={(e) => setNewItemQty(e.target.value)}
+                      className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200 text-right focus:outline-none focus:border-amber-500/60"
+                    />
+                    <select
+                      value={newItemUnit}
+                      onChange={(e) => setNewItemUnit(e.target.value)}
+                      className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-300 focus:outline-none focus:border-amber-500/60"
+                    >
+                      {['bottle','can','keg','case','oz','liter','each'].map((u) => (
+                        <option key={u} value={u}>{u}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => addExtraItem(vendorKey)}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-900 text-sm font-semibold rounded-lg transition-colors"
+                    >Add</button>
+                    <button
+                      onClick={() => setAddingToVendor(null)}
+                      className="text-slate-600 hover:text-slate-400 text-sm transition-colors"
+                    >Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-4 sm:px-5 py-2 border-t border-slate-800/50">
+                  <button
+                    onClick={() => setAddingToVendor(vendorKey)}
+                    className="text-xs text-slate-600 hover:text-amber-400 transition-colors flex items-center gap-1"
+                  >
+                    <span className="text-base leading-none">+</span> Add item to order
+                  </button>
+                </div>
+              )}
 
               {/* Generated order */}
               {openOrderVendor === vendorKey && (
