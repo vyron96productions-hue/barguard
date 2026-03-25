@@ -100,6 +100,7 @@ export default function RecipeMappingPage() {
   const [aiGenSaving, setAiGenSaving]     = useState(false)
   const [aiGenDone, setAiGenDone]         = useState(false)
   const [aiGenError, setAiGenError]       = useState<string | null>(null)
+  const [aiGenSkipped, setAiGenSkipped]   = useState(0)
 
   useEffect(() => { fetchAll() }, [])
 
@@ -197,6 +198,7 @@ export default function RecipeMappingPage() {
     setAiGenLoading(true)
     setAiGenError(null)
     setAiGenDone(false)
+    setAiGenSkipped(0)
     setAiGenRows([])
     try {
       const res = await fetch('/api/recipes/ai-generate')
@@ -240,6 +242,7 @@ export default function RecipeMappingPage() {
     const bulkData = await bulkRes.json()
     if (!bulkRes.ok) { setAiGenError(bulkData.error ?? 'Failed to create menu items'); setAiGenSaving(false); return }
 
+    if (bulkData.skipped_count > 0) setAiGenSkipped(bulkData.skipped_count)
     const createdItems: Array<{ id: string; name: string }> = bulkData.created ?? []
     const nameToId = new Map(createdItems.map((i) => [i.name.toLowerCase().trim(), i.id]))
 
@@ -834,6 +837,9 @@ export default function RecipeMappingPage() {
                 <div className="text-center py-16 space-y-2">
                   <p className="text-4xl">✓</p>
                   <p className="text-lg font-semibold text-emerald-400">Menu items & recipes saved!</p>
+                  {aiGenSkipped > 0 && (
+                    <p className="text-xs text-amber-400">{aiGenSkipped} item{aiGenSkipped > 1 ? 's' : ''} already existed and were skipped — recipes were still linked.</p>
+                  )}
                 </div>
               ) : aiGenError ? (
                 <div className="text-center py-16 border border-red-500/20 rounded-2xl">
