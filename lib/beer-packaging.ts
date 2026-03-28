@@ -6,15 +6,23 @@ export const PACKAGE_TYPE_OPTIONS: PackageType[] = [
   'single', '4-pack', '6-pack', '12-pack', '24-pack', 'case', 'keg',
 ]
 
-/** Default individual unit count per package type */
+/**
+ * Default number of individual SELLABLE SERVINGS per package type.
+ * These are not oz — they are the count of cans/bottles/pints inside each package.
+ *
+ * keg = 165 pints (15.5 gal half-barrel ÷ 16oz per pint)
+ *
+ * For oz-based conversion factors, see UNIT_TO_OZ in lib/conversions.ts.
+ * Do NOT mix these two tables — they measure different things.
+ */
 export const PACKAGE_TYPE_SIZES: Record<PackageType, number> = {
   'single':   1,
   '4-pack':   4,
   '6-pack':   6,
   '12-pack':  12,
   '24-pack':  24,
-  'case':     24,
-  'keg':      165,
+  'case':     24,  // 24 × 12oz cans/bottles
+  'keg':      165, // 165 pints per half-barrel keg
 }
 
 // ─── Return types ─────────────────────────────────────────────────────────────

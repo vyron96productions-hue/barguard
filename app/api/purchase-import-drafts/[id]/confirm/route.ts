@@ -68,13 +68,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 })
 
-    const purchases = approvedLines.map((line) => ({
+    // Lines with null or zero quantity are skipped — inserting 0-qty purchases is misleading
+    const validPurchaseLines = approvedLines.filter((l) => (l.quantity ?? 0) > 0)
+    const zeroQtySkipped = approvedLines.length - validPurchaseLines.length
+
+    const purchases = validPurchaseLines.map((line) => ({
       upload_id: upload.id,
       business_id: businessId,
       purchase_date: purchaseDate,
       raw_item_name: line.raw_item_name,
       inventory_item_id: line.inventory_item_id,
-      quantity_purchased: line.quantity ?? 0,
+      quantity_purchased: line.quantity!,
       vendor_name: body.vendor_name,
       unit_cost: line.unit_cost,
       unit_type: line.unit_type,
@@ -84,7 +88,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (purchasesError) return NextResponse.json({ error: purchasesError.message }, { status: 500 })
 
     // ── Update stock levels: add received quantities to current on-hand ──────
-    const matchedLines = approvedLines.filter((l) => l.inventory_item_id && (l.quantity ?? 0) > 0)
+    const matchedLines = validPurchaseLines.filter((l) => l.inventory_item_id)
     if (matchedLines.length > 0) {
       const itemIds = matchedLines.map((l) => l.inventory_item_id!)
 
@@ -160,7 +164,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     if (draftUpdateError) return NextResponse.json({ error: draftUpdateError.message }, { status: 500 })
 
-    return NextResponse.json({ upload_id: upload.id, rows_imported: approvedLines.length, aliases_saved: aliasLines.length })
+    return NextResponse.json({
+      upload_id: upload.id,
+      rows_imported: validPurchaseLines.length,
+      aliases_saved: aliasLines.length,
+      ...(zeroQtySkipped > 0 && { warning: `${zeroQtySkipped} line(s) skipped — quantity was missing or zero` }),
+    })
   } catch (err: unknown) {
     return authErrorResponse(err)
   }

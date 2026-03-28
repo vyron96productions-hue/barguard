@@ -12,6 +12,7 @@ import DrinkProfitPreview from '@/components/dashboard/DrinkProfitPreview'
 import ReorderAlerts from '@/components/dashboard/ReorderAlerts'
 import { SHIFT_PRESETS, resolveShiftWindow, type ResolvedShiftWindow } from '@/lib/shifts'
 import { itemCostPerOz } from '@/lib/conversions'
+import { HEALTH_WEIGHT_CRITICAL, HEALTH_WEIGHT_WARNING } from '@/lib/recipe-suggestions'
 import type { PerformanceData } from '@/app/api/reports/performance/route'
 import type { InventoryUsageSummary, AiSummary } from '@/types'
 
@@ -50,7 +51,7 @@ function computeMetrics(summaries: InventoryUsageSummary[]) {
 
   const healthScore = total === 0
     ? 100
-    : Math.max(0, Math.round(100 * (1 - (critical.length * 3 + warning.length * 1) / (total * 3))))
+    : Math.max(0, Math.round(100 * (1 - (critical.length * HEALTH_WEIGHT_CRITICAL + warning.length * HEALTH_WEIGHT_WARNING) / (total * HEALTH_WEIGHT_CRITICAL))))
 
   const highestRisk = [...summaries]
     .filter((s) => s.variance_percent !== null)

@@ -167,7 +167,19 @@ export async function DELETE(req: NextRequest) {
     // Delete all related records first to avoid FK constraint errors
     await supabase.from('inventory_counts').delete().eq('inventory_item_id', id).eq('business_id', businessId)
     await supabase.from('inventory_item_aliases').delete().eq('inventory_item_id', id).eq('business_id', businessId)
-    await supabase.from('purchases').update({ inventory_item_id: null }).eq('inventory_item_id', id).eq('business_id', businessId)
+
+    // Nullify FK on purchases — these records become orphaned (no inventory item).
+    // Log the count so we have observability into orphan accumulation.
+    const { data: orphanedPurchases } = await supabase
+      .from('purchases')
+      .update({ inventory_item_id: null })
+      .eq('inventory_item_id', id)
+      .eq('business_id', businessId)
+      .select('id')
+    if (orphanedPurchases?.length) {
+      console.log(`[inventory-items] delete item=${id}: orphaned ${orphanedPurchases.length} purchase record(s)`)
+    }
+
     await supabase.from('purchase_import_draft_lines').update({ inventory_item_id: null }).eq('inventory_item_id', id)
 
     const { error } = await supabase

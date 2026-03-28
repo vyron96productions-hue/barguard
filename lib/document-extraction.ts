@@ -90,6 +90,13 @@ function parseResponse(text: string): ParsedPurchaseDocument {
         let packageType = item.package_type ?? normalizedUnit?.packageType ?? null
         let unitsPerPackage = item.units_per_package ?? normalizedUnit?.unitsPerPackage ?? null
 
+        // Clamp AI-returned values to sane ranges before using them
+        if (unitsPerPackage !== null && (unitsPerPackage <= 0 || unitsPerPackage > 500)) {
+          unitsPerPackage = null
+        }
+        const rawQuantity = item.quantity ?? null
+        const safeQuantity = rawQuantity !== null && rawQuantity >= 0 ? rawQuantity : null
+
         // Always try name-based extraction when unitsPerPackage is still missing —
         // the AI often sets package_type without filling in units_per_package
         if (!unitsPerPackage || unitsPerPackage <= 0) {
@@ -107,7 +114,7 @@ function parseResponse(text: string): ParsedPurchaseDocument {
 
         return {
           raw_item_name: item.raw_item_name ?? 'Unknown item',
-          quantity: item.quantity ?? null,
+          quantity: safeQuantity,
           unit_type: normalizedUnit?.unit ?? rawUnit,
           unit_cost: item.unit_cost ?? null,
           line_total: item.line_total ?? null,

@@ -17,12 +17,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'file and mapping are required' }, { status: 400 })
     }
 
+    const MAX_FILE_BYTES = 10_000_000 // 10 MB
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 10 MB.' }, { status: 400 })
+    }
+
     const mapping: Record<string, string> = JSON.parse(mappingRaw)
     const text = await file.text()
     const { rows, errors } = parseCsvText(text)
 
     if (errors.length > 0 && rows.length === 0) {
       return NextResponse.json({ error: 'CSV parse failed', details: errors }, { status: 400 })
+    }
+
+    const MAX_ROWS = 10_000
+    if (rows.length > MAX_ROWS) {
+      return NextResponse.json({ error: `Too many rows. Maximum is ${MAX_ROWS} per upload.` }, { status: 400 })
     }
 
     const validRows: { count_date: string; item_name: string; quantity: number; unit_type: string | null }[] = []

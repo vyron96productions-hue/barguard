@@ -1,6 +1,14 @@
 // Unit conversion helpers
 // Liquid units normalize to ounces. Food units (each, lb, portion, etc.) pass through as-is.
 
+/**
+ * Total fluid ounces per inventory unit.
+ * Used for cost-per-oz calculations and quantity conversions.
+ *
+ * These are TOTAL OZ values — not serving counts.
+ * For number of servings per package, see PACKAGE_TYPE_SIZES in lib/beer-packaging.ts.
+ * Do NOT mix these two tables — they measure different things.
+ */
 export const UNIT_TO_OZ: Record<string, number> = {
   oz: 1,
   ml: 0.033814,
@@ -8,19 +16,19 @@ export const UNIT_TO_OZ: Record<string, number> = {
   l: 33.814,
   liter: 33.814,
   litre: 33.814,
-  bottle: 25.36,    // 750ml standard bottle
+  bottle: 25.36,    // 750ml standard spirit/wine bottle
   '750ml': 25.36,
   '1L': 33.814,
   '1l': 33.814,
   '1.75L': 59.1745,
   '1.75l': 59.1745,
-  keg: 1984,        // 15.5 gallon half-barrel (standard US commercial keg)
-  quarterkeg: 992,
-  sixthkeg: 661,
+  keg: 1984,        // 15.5 gal half-barrel = 1984oz total
+  quarterkeg: 992,  // 7.75 gal quarter-barrel = 992oz total
+  sixthkeg: 661,    // 5.17 gal sixth-barrel = 661oz total
   pint: 16,
-  can: 12,          // 12oz standard can
-  beer_bottle: 12,  // 12oz standard beer bottle
-  case: 288,        // 24 x 12oz (standard beer/can case)
+  can: 12,          // standard 12oz can
+  beer_bottle: 12,  // standard 12oz beer bottle
+  case: 288,        // 24 × 12oz = 288oz total per case
 }
 
 // Food / kitchen units that don't convert to oz — tracked in their native unit

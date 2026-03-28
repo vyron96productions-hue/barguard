@@ -105,6 +105,7 @@ export async function middleware(request: NextRequest) {
 
       // ① Legacy plan — Vyron's permanent grant, always allow.
       if (plan === 'legacy') {
+        console.log(`[middleware] legacy access: user=${user.id} path=${pathname}`)
         response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
         return response
       }

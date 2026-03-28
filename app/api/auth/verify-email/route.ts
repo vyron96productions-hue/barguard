@@ -212,10 +212,11 @@ export async function GET(req: NextRequest) {
             </table>
           </div>
         `,
-      }).catch(() => { /* non-fatal */ })
+      }).catch((err) => { console.error('[verify-email] owner notification failed:', err) })
     }
-  } catch {
-    // Welcome email failure is non-fatal — user is already verified
+  } catch (err) {
+    // Welcome email failure is non-fatal — user is already verified, but log for observability
+    console.error('[verify-email] welcome email failed:', err)
   }
 
   return NextResponse.redirect(`${origin}/welcome`)

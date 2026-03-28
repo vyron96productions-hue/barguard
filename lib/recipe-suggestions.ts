@@ -1,6 +1,8 @@
 // lib/recipe-suggestions.ts
 // Smart name-matching algorithm for auto-generating recipes
 
+import { FOOD_UNITS } from '@/lib/conversions'
+
 export interface SuggestionMenuItem {
   id: string
   name: string
@@ -26,6 +28,16 @@ export interface RecipeSuggestion {
   ai_suggested?: boolean
 }
 
+// Minimum word-overlap score to surface a suggestion at all
+const MIN_MATCH_SCORE = 0.5
+// Score bands for confidence levels
+const HIGH_CONFIDENCE_SCORE   = 0.85 // ≥85% of inventory item words matched
+const MEDIUM_CONFIDENCE_SCORE = 0.65 // ≥65% of inventory item words matched
+// Health score penalty weights (used in dashboard)
+// critical items penalise 3× more than warning items (they represent unacceptable variance)
+export const HEALTH_WEIGHT_CRITICAL = 3
+export const HEALTH_WEIGHT_WARNING  = 1
+
 // Words to strip from menu item names before matching
 const STRIP_WORDS = new Set([
   'shot', 'shots', 'neat', 'rocks', 'on', 'the', 'up', 'straight', 'chilled',
@@ -39,8 +51,6 @@ function cleanWords(name: string): string[] {
     .split(/\s+/)
     .filter((w) => w.length > 1 && !STRIP_WORDS.has(w))
 }
-
-const FOOD_UNITS = new Set(['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat'])
 
 function detectPour(menuItemName: string, inventoryUnit?: string): { quantity: number; unit: string } {
   const n = menuItemName.toLowerCase()
@@ -99,7 +109,7 @@ export function generateSuggestions(
       }
     }
 
-    if (bestScore >= 0.5 && bestInv) {
+    if (bestScore >= MIN_MATCH_SCORE && bestInv) {
       const { quantity, unit } = detectPour(mi.name, bestInv.unit)
       suggestions.push({
         menu_item_id: mi.id,
@@ -109,7 +119,7 @@ export function generateSuggestions(
         inventory_item_unit: bestInv.unit,
         suggested_quantity: quantity,
         suggested_unit: unit,
-        confidence: bestScore >= 0.85 ? 'high' : bestScore >= 0.65 ? 'medium' : 'low',
+        confidence: bestScore >= HIGH_CONFIDENCE_SCORE ? 'high' : bestScore >= MEDIUM_CONFIDENCE_SCORE ? 'medium' : 'low',
       })
     }
   }
