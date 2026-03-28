@@ -3,7 +3,7 @@ import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { parseCsvText } from '@/lib/csv'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
-import { parseQuantityString, normalizeUnitType } from '@/lib/beer-packaging'
+import { parseQuantityString, normalizeUnitType, PACKAGE_TYPE_SIZES } from '@/lib/beer-packaging'
 
 export async function POST(req: NextRequest) {
   try {
@@ -73,10 +73,10 @@ export async function POST(req: NextRequest) {
           const foodUnits = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'serving', 'slice', 'tray', 'flat', 'bag', 'jar', 'packet', 'cup', 'tbsp', 'tsp'])
           const item_type = foodUnits.has(unit) ? 'food' : 'beverage'
           const packMeta: { pack_size: number; package_type: string } | null =
-            unit === 'case' ? { pack_size: 24, package_type: 'case' } :
-            unit === 'keg' ? { pack_size: 165, package_type: 'keg' } :
-            unit === 'quarterkeg' ? { pack_size: 62, package_type: 'quarter keg' } :
-            unit === 'sixthkeg' ? { pack_size: 41, package_type: 'sixth keg' } :
+            unit === 'case'       ? { pack_size: PACKAGE_TYPE_SIZES['case'], package_type: 'case' } :
+            unit === 'keg'        ? { pack_size: PACKAGE_TYPE_SIZES['keg'],  package_type: 'keg' } :
+            unit === 'quarterkeg' ? { pack_size: 62,                         package_type: 'quarter keg' } :
+            unit === 'sixthkeg'   ? { pack_size: 41,                         package_type: 'sixth keg' } :
             null
           const { data: newItem } = await supabase
             .from('inventory_items')

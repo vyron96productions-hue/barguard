@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     if (!businessId || !session.subscription) return NextResponse.json({ ok: true })
 
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-    const priceId = subscription.items.data[0]?.price.id
+    const priceId = subscription.items.data[0]?.price?.id
     const plan = getPlanFromPriceId(priceId)
 
     if (plan) {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   // ── Subscription updated (plan change, renewal, etc.) ─────────────────────
   if (event.type === 'customer.subscription.updated') {
     const subscription = event.data.object as Stripe.Subscription
-    const priceId = subscription.items.data[0]?.price.id
+    const priceId = subscription.items.data[0]?.price?.id
     const plan = getPlanFromPriceId(priceId)
 
     if (plan) {

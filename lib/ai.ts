@@ -96,7 +96,7 @@ ${shiftPerformanceSection}`
   })
 
   const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected AI response type')
+  if (!content || content.type !== 'text') throw new Error('Unexpected AI response type')
   return content.text
 }
 
@@ -165,6 +165,6 @@ One sentence: the single most important thing this manager should focus on this 
   })
 
   const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected AI response type')
+  if (!content || content.type !== 'text') throw new Error('Unexpected AI response type')
   return content.text
 }

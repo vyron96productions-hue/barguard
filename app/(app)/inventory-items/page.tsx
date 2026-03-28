@@ -3,24 +3,14 @@
 import { useEffect, useState } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
-import { UNIT_LABELS } from '@/lib/conversions'
+import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
+import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { InventoryItem, Vendor } from '@/types'
 
-const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg']
-const FOOD_UNITS = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat']
+const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
+const FOOD_UNITS = Array.from(FOOD_UNITS_SET)
 
 type ItemType = 'beverage' | 'food'
-
-const BEVERAGE_CATEGORIES = [
-  'spirits', 'beer', 'wine', 'keg',
-  'mixer', 'non-alcoholic', 'supply',
-  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
-]
-const FOOD_CATEGORIES = [
-  'proteins', 'produce', 'dairy', 'dry goods', 'frozen',
-  'sauces', 'garnish', 'bread & starches', 'prep items', 'disposables',
-]
-const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
 
 function SectionDivider({ label, count }: { label: string; count: number }) {
   return (

@@ -158,7 +158,7 @@ export async function extractFromImage(
   })
 
   const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected Claude response type')
+  if (!content || content.type !== 'text') throw new Error('Unexpected Claude response type')
   return parseResponse(content.text)
 }
 
@@ -186,6 +186,6 @@ export async function extractFromPdf(pdfBuffer: Buffer): Promise<ParsedPurchaseD
   })
 
   const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected Claude response type')
+  if (!content || content.type !== 'text') throw new Error('Unexpected Claude response type')
   return parseResponse(content.text)
 }

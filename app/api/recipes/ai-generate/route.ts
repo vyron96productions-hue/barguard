@@ -71,6 +71,7 @@ ${itemList}`
       messages: [{ role: 'user', content: prompt }],
     })
 
+    if (!response.content[0] || response.content[0].type !== 'text') throw new Error('Unexpected AI response type')
     const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
     const jsonMatch = text.match(/\[[\s\S]*\]/)
     if (!jsonMatch) return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })

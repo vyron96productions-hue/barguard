@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { PACKAGE_TYPE_SIZES } from '@/lib/beer-packaging'
 
 export async function GET() {
   try {
@@ -26,13 +27,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'name and unit are required' }, { status: 400 })
     }
 
-    const unitPackDefaults: Record<string, { pack_size: number; package_type: string }> = {
-      case: { pack_size: 24, package_type: 'case' },
-      keg: { pack_size: 165, package_type: 'keg' },
-      quarterkeg: { pack_size: 62, package_type: 'quarter keg' },
-      sixthkeg: { pack_size: 41, package_type: 'sixth keg' },
+    const UNIT_PACK_DEFAULTS: Record<string, { pack_size: number; package_type: string }> = {
+      case:       { pack_size: PACKAGE_TYPE_SIZES['case'],    package_type: 'case' },
+      keg:        { pack_size: PACKAGE_TYPE_SIZES['keg'],     package_type: 'keg' },
+      quarterkeg: { pack_size: 62,                            package_type: 'quarter keg' },
+      sixthkeg:   { pack_size: 41,                            package_type: 'sixth keg' },
     }
-    const unitDefaults = unitPackDefaults[unit?.toLowerCase?.() ?? ''] ?? null
+    const unitDefaults = UNIT_PACK_DEFAULTS[unit?.toLowerCase?.() ?? ''] ?? null
     const packSizeVal = pack_size ? parseInt(pack_size, 10) : (unitDefaults?.pack_size ?? null)
     if (packSizeVal !== null && (isNaN(packSizeVal) || packSizeVal < 1)) {
       return NextResponse.json({ error: 'pack_size must be a positive integer' }, { status: 400 })

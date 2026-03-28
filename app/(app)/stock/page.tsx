@@ -3,22 +3,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
-import { UNIT_LABELS, formatQty } from '@/lib/conversions'
+import { UNIT_LABELS, formatQty, INVENTORY_BEVERAGE_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
+import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 
-const BEVERAGE_CATEGORIES = [
-  'spirits', 'beer', 'wine', 'keg',
-  'mixer', 'non-alcoholic',
-  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
-]
-const FOOD_CATEGORIES = [
-  'food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods',
-  'sauces', 'condiments', 'dessert', 'supply',
-]
-const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
-
-const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg']
-const FOOD_UNITS_LIST = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet']
+const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
+const FOOD_UNITS_LIST = Array.from(FOOD_UNITS_SET)
 
 // Bottle-type units and their oz size — used for partial bottle display
 const BOTTLE_SIZE_OZ: Record<string, number> = {
@@ -76,15 +66,13 @@ function staleness(item: StockItem): 'fresh' | 'aging' | 'stale' | 'never' {
   return 'stale'
 }
 
-const FOOD_UNIT_SET = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'serving', 'slice', 'tray', 'flat', 'bag', 'jar', 'packet', 'cup', 'tbsp', 'tsp'])
-
 function isFood(item: StockItem) {
   if (item.item_type === 'food') return true
   // Category always wins — setting category to a food category overrides item_type
   const cat = item.category?.toLowerCase() ?? ''
   if (FOOD_CATEGORIES.some((fc) => cat === fc.toLowerCase())) return true
   // For items with no explicit type, fall back to unit
-  if (!item.item_type || item.item_type === 'other') return FOOD_UNIT_SET.has(item.unit)
+  if (!item.item_type || item.item_type === 'other') return FOOD_UNITS_SET.has(item.unit)
   return false
 }
 
