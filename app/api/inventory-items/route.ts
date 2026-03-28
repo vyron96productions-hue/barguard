@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
     const unitPackDefaults: Record<string, { pack_size: number; package_type: string }> = {
       case: { pack_size: 24, package_type: 'case' },
       keg: { pack_size: 165, package_type: 'keg' },
-      halfkeg: { pack_size: 82, package_type: 'half keg' },
       quarterkeg: { pack_size: 62, package_type: 'quarter keg' },
       sixthkeg: { pack_size: 41, package_type: 'sixth keg' },
     }

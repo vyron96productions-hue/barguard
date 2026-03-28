@@ -17,7 +17,7 @@ const FOOD_CATEGORIES = [
 ]
 const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
 
-const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS_LIST = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet']
 
 // Bottle-type units and their oz size — used for partial bottle display

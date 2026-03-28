@@ -35,7 +35,7 @@ Required JSON shape:
     {
       "raw_item_name": "exact product name as written on the document",
       "quantity": number or null,
-      "unit_type": "bottle | beer_bottle | can | case | keg | pint | 1L | 1.75L | sixthkeg | quarterkeg | halfkeg or null",
+      "unit_type": "bottle | beer_bottle | can | case | keg | pint | 1L | 1.75L | sixthkeg | quarterkeg or null",
       "unit_cost": number or null,
       "line_total": number or null,
       "confidence": "high" | "medium" | "low",

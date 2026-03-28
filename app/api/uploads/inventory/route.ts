@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
           const packMeta: { pack_size: number; package_type: string } | null =
             unit === 'case' ? { pack_size: 24, package_type: 'case' } :
             unit === 'keg' ? { pack_size: 165, package_type: 'keg' } :
-            unit === 'halfkeg' ? { pack_size: 82, package_type: 'half keg' } :
             unit === 'quarterkeg' ? { pack_size: 62, package_type: 'quarter keg' } :
             unit === 'sixthkeg' ? { pack_size: 41, package_type: 'sixth keg' } :
             null

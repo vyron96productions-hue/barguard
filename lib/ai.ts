@@ -91,7 +91,7 @@ ${shiftPerformanceSection}`
 
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 900,
+    max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   })
 
@@ -160,7 +160,7 @@ One sentence: the single most important thing this manager should focus on this 
 
   const message = await client.messages.create({
     model:      'claude-sonnet-4-6',
-    max_tokens: 600,
+    max_tokens: 1024,
     messages:   [{ role: 'user', content: prompt }],
   })
 

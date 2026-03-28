@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useBusinessContext } from '@/app/(app)/BusinessContext'
 
 const sections = [
   {
@@ -46,14 +47,7 @@ export default function MobileNav() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const [businessName, setBusinessName] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((d) => { if (d.business_name) setBusinessName(d.business_name) })
-      .catch(() => {})
-  }, [])
+  const { businessName } = useBusinessContext()
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })

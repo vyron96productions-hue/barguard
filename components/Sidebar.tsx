@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useBusinessContext } from '@/app/(app)/BusinessContext'
 
 const sections = [
   {
@@ -45,18 +45,7 @@ const sections = [
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [businessName, setBusinessName] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.business_name) setBusinessName(d.business_name)
-        if (d.is_admin) setIsAdmin(true)
-      })
-      .catch(() => {})
-  }, [])
+  const { businessName, isAdmin } = useBusinessContext()
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })

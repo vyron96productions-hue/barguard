@@ -6,7 +6,7 @@ import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/li
 import { UNIT_LABELS } from '@/lib/conversions'
 import type { InventoryItem, Vendor } from '@/types'
 
-const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const BEVERAGE_UNITS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg']
 const FOOD_UNITS = ['each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'bag', 'tray', 'box', 'jar', 'packet', 'flat']
 
 type ItemType = 'beverage' | 'food'
@@ -67,16 +67,21 @@ export default function InventoryItemsPage() {
   const [editError,      setEditError]      = useState<string | null>(null)
 
   useEffect(() => {
-    fetchItems()
-    fetchVendors()
+    setLoading(true)
+    Promise.all([
+      fetch('/api/inventory-items').then((r) => r.json()),
+      fetch('/api/vendors').then((r) => r.json()),
+    ]).then(([itemsData, vendorsData]) => {
+      setItems(Array.isArray(itemsData) ? itemsData : [])
+      setVendors(Array.isArray(vendorsData) ? vendorsData : [])
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [])
 
   async function fetchItems() {
-    setLoading(true)
     const res = await fetch('/api/inventory-items')
     const data = await res.json()
     setItems(Array.isArray(data) ? data : [])
-    setLoading(false)
   }
 
   async function fetchVendors() {

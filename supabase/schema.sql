@@ -510,9 +510,15 @@ ALTER TABLE purchase_import_drafts      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchase_import_draft_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shifts                      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_summaries                ENABLE ROW LEVEL SECURITY;
--- POS tables: RLS disabled for MVP (tokens managed server-side)
-ALTER TABLE pos_connections  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE pos_sync_logs    DISABLE ROW LEVEL SECURITY;
+-- POS tables: managed via service role (API routes), but RLS enabled for compliance
+ALTER TABLE pos_connections  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pos_sync_logs    ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "pos_connections_business" ON pos_connections
+  USING (business_id IN (SELECT business_id FROM user_businesses WHERE user_id = auth.uid()));
+
+CREATE POLICY IF NOT EXISTS "pos_sync_logs_business" ON pos_sync_logs
+  USING (business_id IN (SELECT business_id FROM user_businesses WHERE user_id = auth.uid()));
 
 
 -- ============================================================

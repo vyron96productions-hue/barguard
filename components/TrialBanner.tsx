@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { useBusinessContext } from '@/app/(app)/BusinessContext'
 
 interface TrialState {
   plan: string
@@ -39,32 +40,21 @@ const PLANS = [
 
 export function TrialBanner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const [trial, setTrial] = useState<TrialState | null>(null)
+  const { plan, trialEndsAt, loading } = useBusinessContext()
   const [upgrading, setUpgrading] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/profile')
-      .then((r) => r.json())
-      .then((d) => {
-        const plan = d.plan ?? 'basic'
-        const trialEndsAt = d.trial_ends_at ?? null
-
-        if (!trialEndsAt || ['legacy', 'pro', 'enterprise'].includes(plan)) {
-          setTrial({ plan, daysLeft: null, expired: false })
-          return
-        }
-
-        const now = new Date()
-        const end = new Date(trialEndsAt)
-        const msLeft = end.getTime() - now.getTime()
-        const daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
-        const expired = msLeft <= 0
-
-        setTrial({ plan, daysLeft, expired })
-      })
-      .catch(() => setTrial({ plan: 'basic', daysLeft: null, expired: false }))
-  }, [pathname])
+  // Derive trial state from context — no network call, computed once per plan/trialEndsAt change
+  const trial = useMemo<TrialState | null>(() => {
+    if (loading) return null
+    const resolvedPlan = plan ?? 'basic'
+    if (!trialEndsAt || ['legacy', 'pro', 'enterprise'].includes(resolvedPlan)) {
+      return { plan: resolvedPlan, daysLeft: null, expired: false }
+    }
+    const msLeft = new Date(trialEndsAt).getTime() - Date.now()
+    const daysLeft = Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)))
+    return { plan: resolvedPlan, daysLeft, expired: msLeft <= 0 }
+  }, [plan, trialEndsAt, loading])
 
   async function handleUpgrade(plan: string) {
     setUpgrading(plan)

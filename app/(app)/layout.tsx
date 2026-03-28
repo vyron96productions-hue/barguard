@@ -1,10 +1,11 @@
 import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
 import { TrialBanner } from '@/components/TrialBanner'
+import { BusinessProvider } from '@/app/(app)/BusinessContext'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <BusinessProvider>
       <MobileNav />
       <div className="flex min-h-screen">
         <Sidebar />
@@ -16,6 +17,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </TrialBanner>
         </main>
       </div>
-    </>
+    </BusinessProvider>
   )
 }

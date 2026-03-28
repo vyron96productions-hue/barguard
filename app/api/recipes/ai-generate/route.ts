@@ -54,7 +54,7 @@ Rules by unit type:
 - Wine (bottle): menu item = "[Name] Glass", category="wine", qty=5, unit="oz", sell_price=8-14
 - Beer bottle/can/pint: menu item = same name (clean it up), category="beer", qty=1, unit="each", sell_price=5-7
 - Beer case (unit=case): menu item = same name without "case", category="beer", qty=0.0417, unit="case", sell_price=5-6
-- Keg/halfkeg/sixthkeg: menu item = "[Name] Draft", category="beer", qty=1, unit="pint", sell_price=5-7
+- Keg/sixthkeg: menu item = "[Name] Draft", category="beer", qty=1, unit="pint", sell_price=5-7
 - Food (lb/kg/each/portion): menu item = clean name, category appropriate for the food, item_type="food", qty=1, unit matching inventory, sell_price=estimate
 
 Do NOT generate menu items for: juices used as mixers, syrups, sodas, condiments.

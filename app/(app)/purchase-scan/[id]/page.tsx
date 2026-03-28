@@ -7,7 +7,7 @@ import type { PurchaseImportDraftWithLines, PurchaseImportDraftLine, InventoryIt
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 
-const UNIT_OPTIONS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'halfkeg', 'quarterkeg', 'sixthkeg']
+const UNIT_OPTIONS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg']
 const UNIT_LABELS: Record<string, string> = {
   bottle:      'Bottle (750ml)',
   '1L':        'Bottle (1L)',
@@ -15,9 +15,8 @@ const UNIT_LABELS: Record<string, string> = {
   can:         'Beer Can (12oz)',
   beer_bottle: 'Beer Bottle (12oz)',
   pint:        'Pint (16oz)',
-  case:        'Case (24 units)',
-  keg:         'Keg (½ bbl)',
-  halfkeg:     'Half Keg',
+  case:        'Case (24 × 12oz)',
+  keg:         'Keg (½ bbl · 1984oz)',
   quarterkeg:  'Quarter Keg',
   sixthkeg:    'Sixth Keg',
 }
