@@ -36,11 +36,13 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json()
     const { inventory_item_id, quantity, unit } = body
 
-    // Verify recipe belongs to this business
+    // Verify recipe belongs to this business — filter on the joined menu_item's business_id
+    // so a user from Business A cannot update recipes owned by Business B
     const { data: recipe } = await supabase
       .from('menu_item_recipes')
       .select('id, menu_items!inner(business_id)')
       .eq('id', id)
+      .eq('menu_items.business_id', businessId)
       .single()
     if (!recipe) return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
 
@@ -68,6 +70,7 @@ export async function DELETE(req: NextRequest) {
       .from('menu_item_recipes')
       .select('id, menu_items!inner(business_id)')
       .eq('id', id)
+      .eq('menu_items.business_id', businessId)
       .single()
     if (!recipe) return NextResponse.json({ error: 'Recipe not found' }, { status: 404 })
 
