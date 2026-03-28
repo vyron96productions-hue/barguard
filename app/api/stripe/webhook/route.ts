@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
   // ── Payment failed → open a 3-day grace period ────────────────────────────
   // Only set the grace period on the first failure — don't extend it on Stripe retries.
   if (event.type === 'invoice.payment_failed') {
-    const invoice = event.data.object as Stripe.Invoice
+    // Stripe SDK v20 removed .subscription from Invoice types; it still exists in the runtime payload
+    const invoice = event.data.object as Stripe.Invoice & { subscription: string | Stripe.Subscription | null }
     const subscriptionId = typeof invoice.subscription === 'string'
       ? invoice.subscription
       : invoice.subscription?.id
@@ -98,7 +99,8 @@ export async function POST(req: NextRequest) {
 
   // ── Payment succeeded → clear grace period ────────────────────────────────
   if (event.type === 'invoice.payment_succeeded') {
-    const invoice = event.data.object as Stripe.Invoice
+    // Stripe SDK v20 removed .subscription from Invoice types; it still exists in the runtime payload
+    const invoice = event.data.object as Stripe.Invoice & { subscription: string | Stripe.Subscription | null }
     const subscriptionId = typeof invoice.subscription === 'string'
       ? invoice.subscription
       : invoice.subscription?.id
