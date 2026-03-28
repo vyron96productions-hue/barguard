@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
@@ -17,7 +16,6 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
-  const router = useRouter()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,8 +41,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/dashboard')
-    router.refresh()
+    window.location.href = '/dashboard'
   }
 
   async function handleGoogleSignIn() {
