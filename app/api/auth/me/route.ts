@@ -5,15 +5,19 @@ export async function GET() {
   try {
     const { supabase, user, businessId } = await getAuthContext()
 
-    // Single query — join businesses + is_admin flag in one round-trip
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: ub } = await (supabase as any)
+    // Single query — join businesses + is_admin flag in one round-trip.
+    // is_admin is not in the generated types (added via migration) — cast the result shape explicitly.
+    const { data: ubRaw } = await supabase
       .from('user_businesses')
       .select('is_admin, businesses(name, plan, trial_ends_at)')
       .eq('user_id', user.id)
       .single()
 
-    const biz = (ub as any)?.businesses
+    const ub = ubRaw as unknown as {
+      is_admin: boolean
+      businesses: { name: string; plan: string | null; trial_ends_at: string | null } | null
+    } | null
+    const biz = ub?.businesses
 
     const username = (user.user_metadata?.username as string | undefined)
       ?? user.email?.replace('@barguard.app', '')
@@ -27,7 +31,7 @@ export async function GET() {
       business_name: biz?.name ?? null,
       plan:          biz?.plan ?? null,
       trial_ends_at: biz?.trial_ends_at ?? null,
-      is_admin:      (ub as { is_admin?: boolean } | null)?.is_admin ?? false,
+      is_admin:      ub?.is_admin ?? false,
     })
   } catch (e) {
     return authErrorResponse(e)

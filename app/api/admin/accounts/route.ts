@@ -12,8 +12,8 @@ export async function GET() {
     const users = usersData?.users ?? []
 
     // Get all businesses with their user links (include partner_id)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: linksRaw } = await (adminSupabase as any)
+    // is_admin is not in the generated types (added via migration) — cast the result shape explicitly.
+    const { data: linksRaw } = await adminSupabase
       .from('user_businesses')
       .select('user_id, business_id, role, is_admin, businesses(id, name, plan, contact_email, created_at, stripe_subscription_id, partner_id, account_type)')
 

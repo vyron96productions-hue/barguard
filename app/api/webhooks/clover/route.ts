@@ -82,22 +82,17 @@ export async function POST(req: NextRequest) {
 
       if (!conn) continue
 
-      // Idempotency check
-      const { data: existing } = await adminSupabase
-        .from('pos_webhook_events')
-        .select('id')
-        .eq('provider', 'clover')
-        .eq('external_id', orderId)
-        .maybeSingle()
+      // ── Idempotency guard — atomic INSERT wins; retries get 23505 and no-op ──
+      const { error: dedupError } = await adminSupabase
+        .from('webhook_idempotency_keys')
+        .insert({ provider: 'clover', event_id: orderId })
 
-      if (existing) continue
-
-      // Mark as processing
-      await adminSupabase.from('pos_webhook_events').insert({
-        business_id: conn.business_id,
-        provider: 'clover',
-        external_id: orderId,
-      })
+      if (dedupError?.code === '23505') continue // already processed
+      if (dedupError) {
+        // Non-duplicate error (e.g. 42P01 = table missing, network issue).
+        // Log prominently but continue processing — a missed dedup is preferable to dropping a sale.
+        console.error(`[clover] dedup insert failed: code=${dedupError.code} msg=${dedupError.message} order=${orderId}`)
+      }
 
       try {
         const order = await fetchCloverOrder(conn.access_token, merchantId, orderId)

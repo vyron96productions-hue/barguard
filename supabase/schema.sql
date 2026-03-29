@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS user_businesses (
   created_at  timestamptz DEFAULT now(),
   UNIQUE (user_id, business_id)
 );
+-- Idempotent column additions for existing databases
+-- is_admin was added via partner_migration.sql; this ensures fresh schema runs include it.
+ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS is_admin boolean NOT NULL DEFAULT false;
 
 -- ── vendors ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS vendors (
@@ -155,10 +158,23 @@ CREATE TABLE IF NOT EXISTS inventory_usage_summaries (
   shift_label         text,
   total_revenue       numeric,
   total_covers        integer,
-  calculated_at       timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (business_id, inventory_item_id, period_start, period_end)
+  calculated_at       timestamptz NOT NULL DEFAULT now()
+  -- No inline UNIQUE constraint here — uniqueness is enforced by the
+  -- functional index below (idx_usage_summaries_unique_period_shift) which
+  -- uses COALESCE(shift_label, '') to correctly handle NULL shift_label rows.
 );
 CREATE INDEX IF NOT EXISTS idx_usage_summaries_business ON inventory_usage_summaries(business_id, period_start, period_end);
+-- Functional unique index: treats NULL shift_label as '' so date-range summaries
+-- (shift_label IS NULL) correctly conflict with each other, while shift-mode
+-- summaries (shift_label IS NOT NULL) coexist per distinct label value.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usage_summaries_unique_period_shift
+  ON inventory_usage_summaries (
+    business_id,
+    inventory_item_id,
+    period_start,
+    period_end,
+    COALESCE(shift_label, '')
+  );
 
 -- Idempotent column additions for existing databases
 ALTER TABLE inventory_usage_summaries ADD COLUMN IF NOT EXISTS shift_start   timestamptz;

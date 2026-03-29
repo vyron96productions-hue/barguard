@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
-import { PACKAGE_TYPE_SIZES } from '@/lib/beer-packaging'
+import { PACKAGE_TYPE_SIZES, QUARTER_KEG_PINTS, SIXTH_KEG_PINTS } from '@/lib/beer-packaging'
 
 export async function GET() {
   try {
@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     const UNIT_PACK_DEFAULTS: Record<string, { pack_size: number; package_type: string }> = {
       case:       { pack_size: PACKAGE_TYPE_SIZES['case'],    package_type: 'case' },
       keg:        { pack_size: PACKAGE_TYPE_SIZES['keg'],     package_type: 'keg' },
-      quarterkeg: { pack_size: 62,                            package_type: 'quarter keg' },
-      sixthkeg:   { pack_size: 41,                            package_type: 'sixth keg' },
+      quarterkeg: { pack_size: QUARTER_KEG_PINTS, package_type: 'quarter keg' },
+      sixthkeg:   { pack_size: SIXTH_KEG_PINTS,   package_type: 'sixth keg' },
     }
     const unitDefaults = UNIT_PACK_DEFAULTS[unit?.toLowerCase?.() ?? ''] ?? null
     const packSizeVal = pack_size ? parseInt(pack_size, 10) : (unitDefaults?.pack_size ?? null)
@@ -78,17 +78,28 @@ export async function POST(req: NextRequest) {
     let autoMenuItemName: string | null = null
 
     if (resolvedType === 'beverage' && recipeDefaults && data) {
-      // Create menu item with same name
-      const { data: menuItem } = await supabase
+      // Skip auto-creation if a menu item with the same name already exists.
+      // Prevents duplicate menu items when the same ingredient is added twice.
+      const { data: existingMenuItem } = await supabase
         .from('menu_items')
-        .insert({
-          business_id: businessId,
-          name: name.trim(),
-          category: recipeDefaults.category,
-          item_type: 'drink',
-        })
         .select('id')
-        .single()
+        .eq('business_id', businessId)
+        .eq('name', name.trim())
+        .maybeSingle()
+
+      // Create menu item with same name
+      const { data: menuItem } = existingMenuItem
+        ? { data: null }
+        : await supabase
+            .from('menu_items')
+            .insert({
+              business_id: businessId,
+              name: name.trim(),
+              category: recipeDefaults.category,
+              item_type: 'drink',
+            })
+            .select('id')
+            .single()
 
       if (menuItem) {
         // Create recipe linking them

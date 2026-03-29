@@ -94,24 +94,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  // Check we haven't already processed this order
-  const { data: existing } = await adminSupabase
-    .from('pos_webhook_events')
-    .select('id')
-    .eq('provider', 'square')
-    .eq('external_id', order_id)
-    .maybeSingle()
+  // ── Idempotency guard — atomic INSERT wins; retries get 23505 and no-op ──
+  // Uses order_id as the event key: process each completed order at most once.
+  const { error: dedupError } = await adminSupabase
+    .from('webhook_idempotency_keys')
+    .insert({ provider: 'square', event_id: order_id })
 
-  if (existing) {
-    return NextResponse.json({ received: true, duplicate: true })
+  if (dedupError?.code === '23505') {
+    return NextResponse.json({ received: true }) // already processed
   }
-
-  // Mark as processed before fetching (idempotency)
-  await adminSupabase.from('pos_webhook_events').insert({
-    business_id: conn.business_id,
-    provider: 'square',
-    external_id: order_id,
-  })
+  if (dedupError) {
+    // Non-duplicate error (e.g. 42P01 = table missing, network issue).
+    // Log prominently but continue processing — a missed dedup is preferable to dropping a sale.
+    console.error(`[square] dedup insert failed: code=${dedupError.code} msg=${dedupError.message} order=${order_id}`)
+  }
 
   try {
     const order = await fetchSquareOrder(conn.access_token, order_id)

@@ -25,6 +25,16 @@ export const PACKAGE_TYPE_SIZES: Record<PackageType, number> = {
   'keg':      165, // 165 pints per half-barrel keg
 }
 
+/**
+ * Sellable pint counts for keg sub-variants that are not in PackageType
+ * (they're size variants of 'keg', not separate top-level types).
+ *
+ * Quarter keg (Pony keg): 7.75 gal = 992 oz ÷ 16 oz/pint = 62 pints
+ * Sixth keg (Sixtel):     5.16 gal = 660 oz ÷ 16 oz/pint ≈ 41 pints
+ */
+export const QUARTER_KEG_PINTS = 62
+export const SIXTH_KEG_PINTS   = 41
+
 // ─── Return types ─────────────────────────────────────────────────────────────
 
 export interface NormalizedUnit {

@@ -28,6 +28,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  // ── Idempotency guard — prevent duplicate processing on Stripe retries ────
+  // INSERT wins atomically; any concurrent or retry request gets a 23505 unique
+  // violation and returns 200 immediately without doing any work.
+  const { error: dedupError } = await adminSupabase
+    .from('webhook_idempotency_keys')
+    .insert({ provider: 'stripe', event_id: event.id })
+
+  if (dedupError?.code === '23505') {
+    return NextResponse.json({ ok: true }) // already processed — safe no-op
+  }
+  if (dedupError) {
+    // Non-duplicate error (e.g. 42P01 = table missing, network issue).
+    // Log prominently but continue processing — failing a billing event is worse than a rare duplicate.
+    console.error(`[stripe] dedup insert failed: code=${dedupError.code} msg=${dedupError.message} event=${event.id}`)
+  }
+
   // ── Checkout completed → activate paid plan ────────────────────────────────
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
@@ -48,6 +64,9 @@ export async function POST(req: NextRequest) {
           payment_grace_ends_at: null, // clear any prior payment issue
         })
         .eq('id', businessId)
+      console.log(`[stripe] checkout.completed: business=${businessId} plan=${plan} sub=${subscription.id}`)
+    } else {
+      console.warn(`[stripe] checkout.completed: unknown priceId=${priceId} business=${businessId}`)
     }
   }
 
@@ -62,6 +81,9 @@ export async function POST(req: NextRequest) {
         .from('businesses')
         .update({ plan })
         .eq('stripe_subscription_id', subscription.id)
+      console.log(`[stripe] subscription.updated: sub=${subscription.id} plan=${plan}`)
+    } else {
+      console.warn(`[stripe] subscription.updated: unknown priceId=${priceId} sub=${subscription.id}`)
     }
   }
 
@@ -74,6 +96,7 @@ export async function POST(req: NextRequest) {
       .from('businesses')
       .update({ plan: null, stripe_subscription_id: null, payment_grace_ends_at: null })
       .eq('stripe_subscription_id', subscription.id)
+    console.log(`[stripe] subscription.deleted: sub=${subscription.id} — account locked`)
   }
 
   // ── Payment failed → open a 3-day grace period ────────────────────────────
@@ -94,6 +117,7 @@ export async function POST(req: NextRequest) {
         .update({ payment_grace_ends_at: graceEndsAt })
         .eq('stripe_subscription_id', subscriptionId)
         .is('payment_grace_ends_at', null) // don't overwrite — first failure sets the clock
+      console.log(`[stripe] invoice.payment_failed: sub=${subscriptionId} grace_ends=${graceEndsAt}`)
     }
   }
 
@@ -110,6 +134,7 @@ export async function POST(req: NextRequest) {
         .from('businesses')
         .update({ payment_grace_ends_at: null })
         .eq('stripe_subscription_id', subscriptionId)
+      console.log(`[stripe] invoice.payment_succeeded: sub=${subscriptionId} — grace period cleared`)
     }
   }
 

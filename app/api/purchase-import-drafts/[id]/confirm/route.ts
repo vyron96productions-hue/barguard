@@ -24,24 +24,35 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const body: ConfirmBody = await req.json()
 
-    const { data: draft, error: draftError } = await supabase
-      .from('purchase_import_drafts')
-      .select('id, document_upload_id, status')
-      .eq('id', id)
-      .eq('business_id', businessId)
-      .single()
-
-    if (draftError) return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
-    if (draft.status !== 'pending') {
-      return NextResponse.json({ error: 'Draft has already been confirmed or cancelled' }, { status: 400 })
-    }
-
     const approvedLines = body.lines.filter((l) => l.is_approved && l.raw_item_name)
     if (approvedLines.length === 0) {
       return NextResponse.json({ error: 'No approved lines to import' }, { status: 400 })
     }
 
     const purchaseDate = body.purchase_date ?? new Date().toISOString().slice(0, 10)
+
+    // ── Atomic status transition ───────────────────────────────────────────────
+    // UPDATE WHERE status = 'pending' is atomic at the DB level — only one
+    // concurrent request can win. If 0 rows are returned the draft was already
+    // claimed (confirmed or cancelled) and we abort safely.
+    const { data: draft, error: claimError } = await supabase
+      .from('purchase_import_drafts')
+      .update({
+        status: 'confirmed',
+        vendor_name: body.vendor_name,
+        purchase_date: purchaseDate,
+        confirmed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .eq('business_id', businessId)
+      .eq('status', 'pending')
+      .select('id, document_upload_id')
+      .maybeSingle()
+
+    if (claimError) return NextResponse.json({ error: claimError.message }, { status: 500 })
+    if (!draft) {
+      return NextResponse.json({ error: 'Draft has already been confirmed or cancelled' }, { status: 409 })
+    }
 
     const aliasLines = body.lines.filter((l) => l.save_alias && l.inventory_item_id && l.raw_item_name)
     for (const line of aliasLines) {
@@ -156,13 +167,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         .eq('id', line.inventory_item_id!)
         .eq('business_id', businessId)
     }
-
-    const { error: draftUpdateError } = await supabase
-      .from('purchase_import_drafts')
-      .update({ status: 'confirmed', vendor_name: body.vendor_name, purchase_date: purchaseDate, confirmed_at: new Date().toISOString() })
-      .eq('id', id)
-
-    if (draftUpdateError) return NextResponse.json({ error: draftUpdateError.message }, { status: 500 })
 
     return NextResponse.json({
       upload_id: upload.id,

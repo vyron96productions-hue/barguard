@@ -16,10 +16,22 @@ export async function POST(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
-    const { period_start, period_end, shift_start, shift_end, shift_label } = body
+    const { period_start, period_end, shift_start, shift_end } = body
+    // Normalize shift_label: treat empty string as null so it maps to the
+    // same COALESCE('') bucket as null in the D-002 uniqueness index.
+    const shift_label: string | null = body.shift_label || null
 
     if (!period_start || !period_end) {
       return NextResponse.json({ error: 'period_start and period_end are required' }, { status: 400 })
+    }
+
+    // Validate format and ordering. String comparison is correct for YYYY-MM-DD (lexicographic = chronological).
+    const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+    if (!ISO_DATE.test(period_start) || !ISO_DATE.test(period_end)) {
+      return NextResponse.json({ error: 'period_start and period_end must be YYYY-MM-DD' }, { status: 400 })
+    }
+    if (period_start > period_end) {
+      return NextResponse.json({ error: 'period_start must be on or before period_end' }, { status: 400 })
     }
 
     const isShiftMode = !!(shift_start && shift_end)
@@ -196,20 +208,30 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Always wipe previous results for this business before inserting fresh ones.
-    // This prevents stale rows from old date ranges from mixing into the display.
-    const { error: deleteError } = await supabase
+    // Scoped replacement: delete only the rows for this exact summary set
+    // (same business, same period, same shift bucket). Rows from other periods
+    // or other shift labels are left intact so concurrent analyses don't
+    // overwrite each other's results.
+    const baseDelete = supabase
       .from('inventory_usage_summaries')
       .delete()
       .eq('business_id', businessId)
+      .eq('period_start', period_start)
+      .eq('period_end', period_end)
+
+    const { error: deleteError } = await (
+      shift_label != null
+        ? baseDelete.eq('shift_label', shift_label)
+        : baseDelete.is('shift_label', null)
+    )
 
     if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
 
-    const { error: upsertError } = await supabase
+    const { error: insertError } = await supabase
       .from('inventory_usage_summaries')
       .insert(summaries)
 
-    if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 500 })
+    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
     return NextResponse.json({
       calculated: summaries.length,
