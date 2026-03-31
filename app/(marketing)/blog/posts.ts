@@ -443,6 +443,182 @@ export const POSTS: Post[] = [
       },
     ],
   },
+  {
+    slug: 'bartender-theft-signs-prevention',
+    title: 'Bartender Theft: How to Know If It\'s Happening at Your Bar',
+    excerpt: 'Internal theft is responsible for up to 40% of bar losses — and most owners only find out months later. Here\'s how to recognize the warning signs and stop it without torching your team culture.',
+    category: 'Loss Prevention',
+    date: 'March 31, 2026',
+    readTime: '8 min read',
+    content: [
+      {
+        type: 'p',
+        text: 'Nobody wants to believe their bartender is stealing from them. You hired them. You trained them. Maybe you\'ve known them for years. But the data is uncomfortable: industry studies consistently find that internal theft — by employees, not customers — accounts for 35–40% of all bar shrinkage. That\'s not a rounding error. It\'s a line item.',
+      },
+      {
+        type: 'p',
+        text: 'The harder truth is that most bartender theft isn\'t dramatic. It\'s not a case you\'ll catch on camera. It\'s a pattern of small decisions — a drink not rung up, a bottle walked to a friend\'s table, cash pocketed on a round that never hit the register — that compound quietly over months before ownership notices something is wrong.',
+      },
+      {
+        type: 'stats',
+        items: [
+          { number: '35–40%', label: 'of bar shrinkage caused by internal theft' },
+          { number: '18 months', label: 'average time before employee theft is detected' },
+          { number: '$1,500/mo', label: 'median monthly loss per offending employee' },
+          { number: '90%', label: 'of employee theft goes unreported when detected' },
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'How Bartender Theft Actually Happens',
+      },
+      {
+        type: 'p',
+        text: 'Understanding the methods matters because the red flags are different for each one. Most theft at the bar falls into five categories:',
+      },
+      {
+        type: 'h3',
+        text: '1. Short Ringing',
+      },
+      {
+        type: 'p',
+        text: 'A customer orders four drinks. The bartender rings up three and pockets the cash difference on the fourth. Done fast enough, it\'s invisible to the customer and to you. Short ringing is most common at high-cash bars with no mandatory POS entry before drinks are made. The tell: cash sales are consistently lower than volume would suggest, but only on certain shifts.',
+      },
+      {
+        type: 'h3',
+        text: '2. Sweethearting',
+      },
+      {
+        type: 'p',
+        text: 'This is free drinks for friends, regulars, or anyone the bartender wants to impress. A round gets poured and a cash transaction occurs — the bartender rings up nothing, pockets nothing, but your product still disappears. Sweethearting is often thought of as "just being friendly," but at scale it\'s directly reducing your margins. The tell: your usage-to-sales ratio climbs on nights certain staff work, but cash shortages are rare.',
+      },
+      {
+        type: 'h3',
+        text: '3. Void and Refund Abuse',
+      },
+      {
+        type: 'p',
+        text: 'A bartender rings up a sale, takes cash from the customer, then voids the transaction and keeps the money. Modern POS systems log all voids — but only if someone is reviewing that log. A bartender who knows the manager never checks voids has a nearly risk-free method. The tell: high void rates on certain employees or certain shifts, especially on cash transactions.',
+      },
+      {
+        type: 'h3',
+        text: '4. Bottle Walking',
+      },
+      {
+        type: 'p',
+        text: 'Bottles disappear. Sometimes it\'s one a week, sometimes more. High-end spirits are the most common target — a $60 bottle of tequila walked out the back door once a week is $3,000 a year gone before you notice the storage count is off. The tell: specific SKUs showing high variance that doesn\'t correlate with sales volume.',
+      },
+      {
+        type: 'h3',
+        text: '5. Phantom Inventory Manipulation',
+      },
+      {
+        type: 'p',
+        text: 'Less common but most damaging at scale: a bartender or manager who\'s also doing inventory counts can manipulate numbers to cover up ongoing theft. They\'ll count high on items where they\'re stealing to keep the variance invisible. The tell: implausibly clean variance reports, especially if the same person conducts counts every cycle.',
+      },
+      {
+        type: 'callout',
+        text: 'The most important structural control you can implement today: never let the same person pour the drinks and count the inventory. Separation of duties eliminates the most dangerous form of loss concealment.',
+      },
+      {
+        type: 'h2',
+        text: 'Warning Signs You Should Be Watching For',
+      },
+      {
+        type: 'p',
+        text: 'None of these signals alone prove theft. But multiple signals appearing together — especially correlated with specific employees or shifts — is your data telling you to look harder.',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Inventory variance climbs on the same nights the same bartender is scheduled.',
+          'Your cash drawer runs short more frequently on certain shifts, even after tips are reconciled.',
+          'Void and comp rates are unusually high for one employee vs. the rest of the team.',
+          'Your POS shows low drink counts on nights the bar was visibly busy.',
+          'Specific high-value bottles consistently show higher-than-expected depletion.',
+          'A bartender\'s section always runs out faster than others, but their sales numbers don\'t reflect it.',
+          'You notice friends or regulars of a specific bartender drinking heavily but the table\'s check is small.',
+          'Inventory counts seem oddly clean — suspiciously little variance — right after a personnel change.',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'How to Catch It: The Data Approach',
+      },
+      {
+        type: 'p',
+        text: 'The old approach to catching theft was cameras, tip-offs, and gut instinct. The modern approach is variance data — and it\'s more reliable, less confrontational, and much harder to argue with.',
+      },
+      {
+        type: 'p',
+        text: 'The core method is simple: compare what your POS says you sold against what your inventory counts say you consumed. If 30 oz of rum disappeared from your inventory but your POS only shows sales that account for 22 oz, 8 oz is unaccounted for. That 8 oz is your evidence. It doesn\'t tell you who did it — but it tells you theft, waste, or over-pouring is happening at a measurable scale.',
+      },
+      {
+        type: 'ol',
+        items: [
+          'Run variance reports after every inventory count, broken down by product category.',
+          'Cross-reference high-variance days and times with your schedule to see if specific shifts or employees correlate.',
+          'Pull your POS void and comp logs weekly — most modern POS systems have this report built in.',
+          'Track your cash-over/short by shift and by employee over time. A bartender averaging -$15/shift in cash drawers is a pattern, not bad luck.',
+          'If you find a consistent pattern on one employee, document it across at least 3–4 count cycles before acting.',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'How to Address It Without Destroying Your Team Culture',
+      },
+      {
+        type: 'p',
+        text: 'This is where most owners freeze. The data points at someone. Now what?',
+      },
+      {
+        type: 'p',
+        text: 'If the variance is ambiguous — one bad week, no strong pattern — address it structurally rather than personally. Tighten controls, increase count frequency, add a manager review of voids. Make the system harder to exploit without singling anyone out.',
+      },
+      {
+        type: 'p',
+        text: 'If the pattern is clear and consistent, have a direct conversation grounded in data, not accusation. "Our variance on vodka has been running 18% over the last four weeks, and it\'s concentrated on Tuesday and Thursday shifts. I need to understand what\'s happening." Let the data do the work. Most people will fold when you show them the numbers.',
+      },
+      {
+        type: 'p',
+        text: 'When termination is warranted, consult your state\'s employment laws before acting. Document everything. Your variance reports and POS logs are your paper trail.',
+      },
+      {
+        type: 'h2',
+        text: 'Prevention Is Cheaper Than Detection',
+      },
+      {
+        type: 'p',
+        text: 'The most effective anti-theft strategy is making theft difficult and detectable before it starts. When your team knows that variance is tracked weekly, that void logs are reviewed, and that inventory is counted by someone other than them — the calculus changes. Most theft is opportunistic, not premeditated. Remove the opportunity.',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Require POS entry before any drink is poured — no exceptions, no pre-making drinks.',
+          'Have a manager or owner review void and comp reports weekly.',
+          'Rotate who counts inventory — never the same person two cycles in a row.',
+          'Conduct random spot counts mid-week in addition to your regular cycle.',
+          'Make variance data visible to your management team so everyone knows it\'s being watched.',
+          'Set clear, written policies on comps, employee drinks, and voids so there\'s no gray area.',
+        ],
+      },
+      {
+        type: 'callout',
+        text: 'Posting a sign that says "inventory is tracked weekly and discrepancies are investigated" is not dramatic — and it works. Deterrence is often more cost-effective than enforcement.',
+      },
+      {
+        type: 'h2',
+        text: 'The Bottom Line',
+      },
+      {
+        type: 'p',
+        text: 'Bartender theft is an uncomfortable topic, but avoiding it doesn\'t protect your business — it just keeps you in the dark. The good news is that modern inventory tracking makes it easier than ever to see what\'s actually happening at your bar, identify patterns before they become expensive, and address problems with data rather than drama. You don\'t have to run your bar like a prison. You just have to run it like a business.',
+      },
+      {
+        type: 'cta',
+      },
+    ],
+  },
 ]
 
 export function getPost(slug: string): Post | undefined {
