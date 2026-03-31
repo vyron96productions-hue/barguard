@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import DemoVideo from '@/components/DemoVideo'
 
 export default function HomePage() {
   const schema = {
@@ -200,6 +201,18 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+        </div>
+      </section>
+
+      {/* VIDEO DEMO */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '72px 24px 80px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 880, margin: '0 auto' }}>
+          <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#f59e0b', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>See It In Action</p>
+          <h2 style={{ fontFamily: 'var(--font-montserrat)', fontSize: 'clamp(22px, 3vw, 36px)', color: '#f8fafc', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 12 }}>
+            Watch how BarGuard catches what<br /><em style={{ color: '#f59e0b' }}>your POS can&apos;t see</em>
+          </h2>
+          <p style={{ fontSize: 15, color: '#64748b', marginBottom: 40 }}>A 2-minute walkthrough of the full workflow — from invoice scan to variance alert.</p>
+          <DemoVideo />
         </div>
       </section>
 

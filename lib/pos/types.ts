@@ -27,12 +27,11 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
     description: 'Import sales from your Toast restaurant management system.',
     authType: 'credentials',
     credentialFields: [
-      { key: 'clientId', label: 'Client ID', placeholder: 'toast_client_...' },
+      { key: 'clientId', label: 'Client ID', placeholder: 'Paste from Toast Web → Integrations → API Access' },
       { key: 'clientSecret', label: 'Client Secret', placeholder: '••••••••', type: 'password' },
-      { key: 'restaurantGuid', label: 'Restaurant GUID', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
+      { key: 'restaurantGuid', label: 'Location GUID', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
     ],
     docsUrl: 'https://doc.toasttab.com/openapi/orders',
-    comingSoon: true,
   },
   {
     id: 'clover',
