@@ -74,6 +74,13 @@ export default function HomePage() {
           border-color: rgba(245,158,11,0.4);
         }
 
+        .blog-teaser-card {
+          display: block; background: #0f172a; border: 1px solid #1e293b;
+          border-radius: 16px; padding: 24px; text-decoration: none;
+          transition: border-color 0.2s;
+        }
+        .blog-teaser-card:hover { border-color: rgba(245,158,11,0.35); }
+
         @media (max-width: 768px) {
           .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
           .features-grid { grid-template-columns: 1fr; }
@@ -523,10 +530,7 @@ export default function HomePage() {
               { href: '/blog/over-pouring-bar-losses', title: 'Over-Pouring Is Costing More Than You Think', excerpt: 'A quarter ounce over per drink adds up to $50,000+ per year for a busy bar. Here\'s the math.', tag: 'Loss Prevention' },
               { href: '/blog/bartender-theft-signs-prevention', title: 'Bartender Theft: How to Know If It\'s Happening', excerpt: 'Internal theft causes 35–40% of bar losses. Learn the warning signs and how to catch it with data.', tag: 'Loss Prevention' },
             ].map(post => (
-              <a key={post.href} href={post.href} style={{ display: 'block', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 16, padding: '24px', textDecoration: 'none', transition: 'border-color 0.2s' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(245,158,11,0.35)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#1e293b' }}
-              >
+              <a key={post.href} href={post.href} className="blog-teaser-card">
                 <span style={{ display: 'inline-block', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b', fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase' as const, padding: '2px 8px', borderRadius: 100, marginBottom: 12 }}>{post.tag}</span>
                 <p style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', lineHeight: 1.4, marginBottom: 10 }}>{post.title}</p>
                 <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.6 }}>{post.excerpt}</p>
