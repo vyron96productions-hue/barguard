@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import PartnersClient from './PartnersClient'
 
 export const metadata: Metadata = {
-  title: 'Partner Program — BarGuard',
-  description: 'Partner with BarGuard to offer your bar and restaurant clients AI-powered inventory loss detection. Built for MSPs, POS resellers, and merchant service providers.',
+  title: 'Partner Program — Resell BarGuard to Bars & Restaurants',
+  description: 'Partner with BarGuard to offer bars and restaurants AI-powered inventory loss detection. Built for POS resellers, MSPs, and merchant service providers.',
+  openGraph: { url: 'https://barguard.app/partners' },
 }
 
 export default function PartnersPage() {

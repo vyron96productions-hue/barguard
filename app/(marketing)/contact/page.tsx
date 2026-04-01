@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import ContactClient from './ContactClient'
 
 export const metadata: Metadata = {
-  title: 'Contact Us',
-  description: 'Get in touch with the BarGuard team. We are here to help with questions, support, billing, and partnerships.',
+  title: 'Contact BarGuard — Get Help or Ask a Question',
+  description: 'Reach the BarGuard team for questions, support, billing, or partnership inquiries. We typically respond within one business day.',
   openGraph: { url: 'https://barguard.app/contact' },
 }
 

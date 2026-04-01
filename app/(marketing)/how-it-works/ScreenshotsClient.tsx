@@ -184,6 +184,9 @@ export default function ScreenshotsClient() {
             <Link href="/features" data-gtm-event="cta_click" data-gtm-label="howitworks_hero_view_features" style={{ fontSize: 15, padding: '11px 24px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid #1e293b', color: '#94a3b8', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
               View All Features
             </Link>
+            <Link href="/pricing" data-gtm-event="cta_click" data-gtm-label="howitworks_hero_view_pricing" style={{ fontSize: 15, padding: '11px 24px', color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              View Pricing
+            </Link>
           </div>
         </section>
 

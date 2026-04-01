@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import AboutClient from './AboutClient'
 
 export const metadata: Metadata = {
-  title: 'Why BarGuard Exists',
-  description: 'Built by someone who has spent their entire adult life in the hospitality industry — from bartending to owning a nightclub. This is why BarGuard exists.',
+  title: 'About BarGuard — Built by a Bar Owner, for Bar Owners',
+  description: 'BarGuard was built by someone who spent their entire career in hospitality — bartending, managing, owning. This is why it exists and what makes it different.',
   openGraph: { url: 'https://barguard.app/about' },
 }
 

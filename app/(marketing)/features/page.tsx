@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import FeaturesClient from './FeaturesClient'
 
 export const metadata: Metadata = {
-  title: 'Features',
-  description: 'Every feature BarGuard offers — AI invoice scanning, variance tracking, POS integration with Square and Clover, profit intelligence, and more.',
+  title: 'Bar Inventory Software Features — BarGuard',
+  description: 'Every BarGuard feature — AI invoice scanning, variance tracking, POS sync with Square and Clover, smart reorder alerts, and profit intelligence for bars.',
   openGraph: { url: 'https://barguard.app/features' },
 }
 

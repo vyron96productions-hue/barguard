@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import FAQClient from './FAQClient'
 
 export const metadata: Metadata = {
-  title: 'FAQ',
-  description: 'Answers to common questions about BarGuard — pricing, setup, POS integrations, data privacy, and how the variance detection works.',
+  title: 'Bar Inventory Software FAQ — BarGuard',
+  description: 'Common questions about BarGuard — pricing plans, setup time, POS integrations with Square and Clover, data privacy, and how variance detection works.',
   openGraph: { url: 'https://barguard.app/faq' },
 }
 

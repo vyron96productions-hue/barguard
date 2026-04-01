@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import DemoVideo from '@/components/DemoVideo'
+
+export const metadata: Metadata = {
+  title: 'BarGuard — AI Bar Inventory Loss Detection Software',
+  description: 'Stop losing money to shrinkage, over-pouring, and theft. BarGuard tracks your bar inventory, syncs with Square and Clover, and shows you exactly where product is disappearing.',
+  openGraph: { url: 'https://barguard.app' },
+}
 
 export default function HomePage() {
   const schema = {
@@ -21,9 +28,9 @@ export default function HomePage() {
       'Sales analytics',
     ],
     offers: [
-      { '@type': 'Offer', name: 'Basic', price: '99', priceCurrency: 'USD', description: 'Core inventory workflow, AI invoice scanning, variance reports' },
-      { '@type': 'Offer', name: 'Pro', price: '199', priceCurrency: 'USD', description: 'Full POS integration, vendor management, automated reorder' },
-      { '@type': 'Offer', name: 'Enterprise', price: '399', priceCurrency: 'USD', description: 'Multi-location, priority support, custom onboarding' },
+      { '@type': 'Offer', name: 'Basic', price: '99', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Core inventory workflow, AI invoice scanning, variance reports' },
+      { '@type': 'Offer', name: 'Pro', price: '199', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Full POS integration, vendor management, automated reorder' },
+      { '@type': 'Offer', name: 'Enterprise', price: '399', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Multi-location, priority support, custom onboarding' },
     ],
   }
 
@@ -91,6 +98,9 @@ export default function HomePage() {
 
       {/* HERO */}
       <section style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+        <h1 style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>
+          BarGuard — AI Bar Inventory Loss Detection Software
+        </h1>
         <Image
           src="/Barguard_web_banner.webp"
           alt="BarGuard — Stop losing money to invisible inventory shrinkage"
@@ -463,9 +473,12 @@ export default function HomePage() {
             </table>
           </div>
 
-          <div style={{ textAlign: 'center' as const, marginTop: 40 }}>
+          <div style={{ textAlign: 'center' as const, marginTop: 40, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
             <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="homepage_comparison_cta" style={{ padding: '14px 32px', fontSize: 15 }}>
               Try BarGuard Free for 14 Days →
+            </a>
+            <a href="/features" data-gtm-event="cta_click" data-gtm-label="homepage_comparison_features" style={{ padding: '14px 32px', fontSize: 15, color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              See all features
             </a>
           </div>
         </div>
@@ -488,6 +501,37 @@ export default function HomePage() {
             <a href="/signup" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="homepage_pricing_start_trial" style={{ padding: '14px 28px', fontSize: 15 }}>
               Start Free Trial
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* BLOG TEASER */}
+      <section style={{ position: 'relative', zIndex: 1, padding: '80px 24px', borderTop: '1px solid #1e293b' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 36, flexWrap: 'wrap', gap: 12 }}>
+            <div>
+              <p style={{ fontFamily: 'monospace', fontSize: 11, color: '#f59e0b', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>From the Blog</p>
+              <h2 style={{ fontFamily: 'var(--font-montserrat)', fontSize: 'clamp(20px, 2.5vw, 30px)', color: '#f8fafc', letterSpacing: '-0.5px', fontWeight: 800 }}>Bar operations & loss prevention guides</h2>
+            </div>
+            <a href="/blog" data-gtm-event="cta_click" data-gtm-label="homepage_blog_all_articles" style={{ fontSize: 14, color: '#f59e0b', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' as const }}>
+              All articles →
+            </a>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="steps-grid">
+            {[
+              { href: '/blog/bar-shrinkage-how-much-are-you-losing', title: 'How Much Is Your Bar Losing to Shrinkage?', excerpt: 'The average bar loses 20–25% of inventory annually. Here\'s how to calculate your number and stop it.', tag: 'Inventory' },
+              { href: '/blog/over-pouring-bar-losses', title: 'Over-Pouring Is Costing More Than You Think', excerpt: 'A quarter ounce over per drink adds up to $50,000+ per year for a busy bar. Here\'s the math.', tag: 'Loss Prevention' },
+              { href: '/blog/bartender-theft-signs-prevention', title: 'Bartender Theft: How to Know If It\'s Happening', excerpt: 'Internal theft causes 35–40% of bar losses. Learn the warning signs and how to catch it with data.', tag: 'Loss Prevention' },
+            ].map(post => (
+              <a key={post.href} href={post.href} style={{ display: 'block', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 16, padding: '24px', textDecoration: 'none', transition: 'border-color 0.2s' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(245,158,11,0.35)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = '#1e293b' }}
+              >
+                <span style={{ display: 'inline-block', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b', fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase' as const, padding: '2px 8px', borderRadius: 100, marginBottom: 12 }}>{post.tag}</span>
+                <p style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', lineHeight: 1.4, marginBottom: 10 }}>{post.title}</p>
+                <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.6 }}>{post.excerpt}</p>
+              </a>
+            ))}
           </div>
         </div>
       </section>

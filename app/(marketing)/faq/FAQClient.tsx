@@ -192,6 +192,12 @@ export default function FAQPage() {
             <a href="/signup" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="faq_cta_start_trial" style={{ padding: '12px 24px', fontSize: 14 }}>
               Start free trial
             </a>
+            <a href="/pricing" data-gtm-event="cta_click" data-gtm-label="faq_cta_pricing" style={{ padding: '12px 24px', fontSize: 14, color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              View pricing
+            </a>
+            <a href="/features" data-gtm-event="cta_click" data-gtm-label="faq_cta_features" style={{ padding: '12px 24px', fontSize: 14, color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              See all features
+            </a>
           </div>
         </div>
 

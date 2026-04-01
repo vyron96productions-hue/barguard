@@ -392,6 +392,9 @@ export default function FeaturesPage() {
               <a href="/pricing" className="btn-secondary" data-gtm-event="cta_click" data-gtm-label="features_cta_pricing" style={{ padding: '14px 30px', fontSize: 15 }}>
                 View Pricing
               </a>
+              <a href="/how-it-works" data-gtm-event="cta_click" data-gtm-label="features_cta_how_it_works" style={{ padding: '14px 30px', fontSize: 15, color: '#475569', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                See it in action
+              </a>
             </div>
           </div>
         </section>

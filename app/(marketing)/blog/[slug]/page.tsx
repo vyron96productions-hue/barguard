@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = getPost(slug)
   if (!post) return {}
   return {
-    title: post.title,
+    title: `${post.title} — BarGuard Blog`,
     description: post.excerpt,
     openGraph: {
       title: post.title,
@@ -27,5 +27,26 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params
   const post = getPost(slug)
   if (!post) notFound()
-  return <BlogPostClient post={post} />
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    url: `https://barguard.app/blog/${slug}`,
+    datePublished: post.date,
+    publisher: {
+      '@type': 'Organization',
+      name: 'BarGuard',
+      url: 'https://barguard.app',
+      logo: { '@type': 'ImageObject', url: 'https://barguard.app/barguard_icon.png' },
+    },
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <BlogPostClient post={post} allPosts={POSTS} />
+    </>
+  )
 }

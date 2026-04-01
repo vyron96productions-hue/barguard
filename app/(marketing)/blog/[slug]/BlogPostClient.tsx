@@ -3,6 +3,14 @@
 import Link from 'next/link'
 import { Post, Block } from '../posts'
 
+// Map of slug → related slugs (hand-picked for topical relevance)
+const RELATED: Record<string, string[]> = {
+  'bar-shrinkage-how-much-are-you-losing': ['bar-inventory-management-guide', 'bartender-theft-signs-prevention'],
+  'bar-inventory-management-guide': ['bar-shrinkage-how-much-are-you-losing', 'over-pouring-bar-losses'],
+  'over-pouring-bar-losses': ['bar-shrinkage-how-much-are-you-losing', 'bar-inventory-management-guide'],
+  'bartender-theft-signs-prevention': ['bar-shrinkage-how-much-are-you-losing', 'over-pouring-bar-losses'],
+}
+
 function renderBlock(block: Block, i: number) {
   switch (block.type) {
     case 'p':
@@ -73,7 +81,9 @@ function renderBlock(block: Block, i: number) {
   }
 }
 
-export default function BlogPostClient({ post }: { post: Post }) {
+export default function BlogPostClient({ post, allPosts = [] }: { post: Post; allPosts?: Post[] }) {
+  const relatedSlugs = RELATED[post.slug] ?? []
+  const relatedPosts = relatedSlugs.map(s => allPosts.find(p => p.slug === s)).filter(Boolean) as Post[]
   return (
     <div style={{ background: '#020817', minHeight: '100vh', paddingTop: 64 }}>
       {/* Background */}
@@ -113,6 +123,27 @@ export default function BlogPostClient({ post }: { post: Post }) {
         <article>
           {post.content.map((block, i) => renderBlock(block, i))}
         </article>
+
+        {/* Related articles */}
+        {relatedPosts.length > 0 && (
+          <div style={{ marginTop: 56, paddingTop: 40, borderTop: '1px solid #1e293b' }}>
+            <p style={{ fontSize: 11, fontFamily: 'monospace', color: '#f59e0b', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>Related Articles</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {relatedPosts.map(rp => (
+                <Link
+                  key={rp.slug}
+                  href={`/blog/${rp.slug}`}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '16px 20px', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, textDecoration: 'none', transition: 'border-color 0.2s' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.35)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e293b')}
+                >
+                  <span style={{ fontSize: 15, fontWeight: 600, color: '#f1f5f9', lineHeight: 1.4 }}>{rp.title}</span>
+                  <span style={{ fontSize: 13, color: '#475569' }}>{rp.readTime} · {rp.category}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Back to blog */}
         <div style={{ marginTop: 60, paddingTop: 32, borderTop: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
