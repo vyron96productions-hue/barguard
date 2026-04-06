@@ -10,6 +10,7 @@ import ShiftSelector from '@/components/dashboard/ShiftSelector'
 import PerformanceSummaryCard from '@/components/dashboard/PerformanceSummaryCard'
 import DrinkProfitPreview from '@/components/dashboard/DrinkProfitPreview'
 import ReorderAlerts from '@/components/dashboard/ReorderAlerts'
+import ExpenseSummaryCard from '@/components/dashboard/ExpenseSummaryCard'
 import { SHIFT_PRESETS, resolveShiftWindow, type ResolvedShiftWindow } from '@/lib/shifts'
 import { itemCostPerOz } from '@/lib/conversions'
 import { HEALTH_WEIGHT_CRITICAL, HEALTH_WEIGHT_WARNING } from '@/lib/recipe-suggestions'
@@ -589,6 +590,9 @@ export default function DashboardPage() {
 
       {hasData && <UsageChart summaries={summaries} />}
       {aiSummary && <AiSummaryCard summary={aiSummary} />}
+
+      {/* ── Operating Expense Summary — always visible, independent of calc ── */}
+      <ExpenseSummaryCard />
     </div>
   )
 }

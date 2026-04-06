@@ -287,5 +287,99 @@ export interface PurchaseImportDraftWithLines extends PurchaseImportDraft {
   document_upload?: Pick<DocumentUpload, 'id' | 'filename' | 'file_type' | 'file_data' | 'raw_extracted_text'>
 }
 
+// ─── Expense Module ─────────────────────────────────────────────────────────
+
+export interface ExpenseCategory {
+  id: string
+  business_id: string | null   // null = system default
+  name: string
+  parent_group: string | null
+  is_system: boolean
+  created_at: string
+}
+
+export interface ExpenseImportDraft {
+  id: string
+  business_id: string
+  document_upload_id: string | null
+  vendor_name: string | null
+  receipt_date: string | null
+  subtotal: number | null
+  tax_amount: number | null
+  total_amount: number | null
+  payment_method: string | null
+  status: 'pending' | 'confirmed' | 'cancelled'
+  confidence: 'high' | 'medium' | 'low'
+  warning_message: string | null
+  created_at: string
+  confirmed_at: string | null
+  document_upload?: Pick<DocumentUpload, 'id' | 'filename' | 'file_type'>
+}
+
+export interface ExpenseImportDraftLine {
+  id: string
+  draft_id: string
+  business_id: string
+  raw_item_name: string
+  quantity: number | null
+  unit_price: number | null
+  line_total: number | null
+  expense_category_id: string | null
+  confidence: 'high' | 'medium' | 'low'
+  notes: string | null
+  sort_order: number
+  expense_category?: Pick<ExpenseCategory, 'id' | 'name' | 'parent_group'>
+}
+
+export interface ExpenseImportDraftWithLines extends ExpenseImportDraft {
+  lines: ExpenseImportDraftLine[]
+  document_upload?: Pick<DocumentUpload, 'id' | 'filename' | 'file_type' | 'file_data' | 'raw_extracted_text'>
+}
+
+export interface ExpenseReceipt {
+  id: string
+  business_id: string
+  document_upload_id: string | null
+  vendor_name: string | null
+  receipt_date: string
+  subtotal: number | null
+  tax_amount: number | null
+  total_amount: number
+  payment_method: string | null
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ExpenseReceiptItem {
+  id: string
+  receipt_id: string
+  business_id: string
+  raw_item_name: string
+  quantity: number | null
+  unit_price: number | null
+  line_total: number | null
+  expense_category_id: string | null
+  notes: string | null
+  created_at: string
+  expense_category?: Pick<ExpenseCategory, 'id' | 'name' | 'parent_group'>
+}
+
+export interface ExpenseReceiptWithItems extends ExpenseReceipt {
+  items: ExpenseReceiptItem[]
+}
+
+// Analytics types
+export interface ExpenseAnalytics {
+  total_this_week: number
+  total_this_month: number
+  receipt_count_this_month: number
+  top_category: string | null
+  by_category: { category_name: string; total: number; count: number }[]
+  by_vendor: { vendor_name: string; total: number; count: number }[]
+  recent: Pick<ExpenseReceipt, 'id' | 'vendor_name' | 'receipt_date' | 'total_amount'>[]
+}
+
 // Re-export POS types for convenience
 export type { PosProvider, PosConnection, PosSyncLog, NormalizedSaleItem } from '@/lib/pos/types'

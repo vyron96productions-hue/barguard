@@ -19,6 +19,7 @@ export const NAV_SECTIONS = [
       { href: '/sales', label: 'Sales Log', icon: '◎' },
       { href: '/uploads', label: 'Import Reports', icon: '⇪' },
       { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
+      { href: '/expenses', label: 'Expenses', icon: '🧾' },
       { href: '/profit-intelligence', label: 'Profit Intelligence', icon: '◑' },
       { href: '/variance-reports', label: 'Loss Reports', icon: '◐' },
       { href: '/reorder', label: 'Smart Reorder', icon: '⟳' },
