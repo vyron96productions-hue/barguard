@@ -30,6 +30,8 @@ export const POSTS: Post[] = [
     category: 'Inventory Management',
     date: 'March 18, 2026',
     readTime: '7 min read',
+    image: '/images/blogs/bar-shrinkage-how-much-are-you-losing.png',
+    imageAlt: 'bar owner reviewing inventory shrinkage data',
     content: [
       {
         type: 'p',
@@ -169,6 +171,8 @@ export const POSTS: Post[] = [
     category: 'Operations',
     date: 'March 10, 2026',
     readTime: '9 min read',
+    image: '/images/blogs/bar-inventory-management-guide.png',
+    imageAlt: 'bar inventory management system overview',
     content: [
       {
         type: 'p',
@@ -319,6 +323,8 @@ export const POSTS: Post[] = [
     category: 'Loss Prevention',
     date: 'March 5, 2026',
     readTime: '6 min read',
+    image: '/images/blogs/over-pouring-bar-losses.png',
+    imageAlt: 'bartender overpouring drink causing bar revenue loss',
     content: [
       {
         type: 'p',
@@ -454,6 +460,8 @@ export const POSTS: Post[] = [
     category: 'Loss Prevention',
     date: 'March 31, 2026',
     readTime: '8 min read',
+    image: '/images/blogs/bartender-theft-signs-prevention.png',
+    imageAlt: 'bar owner detecting bartender theft with inventory data',
     content: [
       {
         type: 'p',
