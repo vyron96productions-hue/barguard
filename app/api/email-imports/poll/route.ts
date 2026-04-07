@@ -43,13 +43,15 @@ export async function GET(req: NextRequest) {
     const message = err instanceof Error ? err.message : String(err)
     const duration = Date.now() - startMs
 
-    // Log even failed runs so silence is observable
-    await adminSupabase.from('email_poll_log').insert({
-      messages_found: 0,
-      drafts_created: 0,
-      duration_ms:    duration,
-      errors:         [message],
-    }).catch(() => {})  // never throw from logging
+    // Log even failed runs so silence is observable — never throw from logging
+    try {
+      await adminSupabase.from('email_poll_log').insert({
+        messages_found: 0,
+        drafts_created: 0,
+        duration_ms:    duration,
+        errors:         [message],
+      })
+    } catch {}
 
     return NextResponse.json({ ok: false, error: message }, { status: 200 })
     // Return 200 so Vercel doesn't treat it as a cron failure and stop retrying
