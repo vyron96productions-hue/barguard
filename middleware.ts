@@ -9,6 +9,7 @@ const PUBLIC_PREFIXES = [
   '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
   '/how-it-works', '/partners', '/api/chat', '/api/partner/interest', '/status', '/api/status',
   '/blog', '/sitemap.xml', '/robots.txt',
+  '/api/email-imports/poll', '/api/email-imports/cleanup',
 ]
 
 export async function middleware(request: NextRequest) {
