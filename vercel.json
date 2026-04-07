@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/email-imports/poll",
-      "schedule": "0 9 * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/email-imports/cleanup",
