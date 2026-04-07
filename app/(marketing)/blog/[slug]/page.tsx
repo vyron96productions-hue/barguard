@@ -12,13 +12,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = getPost(slug)
   if (!post) return {}
   return {
-    title: `${post.title} — BarGuard Blog`,
-    description: post.excerpt,
+    title: post.metaTitle ?? `${post.title} — BarGuard Blog`,
+    description: post.metaDescription ?? post.excerpt,
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
+      title: post.metaTitle ?? post.title,
+      description: post.metaDescription ?? post.excerpt,
       url: `https://barguard.app/blog/${slug}`,
       type: 'article',
+      ...(post.image ? { images: [{ url: `https://barguard.app${post.image}`, width: 1200, height: 630 }] } : {}),
     },
   }
 }

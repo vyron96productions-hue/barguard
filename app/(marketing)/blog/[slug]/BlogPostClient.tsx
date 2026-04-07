@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Post, Block } from '../posts'
 
 // Map of slug → related slugs (hand-picked for topical relevance)
@@ -9,12 +10,13 @@ const RELATED: Record<string, string[]> = {
   'bar-inventory-management-guide': ['bar-shrinkage-how-much-are-you-losing', 'over-pouring-bar-losses'],
   'over-pouring-bar-losses': ['bar-shrinkage-how-much-are-you-losing', 'bar-inventory-management-guide'],
   'bartender-theft-signs-prevention': ['bar-shrinkage-how-much-are-you-losing', 'over-pouring-bar-losses'],
+  'how-to-reduce-liquor-cost-percentage': ['over-pouring-bar-losses', 'bar-shrinkage-how-much-are-you-losing'],
 }
 
 function renderBlock(block: Block, i: number) {
   switch (block.type) {
     case 'p':
-      return <p key={i} style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.8, marginBottom: 20 }}>{block.text}</p>
+      return <p key={i} style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.8, marginBottom: 20 }} dangerouslySetInnerHTML={{ __html: block.text }} />
     case 'h2':
       return <h2 key={i} style={{ fontFamily: 'var(--font-montserrat)', fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.3px', marginTop: 44, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid #1e293b' }}>{block.text}</h2>
     case 'h3':
@@ -118,6 +120,20 @@ export default function BlogPostClient({ post, allPosts = [] }: { post: Post; al
             {post.excerpt}
           </p>
         </header>
+
+        {/* Hero image */}
+        {post.image && (
+          <div style={{ marginBottom: 44, borderRadius: 16, overflow: 'hidden', border: '1px solid #1e293b' }}>
+            <Image
+              src={post.image}
+              alt={post.imageAlt ?? post.title}
+              width={800}
+              height={450}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+              loading="lazy"
+            />
+          </div>
+        )}
 
         {/* Content */}
         <article>

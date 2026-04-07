@@ -7,6 +7,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; color: string; border: strin
   'Inventory Management': { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: 'rgba(245,158,11,0.25)' },
   'Operations': { bg: 'rgba(59,130,246,0.1)', color: '#60a5fa', border: 'rgba(59,130,246,0.25)' },
   'Loss Prevention': { bg: 'rgba(239,68,68,0.1)', color: '#f87171', border: 'rgba(239,68,68,0.25)' },
+  'Profitability': { bg: 'rgba(34,197,94,0.1)', color: '#4ade80', border: 'rgba(34,197,94,0.25)' },
 }
 
 export default function BlogIndexClient() {

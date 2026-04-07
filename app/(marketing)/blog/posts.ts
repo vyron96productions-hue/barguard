@@ -15,6 +15,10 @@ export interface Post {
   category: string
   date: string
   readTime: string
+  image?: string
+  imageAlt?: string
+  metaTitle?: string
+  metaDescription?: string
   content: Block[]
 }
 
@@ -613,6 +617,169 @@ export const POSTS: Post[] = [
       {
         type: 'p',
         text: 'Bartender theft is an uncomfortable topic, but avoiding it doesn\'t protect your business — it just keeps you in the dark. The good news is that modern inventory tracking makes it easier than ever to see what\'s actually happening at your bar, identify patterns before they become expensive, and address problems with data rather than drama. You don\'t have to run your bar like a prison. You just have to run it like a business.',
+      },
+      {
+        type: 'cta',
+      },
+    ],
+  },
+  {
+    slug: 'how-to-reduce-liquor-cost-percentage',
+    title: 'How to Reduce Liquor Cost Percentage Without Cutting Corners',
+    excerpt: 'Your liquor cost percentage can make or break your profitability. Most bar owners try to fix it by cutting quality or raising prices — but the real fix is gaining visibility into where the money is going.',
+    category: 'Profitability',
+    date: 'April 7, 2026',
+    readTime: '7 min read',
+    image: '/images/blogs/liquor-cost-control.png',
+    imageAlt: 'bartender pouring precise drink with inventory analytics',
+    metaTitle: 'How to Reduce Liquor Cost Percentage | BarGuard',
+    metaDescription: 'Learn how to reduce liquor cost percentage, stop overpouring, and increase bar profits using real inventory data and smarter tracking.',
+    content: [
+      {
+        type: 'p',
+        text: 'If you run a bar, you already know this number matters. Your liquor cost percentage can make or break your profitability.',
+      },
+      {
+        type: 'p',
+        text: "But here's where most bar owners go wrong. They try to fix it by cutting quality, raising prices randomly, or blaming staff without actually knowing what is happening behind the bar. And none of that fixes the real issue.",
+      },
+      {
+        type: 'h2',
+        text: 'What Is Liquor Cost Percentage',
+      },
+      {
+        type: 'p',
+        text: 'Liquor cost percentage is calculated like this: Cost of Liquor Used ÷ Liquor Sales × 100. If you spend $3,000 on liquor and generate $10,000 in sales, your liquor cost is 30%.',
+      },
+      {
+        type: 'stats',
+        items: [
+          { number: '18–24%', label: 'strong — target this range' },
+          { number: '25–28%', label: 'needs attention' },
+          { number: '30%+', label: 'profit is leaking' },
+          { number: '3–8%', label: 'typical savings after fixing control gaps' },
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'Why Your Liquor Cost Is Too High',
+      },
+      {
+        type: 'h3',
+        text: 'Overpouring',
+      },
+      {
+        type: 'p',
+        text: 'Even a small overpour adds up fast. An extra quarter ounce per drink across a busy night can turn into hundreds — or even thousands — in lost revenue.',
+      },
+      {
+        type: 'h3',
+        text: 'No Real Inventory Tracking',
+      },
+      {
+        type: 'p',
+        text: 'If you are counting inventory once a week, you are already behind. You are not seeing where the loss is happening — only that it already happened.',
+      },
+      {
+        type: 'h3',
+        text: 'Inconsistent Recipes',
+      },
+      {
+        type: 'p',
+        text: 'If every bartender pours differently, your margins become unpredictable. Without standard recipes, there is no control.',
+      },
+      {
+        type: 'h3',
+        text: 'Untracked Waste and Free Drinks',
+      },
+      {
+        type: 'p',
+        text: 'Spills, comps, and hookups rarely get tracked. But they still hit your bottom line the same as any other loss.',
+      },
+      {
+        type: 'h2',
+        text: 'The Smarter Way to Reduce Liquor Cost',
+      },
+      {
+        type: 'p',
+        text: 'You do not fix liquor cost by guessing. You fix it by gaining visibility.',
+      },
+      {
+        type: 'h3',
+        text: 'Track Expected vs. Actual Usage',
+      },
+      {
+        type: 'p',
+        text: "Instead of just counting bottles, you need to compare what should have been used versus what was actually used. This is called variance tracking. BarGuard runs shift-based calculations that show expected usage, actual usage, variance, and estimated loss in dollars — so the real problem becomes clear immediately.",
+      },
+      {
+        type: 'h3',
+        text: 'Standardize Every Drink',
+      },
+      {
+        type: 'p',
+        text: 'Every drink should have a defined recipe with exact measurements. No guessing. No freestyle pouring. Consistent recipes are what make your cost projections accurate.',
+      },
+      {
+        type: 'h3',
+        text: 'Count Inventory More Frequently',
+      },
+      {
+        type: 'p',
+        text: 'Weekly counts are not enough for high-risk items. The faster you catch variance, the less money you lose — and the easier it is to trace the cause.',
+      },
+      {
+        type: 'h3',
+        text: 'Focus on High-Risk Items First',
+      },
+      {
+        type: 'p',
+        text: 'Not every bottle matters equally. Focus on high-volume and high-cost items first. BarGuard highlights critical and warning items automatically so you know exactly where to look.',
+      },
+      {
+        type: 'h3',
+        text: 'Use Data to Manage Your Staff',
+      },
+      {
+        type: 'p',
+        text: 'Instead of guessing who is overpouring, you will start seeing patterns. Certain shifts or items will consistently show higher variance. Now you can coach your team with real data instead of assumptions.',
+      },
+      {
+        type: 'callout',
+        text: "The bars that get liquor cost under control share one thing: they treat inventory data as seriously as they treat their P&L. Liquor cost isn't a pricing problem — it's a control problem.",
+      },
+      {
+        type: 'h2',
+        text: 'What Happens When You Fix This',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Your margins increase immediately',
+          'Waste drops across every category',
+          'Staff becomes more consistent with real accountability',
+          'You stop guessing your numbers and start running your business with confidence',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'Where BarGuard Fits In',
+      },
+      {
+        type: 'p',
+        text: 'BarGuard was built to solve this exact problem. It gives you real-time inventory tracking, variance analysis, and full visibility into where your money is going. Instead of wondering why your liquor cost is high, you will know exactly what is causing it.',
+      },
+      {
+        type: 'p',
+        text: 'Learn more about how it works on our <a href="/how-it-works">how it works page</a>, or compare plans on our <a href="/pricing">pricing page</a>.',
+      },
+      {
+        type: 'h2',
+        text: 'The Bottom Line',
+      },
+      {
+        type: 'p',
+        text: 'Most bars do not have a pricing problem. They have a control problem. Fix the control and your liquor cost follows.',
       },
       {
         type: 'cta',
