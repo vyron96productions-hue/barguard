@@ -18,6 +18,7 @@ export const NAV_SECTIONS = [
       { href: '/stock', label: 'Stock Levels', icon: '◫' },
       { href: '/sales', label: 'Sales Log', icon: '◎' },
       { href: '/uploads', label: 'Import Reports', icon: '⇪' },
+      { href: '/email-imports', label: 'Email Imports', icon: '⊠' },
       { href: '/purchase-scan', label: 'Purchase Scan', icon: '⊡' },
       { href: '/expenses', label: 'Expenses', icon: '🧾' },
       { href: '/profit-intelligence', label: 'Profit Intelligence', icon: '◑' },

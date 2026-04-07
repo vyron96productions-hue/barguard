@@ -757,3 +757,160 @@ DROP POLICY IF EXISTS "tenant_all" ON ai_summaries;
 CREATE POLICY "tenant_all" ON ai_summaries
   USING (business_id = current_business_id())
   WITH CHECK (business_id = current_business_id());
+
+
+-- ============================================================
+-- SECTION 12: Email-to-Import (e001_email_sales_imports)
+-- ============================================================
+-- Authoritative copy of e001_email_sales_imports.sql.
+-- See that file for the canonical migration source.
+
+CREATE TABLE IF NOT EXISTS email_import_rules (
+  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id      uuid        NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  sender_email     text        NOT NULL,
+  recipient_alias  text,
+  is_active        boolean     NOT NULL DEFAULT true,
+  notes            text,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_email_import_rules_business ON email_import_rules(business_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_email_import_rules_active
+  ON email_import_rules (lower(sender_email), COALESCE(lower(recipient_alias), ''))
+  WHERE is_active = true;
+
+CREATE TABLE IF NOT EXISTS email_ingest_messages (
+  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id      uuid        REFERENCES businesses(id) ON DELETE SET NULL,
+  rule_id          uuid        REFERENCES email_import_rules(id) ON DELETE SET NULL,
+  gmail_message_id text        NOT NULL UNIQUE,
+  sender_email     text        NOT NULL,
+  recipient_email  text,
+  subject          text,
+  received_at      timestamptz,
+  status           text        NOT NULL DEFAULT 'received',
+  error_message    text,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  processed_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_ingest_messages_business ON email_ingest_messages(business_id);
+CREATE INDEX IF NOT EXISTS idx_ingest_messages_status   ON email_ingest_messages(status);
+
+CREATE TABLE IF NOT EXISTS email_ingest_attachments (
+  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id          uuid        NOT NULL REFERENCES email_ingest_messages(id) ON DELETE CASCADE,
+  business_id         uuid        NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  gmail_attachment_id text,
+  filename            text        NOT NULL,
+  content_type        text,
+  size_bytes          integer,
+  sha256              text,
+  raw_content         text,
+  status              text        NOT NULL DEFAULT 'accepted',
+  rejection_reason    text,
+  created_at          timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_ingest_attachments_message  ON email_ingest_attachments(message_id);
+CREATE INDEX IF NOT EXISTS idx_ingest_attachments_business ON email_ingest_attachments(business_id);
+CREATE INDEX IF NOT EXISTS idx_ingest_attachments_sha256   ON email_ingest_attachments(business_id, sha256)
+  WHERE sha256 IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS sales_import_drafts (
+  id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id           uuid        NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  message_id            uuid        NOT NULL REFERENCES email_ingest_messages(id) ON DELETE CASCADE,
+  attachment_id         uuid        NOT NULL REFERENCES email_ingest_attachments(id) ON DELETE CASCADE,
+  filename              text        NOT NULL,
+  status                text        NOT NULL DEFAULT 'pending_review',
+  row_count             integer     NOT NULL DEFAULT 0,
+  valid_row_count       integer     NOT NULL DEFAULT 0,
+  invalid_row_count     integer     NOT NULL DEFAULT 0,
+  has_duplicate_warning boolean     NOT NULL DEFAULT false,
+  sales_upload_id       uuid        REFERENCES sales_uploads(id) ON DELETE SET NULL,
+  expires_at            timestamptz NOT NULL DEFAULT (now() + interval '14 days'),
+  created_at            timestamptz NOT NULL DEFAULT now(),
+  confirmed_at          timestamptz,
+  cancelled_at          timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_sales_import_drafts_business ON sales_import_drafts(business_id, status);
+CREATE INDEX IF NOT EXISTS idx_sales_import_drafts_expires  ON sales_import_drafts(expires_at)
+  WHERE status = 'pending_review';
+
+CREATE TABLE IF NOT EXISTS sales_import_draft_rows (
+  id                    uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  draft_id              uuid        NOT NULL REFERENCES sales_import_drafts(id) ON DELETE CASCADE,
+  business_id           uuid        NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  sort_order            integer     NOT NULL DEFAULT 0,
+  sale_date             date        NOT NULL,
+  raw_item_name         text        NOT NULL,
+  quantity_sold         numeric     NOT NULL,
+  gross_sales           numeric,
+  sale_timestamp        timestamptz,
+  guest_count           integer,
+  check_id              text,
+  station               text,
+  menu_item_id          uuid        REFERENCES menu_items(id) ON DELETE SET NULL,
+  validation_error      text,
+  is_duplicate_warning  boolean     NOT NULL DEFAULT false
+);
+CREATE INDEX IF NOT EXISTS idx_draft_rows_draft    ON sales_import_draft_rows(draft_id);
+CREATE INDEX IF NOT EXISTS idx_draft_rows_business ON sales_import_draft_rows(business_id);
+
+CREATE TABLE IF NOT EXISTS email_poll_log (
+  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  ran_at          timestamptz NOT NULL DEFAULT now(),
+  messages_found  integer     NOT NULL DEFAULT 0,
+  drafts_created  integer     NOT NULL DEFAULT 0,
+  duration_ms     integer,
+  errors          jsonb
+);
+
+-- Traceability column (nullable — no behavior change for existing manual uploads)
+ALTER TABLE sales_uploads ADD COLUMN IF NOT EXISTS email_import_draft_id uuid DEFAULT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'sales_uploads_email_import_draft_id_fkey'
+  ) THEN
+    ALTER TABLE sales_uploads
+      ADD CONSTRAINT sales_uploads_email_import_draft_id_fkey
+      FOREIGN KEY (email_import_draft_id)
+      REFERENCES sales_import_drafts(id)
+      ON DELETE SET NULL;
+  END IF;
+END $$;
+
+-- RLS for email import tables
+ALTER TABLE email_import_rules       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_ingest_messages    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_ingest_attachments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales_import_drafts      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales_import_draft_rows  ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "tenant_all" ON email_import_rules;
+CREATE POLICY "tenant_all" ON email_import_rules
+  USING (business_id = current_business_id())
+  WITH CHECK (business_id = current_business_id());
+
+DROP POLICY IF EXISTS "tenant_all" ON email_ingest_messages;
+CREATE POLICY "tenant_all" ON email_ingest_messages
+  USING (business_id = current_business_id())
+  WITH CHECK (business_id = current_business_id());
+
+DROP POLICY IF EXISTS "tenant_all" ON email_ingest_attachments;
+CREATE POLICY "tenant_all" ON email_ingest_attachments
+  USING (business_id = current_business_id())
+  WITH CHECK (business_id = current_business_id());
+
+DROP POLICY IF EXISTS "tenant_all" ON sales_import_drafts;
+CREATE POLICY "tenant_all" ON sales_import_drafts
+  USING (business_id = current_business_id())
+  WITH CHECK (business_id = current_business_id());
+
+DROP POLICY IF EXISTS "tenant_all" ON sales_import_draft_rows;
+CREATE POLICY "tenant_all" ON sales_import_draft_rows
+  USING (business_id = current_business_id())
+  WITH CHECK (business_id = current_business_id());

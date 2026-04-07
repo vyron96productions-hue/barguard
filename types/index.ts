@@ -381,5 +381,69 @@ export interface ExpenseAnalytics {
   recent: Pick<ExpenseReceipt, 'id' | 'vendor_name' | 'receipt_date' | 'total_amount'>[]
 }
 
+// ─── Email Imports ──────────────────────────────────────────────────────────
+
+export interface SalesImportDraft {
+  id: string
+  business_id: string
+  message_id: string
+  attachment_id: string
+  filename: string
+  status: 'pending_review' | 'imported' | 'cancelled' | 'expired'
+  row_count: number
+  valid_row_count: number
+  invalid_row_count: number
+  has_duplicate_warning: boolean
+  sales_upload_id: string | null
+  expires_at: string
+  created_at: string
+  confirmed_at: string | null
+  cancelled_at: string | null
+}
+
+export interface SalesImportDraftRow {
+  id: string
+  draft_id: string
+  business_id: string
+  sort_order: number
+  sale_date: string
+  raw_item_name: string
+  quantity_sold: number
+  gross_sales: number | null
+  sale_timestamp: string | null
+  guest_count: number | null
+  check_id: string | null
+  station: string | null
+  menu_item_id: string | null
+  validation_error: string | null
+  is_duplicate_warning: boolean
+}
+
+export interface EmailIngestMessage {
+  id: string
+  business_id: string | null
+  rule_id: string | null
+  gmail_message_id: string
+  sender_email: string
+  recipient_email: string | null
+  subject: string | null
+  received_at: string | null
+  status: 'received' | 'staged' | 'failed' | 'duplicate' | 'unroutable' | 'routing_conflict'
+  error_message: string | null
+  created_at: string
+  processed_at: string | null
+}
+
+export interface EmailImportRule {
+  id: string
+  business_id: string
+  sender_email: string
+  recipient_alias: string | null
+  is_active: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 // Re-export POS types for convenience
 export type { PosProvider, PosConnection, PosSyncLog, NormalizedSaleItem } from '@/lib/pos/types'
