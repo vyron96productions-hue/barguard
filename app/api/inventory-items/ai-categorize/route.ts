@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 120
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export interface AiCategorizeSuggestion {
@@ -38,48 +40,52 @@ export async function GET() {
 
     if (!items || items.length === 0) return NextResponse.json([])
 
-    const itemList = items
-      .map((i) => `${i.id}|${i.name}|${i.unit}|${i.item_type ?? ''}`)
-      .join('\n')
-
-    const prompt = `You are a bar inventory management assistant. Assign the single best category to each inventory item below.
+    const SYSTEM = `You are a bar inventory management assistant. Assign the single best category to each inventory item.
 
 Available categories:
-Beverage categories: spirits, beer, wine, keg, mixer, non-alcoholic, rum, tequila, vodka, whiskey, gin, brandy, cognac
-Food categories: food, kitchen, produce, protein, dairy, dry goods, sauces, condiments, dessert, supply
+Beverage: spirits, beer, wine, keg, mixer, non-alcoholic, rum, tequila, vodka, whiskey, gin, brandy, cognac
+Food: food, kitchen, produce, protein, dairy, dry goods, sauces, condiments, dessert, supply
 Other: other
 
 Rules:
 - Use the most specific beverage subcategory when possible (e.g. "vodka" over "spirits" for Tito's Vodka)
-- Wine bottles/cases → "wine"
-- Beer bottles/cans/cases/kegs → "beer" or "keg" based on unit
+- Wine bottles/cases → "wine". Beer bottles/cans/cases → "beer". Kegs → "keg".
 - Mixers (tonic, club soda, juice, syrups) → "mixer"
-- Food items → best matching food category
-- Supplies (napkins, cups, etc.) → "supply"
-- If nothing fits, use "other"
+- Food items → best matching food category. Supplies → "supply".
+- If nothing fits → "other"
 
-Return ONLY a JSON array with no markdown or explanation:
-[{"id":"<exact id>","category":"<category>","item_type":"beverage|food"}]
+Return ONLY a JSON array, no markdown:
+[{"id":"<exact id>","category":"<category>","item_type":"beverage|food"}]`
 
-Items (format: id|name|unit|current_item_type):
-${itemList}`
+    const BATCH_SIZE = 50
+    const batches: typeof items[] = []
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      batches.push(items.slice(i, i + BATCH_SIZE))
+    }
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    type RawRow = { id: string; category: string; item_type: string }
 
-    const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
-    const jsonMatch = text.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
+    const batchResults = await Promise.all(
+      batches.map(async (batch) => {
+        const itemList = batch.map((i) => `${i.id}|${i.name}|${i.unit}|${i.item_type ?? ''}`).join('\n')
+        try {
+          const response = await client.messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 4096,
+            system: SYSTEM,
+            messages: [{ role: 'user', content: `Items (id|name|unit|type):\n${itemList}` }],
+          })
+          const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
+          const jsonMatch = text.match(/\[[\s\S]*\]/)
+          if (!jsonMatch) return [] as RawRow[]
+          return JSON.parse(jsonMatch[0]) as RawRow[]
+        } catch {
+          return [] as RawRow[]
+        }
+      })
+    )
 
-    const raw = JSON.parse(jsonMatch[0]) as Array<{
-      id: string
-      category: string
-      item_type: string
-    }>
-
+    const raw = batchResults.flat()
     const itemMap = new Map(items.map((i) => [i.id, i]))
 
     const suggestions: AiCategorizeSuggestion[] = raw
