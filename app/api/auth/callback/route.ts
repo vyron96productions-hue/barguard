@@ -26,7 +26,25 @@ export async function GET(req: NextRequest) {
     .single()
 
   if (!ub) {
-    // New Google/OAuth user — create a business for them
+    // Check if a bar already registered with this Gmail address (email/password account first)
+    const { data: existingBiz } = await adminSupabase
+      .from('businesses')
+      .select('id')
+      .eq('contact_email', data.user.email ?? '')
+      .maybeSingle()
+
+    if (existingBiz) {
+      // Link this Google login to the existing bar — no second account created
+      await adminSupabase
+        .from('user_businesses')
+        .insert({ user_id: data.user.id, business_id: existingBiz.id, role: 'owner' })
+      await adminSupabase.auth.admin.updateUserById(data.user.id, {
+        app_metadata: { email_verified: true },
+      })
+      return NextResponse.redirect(`${origin}/dashboard`)
+    }
+
+    // Genuinely new Google user — create a business for them
     const displayName =
       (data.user.user_metadata?.full_name as string | undefined) ||
       (data.user.user_metadata?.name as string | undefined) ||
@@ -46,12 +64,10 @@ export async function GET(req: NextRequest) {
         .insert({ user_id: data.user.id, business_id: business.id, role: 'owner' })
     }
 
-    // Google emails are pre-verified by Google — mark verified in app_metadata
     await adminSupabase.auth.admin.updateUserById(data.user.id, {
       app_metadata: { email_verified: true },
     })
 
-    // Send new users to profile to set their bar name
     return NextResponse.redirect(`${origin}/profile?new=1`)
   }
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
@@ -16,11 +17,21 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const urlError = searchParams.get('error')
+    if (urlError === 'auth_failed') {
+      setError('Sign-in failed. If you registered with a username and password, use those to sign in — then you can link Google from your profile.')
+    } else if (urlError === 'missing_code') {
+      setError('Something went wrong with the sign-in flow. Please try again.')
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

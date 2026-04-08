@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
     }
 
-    // Check if email is already in use
+    // Check if email is already in use (covers both email/password and Google signups)
     const { data: existingBiz } = await adminSupabase
       .from('businesses')
       .select('id')
@@ -38,7 +38,18 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     if (existingBiz) {
-      return NextResponse.json({ error: 'An account with that email already exists.' }, { status: 400 })
+      // Check if the existing account used Google so we can give a better message
+      const { data: { users } } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 })
+      const googleUser = users.find(
+        (u) => u.email === normalizedEmail && u.app_metadata?.provider === 'google'
+      )
+      if (googleUser) {
+        return NextResponse.json(
+          { error: 'This email is linked to a Google account. Sign in with Google instead.' },
+          { status: 400 }
+        )
+      }
+      return NextResponse.json({ error: 'An account with that email already exists. Try signing in instead.' }, { status: 400 })
     }
 
     const authEmail = usernameToEmail(username)
