@@ -90,7 +90,16 @@ export async function fetchToastSales(
         'Toast-Restaurant-External-ID': restaurantGuid,
       },
     })
-    if (!res.ok) throw new Error('Toast orders fetch failed')
+    if (!res.ok) {
+      let toastError = `Toast orders fetch failed (HTTP ${res.status})`
+      try {
+        const body = await res.json()
+        const msg = body?.message ?? body?.error ?? JSON.stringify(body)
+        toastError = `Toast orders fetch failed (HTTP ${res.status}): ${msg}`
+      } catch { /* body not JSON */ }
+      console.error('[toast/sync] orders API error:', toastError)
+      throw new Error(toastError)
+    }
     const orders: unknown[] = await res.json()
     if (!Array.isArray(orders) || orders.length === 0) break
 

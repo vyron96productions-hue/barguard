@@ -27,6 +27,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ imported: count })
   } catch (e: unknown) {
+    // Surface the real Toast error message rather than a generic 500
+    if (e instanceof Error && e.message.startsWith('Toast orders fetch failed')) {
+      return NextResponse.json({ error: e.message }, { status: 502 })
+    }
     return authErrorResponse(e)
   }
 }
