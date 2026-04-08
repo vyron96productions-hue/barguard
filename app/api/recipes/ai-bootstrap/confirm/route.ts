@@ -46,7 +46,6 @@ export async function POST(req: Request) {
         inventory_item_id: nameToId.get(r.ingredient_name.toLowerCase().trim()),
         quantity: r.quantity,
         unit: r.unit,
-        business_id: businessId,
       }))
       .filter((r) => r.inventory_item_id != null)
 
