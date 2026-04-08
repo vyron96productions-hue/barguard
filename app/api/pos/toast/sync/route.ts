@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { fetchToastSales } from '@/lib/pos/toast'
-import { importPosItemsToSupabase, logPosSync } from '@/lib/pos/sync'
+import { importPosItemsToSupabase, logPosSync, autoCreateMenuItemsFromSales } from '@/lib/pos/sync'
 
 export async function POST(req: Request) {
   try {
@@ -23,9 +23,10 @@ export async function POST(req: Request) {
 
     const items = await fetchToastSales(conn.access_token, conn.location_id, period_start, period_end)
     const count = await importPosItemsToSupabase('toast', period_start, period_end, items, businessId)
+    const menuItemsCreated = await autoCreateMenuItemsFromSales(items, businessId)
     await logPosSync('toast', period_start, period_end, 'success', count, businessId)
 
-    return NextResponse.json({ imported: count })
+    return NextResponse.json({ imported: count, menu_items_created: menuItemsCreated })
   } catch (e: unknown) {
     // Surface the real Toast error message rather than a generic 500
     if (e instanceof Error && e.message.startsWith('Toast orders fetch failed')) {

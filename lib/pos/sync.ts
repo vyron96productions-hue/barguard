@@ -78,6 +78,86 @@ export async function importPosItemsToSupabase(
   return totalInserted
 }
 
+/**
+ * For new accounts: auto-creates menu_items from synced sale names that don't
+ * already exist as a menu item or alias. Derives sell_price from the sales data.
+ * Also creates menu_item_aliases and back-fills menu_item_id on the transactions
+ * we just inserted.
+ * Only called from the POS sync routes — never from manual upload flows.
+ */
+export async function autoCreateMenuItemsFromSales(
+  items: NormalizedSaleItem[],
+  businessId: string
+): Promise<number> {
+  if (items.length === 0) return 0
+
+  // Collect unique raw names + average unit price from the synced items
+  const priceMap = new Map<string, { total: number; count: number }>()
+  for (const item of items) {
+    const key = item.raw_item_name.trim()
+    if (!key) continue
+    const entry = priceMap.get(key) ?? { total: 0, count: 0 }
+    if (item.gross_sales != null && item.quantity_sold > 0) {
+      entry.total += item.gross_sales / item.quantity_sold
+      entry.count += 1
+    }
+    priceMap.set(key, entry)
+  }
+
+  // Fetch existing menu items and aliases so we don't duplicate
+  const [{ data: existingItems }, { data: existingAliases }] = await Promise.all([
+    adminSupabase.from('menu_items').select('name').eq('business_id', businessId),
+    adminSupabase.from('menu_item_aliases').select('raw_name').eq('business_id', businessId),
+  ])
+
+  const existingNames = new Set((existingItems ?? []).map((i) => i.name.toLowerCase().trim()))
+  const existingAliasNames = new Set(
+    (existingAliases ?? []).map((a) => a.raw_name.toLowerCase().trim())
+  )
+
+  const toCreate = [...priceMap.entries()]
+    .filter(([name]) => {
+      const key = name.toLowerCase()
+      return !existingNames.has(key) && !existingAliasNames.has(key)
+    })
+    .map(([name, { total, count }]) => ({
+      business_id: businessId,
+      name,
+      sell_price: count > 0 ? Math.round((total / count) * 100) / 100 : null,
+      item_type: 'drink' as const,
+    }))
+
+  if (toCreate.length === 0) return 0
+
+  const { data: inserted, error } = await adminSupabase
+    .from('menu_items')
+    .insert(toCreate)
+    .select('id, name')
+
+  if (error || !inserted || inserted.length === 0) return 0
+
+  // Create aliases (raw_name = menu item name) so future syncs auto-resolve
+  await adminSupabase.from('menu_item_aliases').insert(
+    inserted.map((m) => ({
+      business_id: businessId,
+      raw_name: m.name,
+      menu_item_id: m.id,
+    }))
+  )
+
+  // Back-fill menu_item_id on the sales_transactions we just inserted
+  for (const m of inserted) {
+    await adminSupabase
+      .from('sales_transactions')
+      .update({ menu_item_id: m.id })
+      .eq('business_id', businessId)
+      .eq('raw_item_name', m.name)
+      .is('menu_item_id', null)
+  }
+
+  return inserted.length
+}
+
 export async function logPosSync(
   provider: PosProvider,
   periodStart: string,
