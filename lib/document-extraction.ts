@@ -145,7 +145,7 @@ export async function extractFromImage(
 ): Promise<ParsedPurchaseDocument> {
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [
       {
         role: 'user',
@@ -172,7 +172,7 @@ export async function extractFromImage(
 export async function extractFromPdf(pdfBuffer: Buffer): Promise<ParsedPurchaseDocument> {
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
+    max_tokens: 4096,
     messages: [
       {
         role: 'user',
