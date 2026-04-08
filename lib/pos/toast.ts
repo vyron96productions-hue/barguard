@@ -70,9 +70,9 @@ export async function fetchToastSales(
 ): Promise<NormalizedSaleItem[]> {
   const items: NormalizedSaleItem[] = []
 
-  // Toast uses YYYYMMDD format for business dates
-  const start = startDate.replace(/-/g, '')
-  const end   = endDate.replace(/-/g, '')
+  // Toast ordersBulk requires ISO 8601 with timezone: yyyy-MM-dd'T'HH:mm:ss.SSSZ
+  const start = `${startDate}T00:00:00.000+0000`
+  const end   = `${endDate}T23:59:59.999+0000`
 
   let page = 1
   const pageSize = 100
