@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 120 // Vercel Pro supports up to 300s
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export interface BootstrapIngredient {
@@ -56,36 +58,44 @@ Rules:
 Return ONLY valid JSON:
 {"ingredients":[{"name":"Tequila","unit":"oz","item_type":"beverage"}],"recipes":[{"menu_item_id":"<id>","ingredient_name":"Tequila","quantity":1.5,"unit":"oz"}]}`
 
-    // Batch into groups of 40 to stay well under token limits
+    // Split into batches of 40 and fire all Claude calls in parallel
     const BATCH_SIZE = 40
+    const batches: typeof menuItems[] = []
+    for (let i = 0; i < menuItems.length; i += BATCH_SIZE) {
+      batches.push(menuItems.slice(i, i + BATCH_SIZE))
+    }
+
+    type ParsedBatch = {
+      ingredients: Array<{ name: string; unit: string; item_type: string }>
+      recipes: Array<{ menu_item_id: string; ingredient_name: string; quantity: number; unit: string }>
+    }
+
+    const batchResults = await Promise.all(
+      batches.map(async (batch) => {
+        const menuList = batch.map((m) => `${m.id}|${m.name}|${m.item_type ?? 'drink'}`).join('\n')
+        try {
+          const response = await client.messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 4096,
+            system: SYSTEM,
+            messages: [{ role: 'user', content: `Menu items (id|name|type):\n${menuList}` }],
+          })
+          const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
+          const jsonMatch = text.match(/\{[\s\S]*\}/)
+          if (!jsonMatch) return null
+          return JSON.parse(jsonMatch[0]) as ParsedBatch
+        } catch {
+          return null
+        }
+      })
+    )
+
     const allIngredients: BootstrapIngredient[] = []
     const allRecipes: BootstrapRecipeLine[] = []
     const seenIngredients = new Set<string>()
 
-    for (let i = 0; i < menuItems.length; i += BATCH_SIZE) {
-      const batch = menuItems.slice(i, i + BATCH_SIZE)
-      const menuList = batch.map((m) => `${m.id}|${m.name}|${m.item_type ?? 'drink'}`).join('\n')
-
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: `Menu items (id|name|type):\n${menuList}` }],
-      })
-
-      const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) continue  // skip malformed batch, keep going
-
-      let parsed: {
-        ingredients: Array<{ name: string; unit: string; item_type: string }>
-        recipes: Array<{ menu_item_id: string; ingredient_name: string; quantity: number; unit: string }>
-      }
-      try {
-        parsed = JSON.parse(jsonMatch[0])
-      } catch {
-        continue  // skip malformed batch
-      }
+    for (const parsed of batchResults) {
+      if (!parsed) continue
 
       for (const ing of parsed.ingredients ?? []) {
         if (!ing.name) continue
