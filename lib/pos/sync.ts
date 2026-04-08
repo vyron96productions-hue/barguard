@@ -78,11 +78,36 @@ export async function importPosItemsToSupabase(
   return totalInserted
 }
 
+// ── Item type classifier ─────────────────────────────────────────────────────
+const FOOD_WORDS = [
+  'burger', 'sandwich', 'wrap', 'salad', 'soup', 'fries', 'chips', 'wings',
+  'nachos', 'quesadilla', 'pizza', 'pretzel', 'taco', 'slider', 'flatbread',
+  'appetizer', 'entree', 'plate', 'side', 'dessert', 'cake', 'cookie',
+  'brownie', 'chicken', 'beef', 'fish', 'shrimp', 'pork', 'bacon', 'bread',
+  'food', 'kitchen', 'meal', 'snack', 'basket', 'bowl', 'hot dog', 'dog',
+]
+const BEER_WORDS = [
+  'beer', ' ale', 'lager', 'ipa', 'stout', 'porter', 'pilsner', 'hefeweizen',
+  'draft', 'pint', 'brew', 'cider', 'seltzer', 'shandy',
+]
+
+function guessMenuItemType(name: string): 'drink' | 'food' | 'beer' | 'other' {
+  const n = name.toLowerCase()
+  if (FOOD_WORDS.some((w) => n.includes(w))) return 'food'
+  if (BEER_WORDS.some((w) => n.includes(w))) return 'beer'
+  return 'drink'
+}
+
+function guessInventoryItemType(name: string): 'beverage' | 'food' | 'other' {
+  const t = guessMenuItemType(name)
+  return t === 'food' ? 'food' : 'beverage'
+}
+
 /**
- * For new accounts: auto-creates menu_items from synced sale names that don't
- * already exist as a menu item or alias. Derives sell_price from the sales data.
- * Also creates menu_item_aliases and back-fills menu_item_id on the transactions
- * we just inserted.
+ * For new accounts: auto-creates menu_items AND inventory_items from synced
+ * sale names that don't already exist. Derives sell_price for menu items from
+ * the sales data. Also creates menu_item_aliases and back-fills menu_item_id
+ * on the transactions we just inserted.
  * Only called from the POS sync routes — never from manual upload flows.
  */
 export async function autoCreateMenuItemsFromSales(
@@ -104,58 +129,81 @@ export async function autoCreateMenuItemsFromSales(
     priceMap.set(key, entry)
   }
 
-  // Fetch existing menu items and aliases so we don't duplicate
-  const [{ data: existingItems }, { data: existingAliases }] = await Promise.all([
+  // Fetch existing menu items, menu aliases, inventory items, and inventory aliases
+  const [
+    { data: existingMenuItems },
+    { data: existingMenuAliases },
+    { data: existingInvItems },
+    { data: existingInvAliases },
+  ] = await Promise.all([
     adminSupabase.from('menu_items').select('name').eq('business_id', businessId),
     adminSupabase.from('menu_item_aliases').select('raw_name').eq('business_id', businessId),
+    adminSupabase.from('inventory_items').select('name').eq('business_id', businessId),
+    adminSupabase.from('inventory_item_aliases').select('raw_name').eq('business_id', businessId),
   ])
 
-  const existingNames = new Set((existingItems ?? []).map((i) => i.name.toLowerCase().trim()))
-  const existingAliasNames = new Set(
-    (existingAliases ?? []).map((a) => a.raw_name.toLowerCase().trim())
-  )
+  const existingMenuNames = new Set((existingMenuItems ?? []).map((i) => i.name.toLowerCase().trim()))
+  const existingMenuAliasNames = new Set((existingMenuAliases ?? []).map((a) => a.raw_name.toLowerCase().trim()))
+  const existingInvNames = new Set((existingInvItems ?? []).map((i) => i.name.toLowerCase().trim()))
+  const existingInvAliasNames = new Set((existingInvAliases ?? []).map((a) => a.raw_name.toLowerCase().trim()))
 
-  const toCreate = [...priceMap.entries()]
+  const allNames = [...priceMap.entries()]
+
+  // ── Menu items ───────────────────────────────────────────────
+  const menuToCreate = allNames
     .filter(([name]) => {
       const key = name.toLowerCase()
-      return !existingNames.has(key) && !existingAliasNames.has(key)
+      return !existingMenuNames.has(key) && !existingMenuAliasNames.has(key)
     })
     .map(([name, { total, count }]) => ({
       business_id: businessId,
       name,
       sell_price: count > 0 ? Math.round((total / count) * 100) / 100 : null,
-      item_type: 'drink' as const,
+      item_type: guessMenuItemType(name),
     }))
 
-  if (toCreate.length === 0) return 0
+  const { data: insertedMenu } = menuToCreate.length > 0
+    ? await adminSupabase.from('menu_items').insert(menuToCreate).select('id, name')
+    : { data: [] }
 
-  const { data: inserted, error } = await adminSupabase
-    .from('menu_items')
-    .insert(toCreate)
-    .select('id, name')
-
-  if (error || !inserted || inserted.length === 0) return 0
-
-  // Create aliases (raw_name = menu item name) so future syncs auto-resolve
-  await adminSupabase.from('menu_item_aliases').insert(
-    inserted.map((m) => ({
-      business_id: businessId,
-      raw_name: m.name,
-      menu_item_id: m.id,
-    }))
-  )
-
-  // Back-fill menu_item_id on the sales_transactions we just inserted
-  for (const m of inserted) {
-    await adminSupabase
-      .from('sales_transactions')
-      .update({ menu_item_id: m.id })
-      .eq('business_id', businessId)
-      .eq('raw_item_name', m.name)
-      .is('menu_item_id', null)
+  if (insertedMenu && insertedMenu.length > 0) {
+    await adminSupabase.from('menu_item_aliases').insert(
+      insertedMenu.map((m) => ({ business_id: businessId, raw_name: m.name, menu_item_id: m.id }))
+    )
+    for (const m of insertedMenu) {
+      await adminSupabase
+        .from('sales_transactions')
+        .update({ menu_item_id: m.id })
+        .eq('business_id', businessId)
+        .eq('raw_item_name', m.name)
+        .is('menu_item_id', null)
+    }
   }
 
-  return inserted.length
+  // ── Inventory items ──────────────────────────────────────────
+  const invToCreate = allNames
+    .filter(([name]) => {
+      const key = name.toLowerCase()
+      return !existingInvNames.has(key) && !existingInvAliasNames.has(key)
+    })
+    .map(([name]) => ({
+      business_id: businessId,
+      name,
+      unit: guessInventoryItemType(name) === 'food' ? 'portion' : 'oz',
+      item_type: guessInventoryItemType(name),
+    }))
+
+  const { data: insertedInv } = invToCreate.length > 0
+    ? await adminSupabase.from('inventory_items').insert(invToCreate).select('id, name')
+    : { data: [] }
+
+  if (insertedInv && insertedInv.length > 0) {
+    await adminSupabase.from('inventory_item_aliases').insert(
+      insertedInv.map((i) => ({ business_id: businessId, raw_name: i.name, inventory_item_id: i.id }))
+    )
+  }
+
+  return (insertedMenu?.length ?? 0)
 }
 
 export async function logPosSync(
