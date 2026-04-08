@@ -98,11 +98,6 @@ function guessMenuItemType(name: string): 'drink' | 'food' | 'beer' | 'other' {
   return 'drink'
 }
 
-function guessInventoryItemType(name: string): 'beverage' | 'food' | 'other' {
-  const t = guessMenuItemType(name)
-  return t === 'food' ? 'food' : 'beverage'
-}
-
 /**
  * For new accounts: auto-creates menu_items AND inventory_items from synced
  * sale names that don't already exist. Derives sell_price for menu items from
@@ -129,23 +124,14 @@ export async function autoCreateMenuItemsFromSales(
     priceMap.set(key, entry)
   }
 
-  // Fetch existing menu items, menu aliases, inventory items, and inventory aliases
-  const [
-    { data: existingMenuItems },
-    { data: existingMenuAliases },
-    { data: existingInvItems },
-    { data: existingInvAliases },
-  ] = await Promise.all([
+  // Fetch existing menu items and aliases so we don't duplicate
+  const [{ data: existingMenuItems }, { data: existingMenuAliases }] = await Promise.all([
     adminSupabase.from('menu_items').select('name').eq('business_id', businessId),
     adminSupabase.from('menu_item_aliases').select('raw_name').eq('business_id', businessId),
-    adminSupabase.from('inventory_items').select('name').eq('business_id', businessId),
-    adminSupabase.from('inventory_item_aliases').select('raw_name').eq('business_id', businessId),
   ])
 
   const existingMenuNames = new Set((existingMenuItems ?? []).map((i) => i.name.toLowerCase().trim()))
   const existingMenuAliasNames = new Set((existingMenuAliases ?? []).map((a) => a.raw_name.toLowerCase().trim()))
-  const existingInvNames = new Set((existingInvItems ?? []).map((i) => i.name.toLowerCase().trim()))
-  const existingInvAliasNames = new Set((existingInvAliases ?? []).map((a) => a.raw_name.toLowerCase().trim()))
 
   const allNames = [...priceMap.entries()]
 
@@ -180,28 +166,9 @@ export async function autoCreateMenuItemsFromSales(
     }
   }
 
-  // ── Inventory items ──────────────────────────────────────────
-  const invToCreate = allNames
-    .filter(([name]) => {
-      const key = name.toLowerCase()
-      return !existingInvNames.has(key) && !existingInvAliasNames.has(key)
-    })
-    .map(([name]) => ({
-      business_id: businessId,
-      name,
-      unit: guessInventoryItemType(name) === 'food' ? 'portion' : 'oz',
-      item_type: guessInventoryItemType(name),
-    }))
-
-  const { data: insertedInv } = invToCreate.length > 0
-    ? await adminSupabase.from('inventory_items').insert(invToCreate).select('id, name')
-    : { data: [] }
-
-  if (insertedInv && insertedInv.length > 0) {
-    await adminSupabase.from('inventory_item_aliases').insert(
-      insertedInv.map((i) => ({ business_id: businessId, raw_name: i.name, inventory_item_id: i.id }))
-    )
-  }
+  // NOTE: We intentionally do NOT create inventory_items from sales data.
+  // Inventory items are raw ingredients/stock (Tequila, Bud Light case, etc.)
+  // and should come from purchase invoice imports — not from what was sold.
 
   return (insertedMenu?.length ?? 0)
 }
