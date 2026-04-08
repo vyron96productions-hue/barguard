@@ -40,90 +40,83 @@ export async function POST() {
       return NextResponse.json({ ingredients: [], recipes: [] })
     }
 
-    const menuList = menuItems
-      .map((m) => `${m.id}|${m.name}|${m.item_type ?? 'drink'}`)
-      .join('\n')
+    const menuMap = new Map(menuItems.map((m) => [m.id, m]))
 
-    const prompt = `You are a bar management assistant. Given these menu items sold at a bar, identify the primary ingredients (inventory items) a bar would stock to make them, and a standard recipe pour quantity for each.
+    const SYSTEM = `You are a bar management assistant. Given menu items sold at a bar, identify the primary ingredient (inventory item) a bar stocks to make each one, and the standard pour quantity.
 
 Rules:
-- Each ingredient you list will become an inventory item — name it as a bar would stock it (e.g. "Tequila", "Vodka", "Rum", "Bud Light", "House Red Wine")
-- Do NOT be brand-specific unless the menu item name is brand-specific (e.g. "Jack Daniel's" menu item → ingredient "Jack Daniel's")
-- Beer/cider by name: ingredient = same name, unit = "each", qty = 1
-  - EXCEPTION: if item_type is "beer" and name implies draft (Draft, Tap, Pint), use unit = "pint", qty = 1
-- Spirits/cocktails: use the PRIMARY spirit only (1 ingredient per drink is fine), unit = "oz", typical pour qty
-  - Margarita → Tequila, 1.5 oz
-  - Moscow Mule → Vodka, 1.5 oz
-  - Old Fashioned → Whiskey, 2 oz
-  - Gin & Tonic → Gin, 1.5 oz
-  - Dark & Stormy → Rum, 1.5 oz
-  - Lemon Drop → Vodka, 1 oz
-  - Aperol Spritz → Aperol, 2 oz
-  - Negroni → Gin, 1 oz
-  - Whiskey Sour → Whiskey, 2 oz
-  - Paloma → Tequila, 2 oz
-  - Long Island Iced Tea → Vodka, 0.5 oz
-  - Mimosa → Champagne, 4 oz
-  - Wine by glass → same wine name, unit = "oz", qty = 5
-- Food items: ingredient = the main protein/component, unit = "portion", qty = 1, item_type = "food"
-- Shots of a specific spirit: ingredient = that spirit name, unit = "oz", qty = 1.5
-- If a menu item is already an ingredient (e.g. "Tequila Shot") → ingredient = "Tequila", 1.5 oz
-- Skip modifiers, sodas, juices as ingredients
-- Deduplicate ingredients — if multiple drinks use Vodka, list Vodka once
+- Name ingredients as a bar stocks them (e.g. "Tequila", "Vodka", "Bud Light")
+- Only brand-specific if the menu item name is brand-specific
+- Beer/cider: ingredient = same name, unit = "each", qty = 1. Draft/Tap/Pint → unit = "pint"
+- Spirits/cocktails: PRIMARY spirit only, unit = "oz". Typical pours: most cocktails 1.5oz, Old Fashioned 2oz, wine glass 5oz
+- Food: main component, unit = "portion", qty = 1, item_type = "food"
+- Skip items that are pure modifiers, sodas, or non-trackable
+- Deduplicate ingredients across the batch — list each unique ingredient once in "ingredients"
 
-Return ONLY valid JSON, no markdown, no explanation:
-{
-  "ingredients": [
-    {"name": "Tequila", "unit": "oz", "item_type": "beverage"},
-    ...
-  ],
-  "recipes": [
-    {"menu_item_id": "<exact id from input>", "ingredient_name": "Tequila", "quantity": 1.5, "unit": "oz"},
-    ...
-  ]
-}
+Return ONLY valid JSON:
+{"ingredients":[{"name":"Tequila","unit":"oz","item_type":"beverage"}],"recipes":[{"menu_item_id":"<id>","ingredient_name":"Tequila","quantity":1.5,"unit":"oz"}]}`
 
-Menu items (id|name|type):
-${menuList}`
+    // Batch into groups of 40 to stay well under token limits
+    const BATCH_SIZE = 40
+    const allIngredients: BootstrapIngredient[] = []
+    const allRecipes: BootstrapRecipeLine[] = []
+    const seenIngredients = new Set<string>()
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8192,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    for (let i = 0; i < menuItems.length; i += BATCH_SIZE) {
+      const batch = menuItems.slice(i, i + BATCH_SIZE)
+      const menuList = batch.map((m) => `${m.id}|${m.name}|${m.item_type ?? 'drink'}`).join('\n')
 
-    const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) {
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: `Menu items (id|name|type):\n${menuList}` }],
+      })
+
+      const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) continue  // skip malformed batch, keep going
+
+      let parsed: {
+        ingredients: Array<{ name: string; unit: string; item_type: string }>
+        recipes: Array<{ menu_item_id: string; ingredient_name: string; quantity: number; unit: string }>
+      }
+      try {
+        parsed = JSON.parse(jsonMatch[0])
+      } catch {
+        continue  // skip malformed batch
+      }
+
+      for (const ing of parsed.ingredients ?? []) {
+        if (!ing.name) continue
+        const key = ing.name.trim().toLowerCase()
+        if (!seenIngredients.has(key)) {
+          seenIngredients.add(key)
+          allIngredients.push({
+            name: ing.name.trim(),
+            unit: ing.unit?.trim() ?? 'oz',
+            item_type: ing.item_type === 'food' ? 'food' : 'beverage',
+          })
+        }
+      }
+
+      for (const r of parsed.recipes ?? []) {
+        if (!menuMap.has(r.menu_item_id) || !r.ingredient_name || !(r.quantity > 0)) continue
+        allRecipes.push({
+          menu_item_id: r.menu_item_id,
+          menu_item_name: menuMap.get(r.menu_item_id)!.name,
+          ingredient_name: r.ingredient_name.trim(),
+          quantity: r.quantity,
+          unit: r.unit ?? 'oz',
+        })
+      }
+    }
+
+    if (allIngredients.length === 0) {
       return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
     }
 
-    const parsed = JSON.parse(jsonMatch[0]) as {
-      ingredients: Array<{ name: string; unit: string; item_type: string }>
-      recipes: Array<{ menu_item_id: string; ingredient_name: string; quantity: number; unit: string }>
-    }
-
-    const menuMap = new Map(menuItems.map((m) => [m.id, m]))
-
-    const ingredients: BootstrapIngredient[] = (parsed.ingredients ?? [])
-      .filter((i) => i.name && i.unit)
-      .map((i) => ({
-        name: i.name.trim(),
-        unit: i.unit.trim(),
-        item_type: i.item_type === 'food' ? 'food' : 'beverage',
-      }))
-
-    const recipes: BootstrapRecipeLine[] = (parsed.recipes ?? [])
-      .filter((r) => menuMap.has(r.menu_item_id) && r.ingredient_name && r.quantity > 0)
-      .map((r) => ({
-        menu_item_id: r.menu_item_id,
-        menu_item_name: menuMap.get(r.menu_item_id)!.name,
-        ingredient_name: r.ingredient_name.trim(),
-        quantity: r.quantity,
-        unit: r.unit ?? 'oz',
-      }))
-
-    return NextResponse.json({ ingredients, recipes } satisfies BootstrapResult)
+    return NextResponse.json({ ingredients: allIngredients, recipes: allRecipes } satisfies BootstrapResult)
   } catch (e) {
     return authErrorResponse(e)
   }
