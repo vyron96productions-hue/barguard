@@ -102,6 +102,14 @@ export default function RecipeMappingPage() {
   const [aiGenError, setAiGenError]       = useState<string | null>(null)
   const [aiGenSkipped, setAiGenSkipped]   = useState(0)
 
+  // AI Bootstrap (no inventory items yet — generate ingredients + recipes from menu names)
+  const [showBootstrap, setShowBootstrap]         = useState(false)
+  const [bootstrapLoading, setBootstrapLoading]   = useState(false)
+  const [bootstrapSaving, setBootstrapSaving]     = useState(false)
+  const [bootstrapDone, setBootstrapDone]         = useState(false)
+  const [bootstrapError, setBootstrapError]       = useState<string | null>(null)
+  const [bootstrapResult, setBootstrapResult]     = useState<import('@/app/api/recipes/ai-bootstrap/route').BootstrapResult | null>(null)
+
   useEffect(() => { fetchAll() }, [])
 
   async function fetchAll() {
@@ -280,6 +288,43 @@ export default function RecipeMappingPage() {
       setAiGenDone(false)
       fetchAll()
     }, 1800)
+  }
+
+  async function openBootstrap() {
+    setShowBootstrap(true)
+    setBootstrapLoading(true)
+    setBootstrapError(null)
+    setBootstrapDone(false)
+    setBootstrapResult(null)
+    try {
+      const res = await fetch('/api/recipes/ai-bootstrap', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setBootstrapError(data.error ?? 'AI failed — please try again'); setBootstrapLoading(false); return }
+      setBootstrapResult(data)
+    } catch {
+      setBootstrapError('Network error — please try again')
+    }
+    setBootstrapLoading(false)
+  }
+
+  async function confirmBootstrap() {
+    if (!bootstrapResult) return
+    setBootstrapSaving(true)
+    setBootstrapError(null)
+    try {
+      const res = await fetch('/api/recipes/ai-bootstrap/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bootstrapResult),
+      })
+      const data = await res.json()
+      if (!res.ok) { setBootstrapError(data.error ?? 'Save failed — please try again'); setBootstrapSaving(false); return }
+      setBootstrapDone(true)
+      setTimeout(() => { setShowBootstrap(false); setBootstrapDone(false); fetchAll() }, 1800)
+    } catch {
+      setBootstrapError('Network error — please try again')
+    }
+    setBootstrapSaving(false)
   }
 
   async function handleAddMenuItem(e: React.FormEvent) {
@@ -718,40 +763,57 @@ export default function RecipeMappingPage() {
         {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
       </form>
 
-      {/* AI Auto-Generate + Auto-Match banner */}
-      {inventoryItems.length > 0 && (
+      {/* AI Recipe panel — always visible when menu items exist */}
+      {menuItems.length > 0 && (
         <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl px-4 sm:px-5 py-4 space-y-3">
-          {/* AI Generate row */}
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-amber-400">AI Auto-Generate</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                No menu items yet? Let AI build your entire recipe list from your inventory in one click.
-              </p>
-            </div>
-            <button
-              onClick={openAiGen}
-              className="shrink-0 px-4 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors"
-            >
-              AI Generate
-            </button>
-          </div>
-          {/* Auto-match row — only show if menu items already exist */}
-          {menuItems.length > 0 && (
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-amber-500/10">
+          {inventoryItems.length === 0 ? (
+            /* Bootstrap mode — no inventory items yet */
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-400">Auto-Match Existing</p>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Link existing menu items to inventory items by name matching.
+                <p className="text-sm font-semibold text-amber-400">AI Setup Recipes</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  No inventory items yet. AI will infer your ingredients from your menu and set up recipes automatically.
                 </p>
               </div>
               <button
-                onClick={openWizard}
-                className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+                onClick={openBootstrap}
+                className="shrink-0 px-4 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors"
               >
-                Auto-Match
+                AI Setup
               </button>
             </div>
+          ) : (
+            /* Normal mode — inventory items exist */
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-amber-400">AI Auto-Generate</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Let AI build your entire recipe list from your inventory in one click.
+                  </p>
+                </div>
+                <button
+                  onClick={openAiGen}
+                  className="shrink-0 px-4 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors"
+                >
+                  AI Generate
+                </button>
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-amber-500/10">
+                <div>
+                  <p className="text-sm font-semibold text-slate-400">Auto-Match Existing</p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Link existing menu items to inventory items by name matching.
+                  </p>
+                </div>
+                <button
+                  onClick={openWizard}
+                  className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  Auto-Match
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -1132,6 +1194,87 @@ export default function RecipeMappingPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* AI Bootstrap overlay */}
+      {showBootstrap && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-100">AI Recipe Setup</h2>
+                  <p className="text-slate-500 text-sm mt-1">
+                    AI will create your inventory items (ingredients) and link them to your menu items.
+                  </p>
+                </div>
+                <button onClick={() => setShowBootstrap(false)} className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1 mt-1">✕</button>
+              </div>
+
+              {bootstrapLoading && (
+                <div className="text-center py-12 space-y-3">
+                  <div className="text-3xl animate-pulse">✦</div>
+                  <p className="text-slate-400 text-sm">AI is analyzing your menu and building your ingredient list…</p>
+                </div>
+              )}
+
+              {bootstrapError && !bootstrapResult && (
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-red-400 text-sm">{bootstrapError}</p>
+                  <button onClick={openBootstrap} className="text-xs text-amber-400 hover:underline">Try again</button>
+                </div>
+              )}
+
+              {bootstrapDone && (
+                <div className="text-center py-8">
+                  <p className="text-green-400 font-semibold">All set! Ingredients and recipes saved.</p>
+                </div>
+              )}
+
+              {bootstrapResult && !bootstrapLoading && !bootstrapDone && (
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-300 mb-2">
+                      Inventory items to create ({bootstrapResult.ingredients.length})
+                    </p>
+                    <div className="bg-slate-900 rounded-xl divide-y divide-slate-800 max-h-48 overflow-y-auto">
+                      {bootstrapResult.ingredients.map((ing, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                          <span className="text-slate-200">{ing.name}</span>
+                          <span className="text-slate-500 text-xs">{ing.unit} · {ing.item_type}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-300 mb-2">
+                      Recipes to create ({bootstrapResult.recipes.length})
+                    </p>
+                    <div className="bg-slate-900 rounded-xl divide-y divide-slate-800 max-h-64 overflow-y-auto">
+                      {bootstrapResult.recipes.map((r, i) => (
+                        <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                          <span className="text-slate-200">{r.menu_item_name}</span>
+                          <span className="text-slate-500 text-xs">{r.quantity} {r.unit} {r.ingredient_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {bootstrapError && <p className="text-red-400 text-sm text-center">{bootstrapError}</p>}
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button onClick={() => setShowBootstrap(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">Cancel</button>
+                    <button
+                      onClick={confirmBootstrap}
+                      disabled={bootstrapSaving}
+                      className="px-5 py-2 bg-amber-500 text-slate-900 text-sm font-bold rounded-lg hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                    >
+                      {bootstrapSaving ? 'Saving…' : 'Confirm & Save'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
