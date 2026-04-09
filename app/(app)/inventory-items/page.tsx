@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
-import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
+import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS } from '@/lib/conversions'
 import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { InventoryItem, Vendor } from '@/types'
 
 const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
-const FOOD_UNITS = Array.from(FOOD_UNITS_SET)
+const FOOD_UNITS = INVENTORY_FOOD_UNITS
 
 type ItemType = 'beverage' | 'food'
 
@@ -45,6 +45,10 @@ export default function InventoryItemsPage() {
   const [bulkPriceSaving, setBulkPriceSaving] = useState(false)
   const [bulkPriceDone, setBulkPriceDone]   = useState(false)
   const [bulkPriceError, setBulkPriceError] = useState<string | null>(null)
+
+  const [selectMode,     setSelectMode]     = useState(false)
+  const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set())
+  const [bulkDeleting,   setBulkDeleting]   = useState(false)
 
   const [editingId,      setEditingId]      = useState<string | null>(null)
   const [editName,       setEditName]       = useState('')
@@ -119,6 +123,36 @@ export default function InventoryItemsPage() {
       setError(data.error ?? 'Failed to delete item')
       return
     }
+    fetchItems()
+  }
+
+  function toggleSelectMode() {
+    setSelectMode((prev) => { if (prev) setSelectedIds(new Set()); return !prev })
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(filteredItems.map((i) => i.id)))
+  }
+
+  function deselectAll() {
+    setSelectedIds(new Set())
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return
+    setBulkDeleting(true)
+    await Promise.all([...selectedIds].map((id) => fetch(`/api/inventory-items?id=${id}`, { method: 'DELETE' })))
+    setSelectedIds(new Set())
+    setSelectMode(false)
+    setBulkDeleting(false)
     fetchItems()
   }
 
@@ -255,7 +289,16 @@ export default function InventoryItemsPage() {
                         onChange={(e) => setEditUnit(e.target.value)}
                         className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
                       >
-                        {BEVERAGE_UNITS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
+                        <optgroup label="Food / Kitchen">
+                          {FOOD_UNITS.map((u) => (
+                            <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Beverage">
+                          {BEVERAGE_UNITS.map((u) => (
+                            <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
+                          ))}
+                        </optgroup>
                       </select>
                     </div>
                     <div>
@@ -332,8 +375,26 @@ export default function InventoryItemsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between px-4 sm:px-5 py-3 hover:bg-slate-800/20 transition-colors">
-                  <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                <div
+                  className={`flex items-center justify-between px-4 sm:px-5 py-3 transition-colors ${
+                    selectMode
+                      ? selectedIds.has(item.id)
+                        ? 'bg-amber-500/10 cursor-pointer'
+                        : 'hover:bg-slate-800/30 cursor-pointer'
+                      : 'hover:bg-slate-800/20'
+                  }`}
+                  onClick={selectMode ? () => toggleSelect(item.id) : undefined}
+                >
+                  {selectMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mr-3 shrink-0 w-4 h-4 accent-amber-500 cursor-pointer"
+                    />
+                  )}
+                  <div className="flex items-center gap-2 min-w-0 flex-wrap flex-1">
                     <p className="font-medium text-sm text-slate-200 truncate">{item.name}</p>
                     <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{UNIT_LABELS[item.unit] ?? item.unit}</span>
                     {item.package_type && (
@@ -362,20 +423,22 @@ export default function InventoryItemsPage() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 ml-3 shrink-0">
-                    <button
-                      onClick={() => openEdit(item)}
-                      className="text-xs text-slate-500 hover:text-amber-400 transition-colors py-1 px-2"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-xs text-slate-700 hover:text-red-400 active:text-red-300 transition-colors py-1 px-2"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  {!selectMode && (
+                    <div className="flex items-center gap-1 ml-3 shrink-0">
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="text-xs text-slate-500 hover:text-amber-400 transition-colors py-1 px-2"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="text-xs text-slate-700 hover:text-red-400 active:text-red-300 transition-colors py-1 px-2"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -386,19 +449,33 @@ export default function InventoryItemsPage() {
   }
 
   return (
-    <div className="space-y-5 max-w-2xl">
+    <div className={`space-y-5 max-w-2xl ${selectMode ? 'pb-24' : ''}`}>
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Inventory Items</h1>
           <p className="text-slate-500 mt-1 text-sm">Physical items you track — bottles, kegs, ingredients, food stock.</p>
         </div>
         {items.length > 0 && (
-          <button
-            onClick={openBulkPriceMode}
-            className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
-          >
-            Edit Prices
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={toggleSelectMode}
+              className={`shrink-0 px-4 py-2 border text-sm font-semibold rounded-lg transition-colors ${
+                selectMode
+                  ? 'bg-slate-700 border-slate-600 text-slate-200 hover:bg-slate-600'
+                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              {selectMode ? 'Cancel' : 'Select'}
+            </button>
+            {!selectMode && (
+              <button
+                onClick={openBulkPriceMode}
+                className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+              >
+                Edit Prices
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -440,12 +517,9 @@ export default function InventoryItemsPage() {
                 onChange={(e) => setUnit(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
               >
-                <optgroup label={itemType === 'food' ? 'Food units' : 'Beverage units'}>
-                  {(itemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
-                </optgroup>
-                <optgroup label="Other">
-                  {(itemType === 'food' ? BEVERAGE_UNITS : FOOD_UNITS).map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
-                </optgroup>
+                {(itemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => (
+                  <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -677,6 +751,32 @@ export default function InventoryItemsPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Bulk select action bar */}
+      {selectMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur border-t border-slate-800 px-4 py-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={selectedIds.size === filteredItems.length ? deselectAll : selectAll}
+                className="text-sm text-amber-400 hover:text-amber-300 font-medium transition-colors"
+              >
+                {selectedIds.size === filteredItems.length ? 'Deselect All' : 'Select All'}
+              </button>
+              <p className="text-sm text-slate-400">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'None selected'}
+              </p>
+            </div>
+            <button
+              onClick={handleBulkDelete}
+              disabled={selectedIds.size === 0 || bulkDeleting}
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-40 text-white font-semibold rounded-lg text-sm transition-colors"
+            >
+              {bulkDeleting ? 'Deleting…' : `Delete${selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}`}
+            </button>
+          </div>
         </div>
       )}
 

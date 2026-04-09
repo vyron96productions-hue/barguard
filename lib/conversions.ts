@@ -61,8 +61,17 @@ export const INVENTORY_BEVERAGE_UNITS = [
   'bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
 ]
 
+/** Units used for counting food/kitchen inventory (shown in UI dropdowns) */
+export const INVENTORY_FOOD_UNITS = [
+  'each', 'portion', 'serving', 'slice', 'piece',
+  'lb', 'kg', 'g', 'oz',
+  'cup', 'tbsp', 'tsp',
+  'bag', 'box', 'tray', 'flat', 'jar', 'packet',
+]
+
 /** Human-friendly labels for inventory unit values */
 export const UNIT_LABELS: Record<string, string> = {
+  // Beverage
   bottle:      'Bottle (750ml)',
   '1L':        'Bottle (1L)',
   '1.75L':     'Handle (1.75L)',
@@ -73,6 +82,25 @@ export const UNIT_LABELS: Record<string, string> = {
   keg:         'Keg (½ bbl · 1984oz)',
   quarterkeg:  'Quarter Keg',
   sixthkeg:    'Sixth Keg',
+  // Food / kitchen
+  each:        'Each',
+  portion:     'Portion',
+  serving:     'Serving',
+  slice:       'Slice',
+  piece:       'Piece',
+  lb:          'lb (pound)',
+  kg:          'kg',
+  g:           'g (gram)',
+  oz:          'oz (weight)',
+  cup:         'Cup',
+  tbsp:        'Tablespoon',
+  tsp:         'Teaspoon',
+  bag:         'Bag',
+  box:         'Box',
+  tray:        'Tray',
+  flat:        'Flat',
+  jar:         'Jar',
+  packet:      'Packet',
 }
 
 /** Returns the friendly label for a unit, falling back to the raw value */
