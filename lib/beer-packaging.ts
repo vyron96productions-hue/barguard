@@ -162,6 +162,19 @@ export function normalizeUnitType(raw: string): NormalizedUnit {
   if (/^(pk|pack|packs)$/.test(s))
     return { unit: 'pack', packageType: null, unitsPerPackage: null }
 
+  // — Volume strings → canonical bottle units —
+  if (/^(750\s*ml|750ml)$/i.test(s))
+    return { unit: 'bottle', packageType: 'single', unitsPerPackage: 1 }
+
+  if (/^(wine\s*bottle|wine\s*btl|wine\s*bot|wine\s*b\/t)$/i.test(s))
+    return { unit: 'wine_bottle', packageType: 'single', unitsPerPackage: 1 }
+
+  if (/^(1000\s*ml|1000ml|1\s*l|1l|1\s*liter|1\s*litre)$/i.test(s))
+    return { unit: '1L', packageType: null, unitsPerPackage: null }
+
+  if (/^(1750\s*ml|1750ml|1\.75\s*l|1\.75l|1\.75\s*liter|1\.75\s*litre|handle)$/i.test(s))
+    return { unit: '1.75L', packageType: null, unitsPerPackage: null }
+
   // — Volume / weight / other — pass through unchanged —
   return { unit: raw.trim(), packageType: null, unitsPerPackage: null }
 }

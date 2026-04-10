@@ -17,7 +17,7 @@ export interface AiCategorizeSuggestion {
 const PRESET_CATEGORIES = [
   // Beverages
   'spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic',
-  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
+  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac', 'liqueur',
   // Food
   'food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods',
   'sauces', 'condiments', 'dessert', 'supply',
@@ -43,12 +43,13 @@ export async function GET() {
     const SYSTEM = `You are a bar inventory management assistant. Assign the single best category to each inventory item.
 
 Available categories:
-Beverage: spirits, beer, wine, keg, mixer, non-alcoholic, rum, tequila, vodka, whiskey, gin, brandy, cognac
+Beverage: spirits, beer, wine, keg, mixer, non-alcoholic, rum, tequila, vodka, whiskey, gin, brandy, cognac, liqueur
 Food: food, kitchen, produce, protein, dairy, dry goods, sauces, condiments, dessert, supply
 Other: other
 
 Rules:
 - Use the most specific beverage subcategory when possible (e.g. "vodka" over "spirits" for Tito's Vodka)
+- Liqueurs (Baileys, Kahlúa, Amaretto, Triple Sec, Chambord, Cointreau, etc.) → "liqueur"
 - Wine bottles/cases → "wine". Beer bottles/cans/cases → "beer". Kegs → "keg".
 - Mixers (tonic, club soda, juice, syrups) → "mixer"
 - Food items → best matching food category. Supplies → "supply".

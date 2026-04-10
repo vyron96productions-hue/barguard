@@ -3,7 +3,7 @@
 export const BEVERAGE_CATEGORIES = [
   'spirits', 'beer', 'wine', 'keg',
   'mixer', 'non-alcoholic', 'supply',
-  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac',
+  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac', 'liqueur',
 ]
 
 export const FOOD_CATEGORIES = [

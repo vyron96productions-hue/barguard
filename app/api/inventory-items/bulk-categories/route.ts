@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
 const FOOD_CATS = new Set(['food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods', 'sauces', 'condiments', 'dessert', 'supply'])
-const BEV_CATS = new Set(['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac'])
+const BEV_CATS = new Set(['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac', 'liqueur'])
 
 // PATCH /api/inventory-items/bulk-categories
 // Update category (and inferred item_type) for multiple inventory items at once

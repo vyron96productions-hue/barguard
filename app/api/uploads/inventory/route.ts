@@ -89,7 +89,12 @@ export async function POST(req: NextRequest) {
 
         // Auto-create inventory item if it doesn't exist
         if (!inventoryItemId) {
-          const unit = r.unit_type ?? 'bottle'
+          const WINE_KEYWORDS = /\b(wine|chardonnay|merlot|cabernet|cab\s*sav|pinot|sauvignon|blanc|rouge|riesling|malbec|shiraz|syrah|zinfandel|prosecco|champagne|cava|moscato|rosé|rose|bordeaux|burgundy|chianti|rioja|albariño|viognier|grenache|tempranillo)\b/i
+          let unit = r.unit_type ?? 'bottle'
+          // If CSV gave us a plain 750ml unit, check the item name for wine keywords
+          if (unit === 'bottle' && WINE_KEYWORDS.test(r.item_name)) {
+            unit = 'wine_bottle'
+          }
           const foodUnits = new Set(['lb', 'kg', 'g', 'each', 'piece', 'portion', 'serving', 'slice', 'tray', 'flat', 'bag', 'jar', 'packet', 'cup', 'tbsp', 'tsp'])
           const item_type = foodUnits.has(unit) ? 'food' : 'beverage'
           const packMeta: { pack_size: number; package_type: string } | null =
