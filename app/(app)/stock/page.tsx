@@ -12,12 +12,15 @@ const FOOD_UNITS_LIST = Array.from(FOOD_UNITS_SET)
 
 // Bottle-type units and their oz size — used for partial bottle display
 const BOTTLE_SIZE_OZ: Record<string, number> = {
-  'bottle': 25.36,   // 750ml standard
-  '750ml':  25.36,
-  '1L':     33.814,
-  '1.75L':  59.1745,
+  'bottle':      25.36,    // 750ml spirit bottle
+  'wine_bottle': 25.36,    // 750ml wine bottle
+  '750ml':       25.36,
+  '1L':          33.814,
+  '1.75L':       59.1745,
 }
 const STANDARD_SHOT_OZ = 1.5
+const STANDARD_WINE_GLASS_OZ = 5.0
+const WINE_UNITS = new Set(['wine_bottle'])
 
 interface StockItem {
   id: string
@@ -1085,10 +1088,12 @@ function KegLevelDisplay({ qty, unit }: { qty: number; unit: string }) {
   )
 }
 
-function PartialBottleDisplay({ qty, bottleSizeOz }: { qty: number; bottleSizeOz: number }) {
+function PartialBottleDisplay({ qty, bottleSizeOz, isWine = false }: { qty: number; bottleSizeOz: number; isWine?: boolean }) {
   const fraction = qty % 1
   const hasFraction = fraction > 0.02
-  const totalShots = Math.floor((qty * bottleSizeOz) / STANDARD_SHOT_OZ)
+  const pourOz = isWine ? STANDARD_WINE_GLASS_OZ : STANDARD_SHOT_OZ
+  const totalPours = Math.floor((qty * bottleSizeOz) / pourOz)
+  const pourLabel = isWine ? 'glasses' : 'shots'
 
   return (
     <div className="space-y-1.5 pt-0.5">
@@ -1106,8 +1111,8 @@ function PartialBottleDisplay({ qty, bottleSizeOz }: { qty: number; bottleSizeOz
           </div>
         </div>
       )}
-      {totalShots > 0 && (
-        <p className="text-[10px] text-slate-600">~{totalShots} shots</p>
+      {totalPours > 0 && (
+        <p className="text-[10px] text-slate-600">~{totalPours} {pourLabel}</p>
       )}
     </div>
   )
@@ -1314,9 +1319,9 @@ function StockCard({ item, allCategories, onUpdate }: {
           <p className="text-[10px] text-slate-700">Count: {item.quantity_on_hand} · {daysAgo(item.count_date!)}d ago</p>
         )}
 
-        {/* Partial bottle display for bottle-tracked spirits */}
+        {/* Partial bottle display for bottle-tracked spirits/wine */}
         {bottleSizeOz !== null && effectiveQty !== null && effectiveQty > 0 && (
-          <PartialBottleDisplay qty={effectiveQty} bottleSizeOz={bottleSizeOz} />
+          <PartialBottleDisplay qty={effectiveQty} bottleSizeOz={bottleSizeOz} isWine={WINE_UNITS.has(item.unit)} />
         )}
 
         {/* Keg level display */}

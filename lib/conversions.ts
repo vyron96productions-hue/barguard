@@ -16,8 +16,9 @@ export const UNIT_TO_OZ: Record<string, number> = {
   l: 33.814,
   liter: 33.814,
   litre: 33.814,
-  bottle: 25.36,    // 750ml standard spirit/wine bottle
-  '750ml': 25.36,
+  bottle:      25.36,  // 750ml standard spirit bottle
+  wine_bottle: 25.36,  // 750ml wine bottle (same volume, different pour size — 5oz glass vs 1.5oz shot)
+  '750ml':     25.36,
   '1L': 33.814,
   '1l': 33.814,
   '1.75L': 59.1745,
@@ -59,7 +60,7 @@ export function isSupportedUnit(unit: string): boolean {
 
 /** Units used for counting inventory (shown in UI dropdowns) */
 export const INVENTORY_BEVERAGE_UNITS = [
-  'bottle', '1L', '1.75L', 'can', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
+  'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
 ]
 
 /** Units used for counting food/kitchen inventory (shown in UI dropdowns) */
@@ -73,7 +74,8 @@ export const INVENTORY_FOOD_UNITS = [
 /** Human-friendly labels for inventory unit values */
 export const UNIT_LABELS: Record<string, string> = {
   // Beverage
-  bottle:      'Bottle (750ml)',
+  bottle:      'Spirit Bottle (750ml)',
+  wine_bottle: 'Wine Bottle (750ml)',
   '1L':        'Bottle (1L)',
   '1.75L':     'Handle (1.75L)',
   can:              'Beer Can (12oz)',
@@ -112,7 +114,8 @@ export function unitLabel(unit: string): string {
 
 /** Short display label for use in tables/badges next to numbers */
 export const SHORT_UNIT_LABELS: Record<string, string> = {
-  bottle:      'btl',
+  bottle:      'spirit btl',
+  wine_bottle: 'wine btl',
   '1L':        '1L btl',
   '1.75L':     '1.75L',
   can:         'can',
@@ -144,7 +147,7 @@ export function itemCostPerOz(costPerUnit: number | null | undefined, unit: stri
 
 // Units that are always whole items — never display as decimals
 const WHOLE_UNITS = new Set([
-  'bottle', 'beer_bottle', 'beer_bottle_16oz', 'can', 'case', '1L', '1.75L',
+  'bottle', 'wine_bottle', 'beer_bottle', 'beer_bottle_16oz', 'can', 'case', '1L', '1.75L',
   'each', 'piece', 'portion', 'serving', 'slice', 'bag', 'tray', 'box', 'flat', 'jar', 'packet',
 ])
 // Kegs intentionally excluded — partial keg counts (e.g. 0.75) are meaningful and must not be rounded.
@@ -165,7 +168,7 @@ export function formatQty(qty: number, unit: string): string {
 /** All units (inventory + recipe pour units) */
 export const ALL_UNITS = [
   // Beverage — counting units
-  'bottle', '1L', '1.75L', 'can', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
+  'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
   // Beverage — pour / recipe units (not used for inventory counting)
   'oz', 'ml', 'cl', 'l',
   // Food / kitchen
