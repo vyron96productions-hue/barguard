@@ -25,6 +25,7 @@ export async function POST(req: Request) {
       refresh_token: token.refresh_token ?? null,
       token_expires_at: expiresAt,
       merchant_id: clientId,
+      client_secret: clientSecret,
       location_id: restaurantGuid,
       location_name: token.location_name ?? restaurantGuid,
       is_active: true,

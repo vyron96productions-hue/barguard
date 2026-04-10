@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
-import { fetchToastSales } from '@/lib/pos/toast'
+import { fetchToastSales, refreshToastToken } from '@/lib/pos/toast'
 import { importPosItemsToSupabase, logPosSync, autoCreateMenuItemsFromSales } from '@/lib/pos/sync'
 
 export async function POST(req: Request) {
@@ -21,7 +21,36 @@ export async function POST(req: Request) {
 
     if (!conn) return NextResponse.json({ error: 'Toast not connected' }, { status: 400 })
 
-    const items = await fetchToastSales(conn.access_token, conn.location_id, period_start, period_end)
+    // Auto-refresh token if expired or within 5 minutes of expiry
+    let accessToken: string = conn.access_token
+    if (conn.token_expires_at) {
+      const expiresAt = new Date(conn.token_expires_at).getTime()
+      const isExpired = expiresAt - Date.now() < 5 * 60 * 1000 // 5 min buffer
+      if (isExpired) {
+        if (!conn.client_secret || !conn.refresh_token) {
+          return NextResponse.json({
+            error: 'Toast token expired. Please reconnect Toast by re-entering your credentials in the POS settings.',
+          }, { status: 401 })
+        }
+        try {
+          const refreshed = await refreshToastToken(conn.merchant_id, conn.client_secret, conn.refresh_token)
+          accessToken = refreshed.access_token
+          const newExpiresAt = refreshed.expires_in
+            ? new Date(Date.now() + refreshed.expires_in * 1000).toISOString()
+            : null
+          await supabase.from('pos_connections').update({
+            access_token: refreshed.access_token,
+            ...(newExpiresAt ? { token_expires_at: newExpiresAt } : {}),
+          }).eq('id', conn.id)
+        } catch {
+          return NextResponse.json({
+            error: 'Toast token expired and refresh failed. Please reconnect Toast in POS settings.',
+          }, { status: 401 })
+        }
+      }
+    }
+
+    const items = await fetchToastSales(accessToken, conn.location_id, period_start, period_end)
     const count = await importPosItemsToSupabase('toast', period_start, period_end, items, businessId)
     const menuItemsCreated = await autoCreateMenuItemsFromSales(items, businessId)
     await logPosSync('toast', period_start, period_end, 'success', count, businessId)
