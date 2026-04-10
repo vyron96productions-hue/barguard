@@ -141,13 +141,20 @@ export function itemCostPerOz(costPerUnit: number | null | undefined, unit: stri
 
 // Units that are always whole items — never display as decimals
 const WHOLE_UNITS = new Set([
-  'bottle', 'beer_bottle', 'can', 'case', 'keg', 'quarterkeg', 'sixthkeg', '1L', '1.75L',
+  'bottle', 'beer_bottle', 'can', 'case', '1L', '1.75L',
   'each', 'piece', 'portion', 'serving', 'slice', 'bag', 'tray', 'box', 'flat', 'jar', 'packet',
 ])
+// Kegs intentionally excluded — partial keg counts (e.g. 0.75) are meaningful and must not be rounded.
 
-/** Format a quantity for display. Whole-item units (bottles, cans, etc.) show as integers. */
+const KEG_UNITS = new Set(['keg', 'quarterkeg', 'sixthkeg'])
+
+/** Format a quantity for display. Whole-item units (bottles, cans, etc.) show as integers. Kegs show up to 2 decimal places. */
 export function formatQty(qty: number, unit: string): string {
   if (WHOLE_UNITS.has(unit)) return String(Math.round(qty))
+  if (KEG_UNITS.has(unit)) {
+    // Show up to 2 decimals, strip trailing zeros
+    return parseFloat(qty.toFixed(2)).toString()
+  }
   const rounded = Number(qty.toFixed(1))
   return String(rounded)
 }

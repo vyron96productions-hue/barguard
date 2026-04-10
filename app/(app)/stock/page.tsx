@@ -1030,6 +1030,61 @@ function fractionLabel(f: number): string {
   return 'nearly empty'
 }
 
+const KEG_PINTS: Record<string, number> = {
+  keg: 165,
+  quarterkeg: 62,
+  sixthkeg: 41,
+}
+
+function KegLevelDisplay({ qty, unit }: { qty: number; unit: string }) {
+  const totalPints = KEG_PINTS[unit] ?? 165
+  const wholeKegs = Math.floor(qty)
+  const fraction = parseFloat((qty % 1).toFixed(2))
+  const hasFraction = fraction > 0.01
+  // Pints in the partial keg (or in a single fractional keg count)
+  const partialPints = Math.round(fraction * totalPints)
+  // Total pints across all kegs
+  const allPints = Math.round(qty * totalPints)
+
+  const fillPct = Math.round((hasFraction ? fraction : qty > 0 ? 1 : 0) * 100)
+
+  return (
+    <div className="space-y-1.5 pt-0.5">
+      {/* Fill bar — always show for kegs */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[10px] text-slate-600 uppercase tracking-wider">
+            {hasFraction && wholeKegs > 0
+              ? `+1 partial keg`
+              : hasFraction
+                ? 'Keg level'
+                : 'Full keg'}
+          </span>
+          <span className="text-[10px] text-slate-500">
+            {hasFraction ? fractionLabel(fraction) : '100%'}
+          </span>
+        </div>
+        <div className="h-2.5 bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${hasFraction ? fillPct : 100}%`,
+              background: fillPct > 50
+                ? 'rgb(52 211 153 / 0.6)'   // emerald
+                : fillPct > 25
+                  ? 'rgb(251 191 36 / 0.6)' // amber
+                  : 'rgb(248 113 113 / 0.6)', // red
+            }}
+          />
+        </div>
+      </div>
+      {allPints > 0 && (
+        <p className="text-[10px] text-slate-600">~{allPints} pints remaining</p>
+      )}
+    </div>
+  )
+}
+
 function PartialBottleDisplay({ qty, bottleSizeOz }: { qty: number; bottleSizeOz: number }) {
   const fraction = qty % 1
   const hasFraction = fraction > 0.02
@@ -1262,6 +1317,11 @@ function StockCard({ item, allCategories, onUpdate }: {
         {/* Partial bottle display for bottle-tracked spirits */}
         {bottleSizeOz !== null && effectiveQty !== null && effectiveQty > 0 && (
           <PartialBottleDisplay qty={effectiveQty} bottleSizeOz={bottleSizeOz} />
+        )}
+
+        {/* Keg level display */}
+        {KEG_PINTS[item.unit] !== undefined && effectiveQty !== null && effectiveQty > 0 && (
+          <KegLevelDisplay qty={effectiveQty} unit={item.unit} />
         )}
       </div>
 
