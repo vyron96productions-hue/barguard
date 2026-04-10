@@ -4,6 +4,9 @@ import { parseCsvText } from '@/lib/csv'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
 import { runSalesImport } from '@/lib/sales-import/service'
 import type { ValidatedSalesRow } from '@/lib/sales-import/types'
+import { logger, logError } from '@/lib/logger'
+
+const ROUTE = 'uploads/sales'
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,11 +54,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (validRows.length === 0) {
+      logger.warn(ROUTE, 'No valid rows', { businessId, filename: file.name, row_errors: rowErrors.length })
       return NextResponse.json({ error: 'No valid rows found', details: rowErrors }, { status: 400 })
     }
 
+    logger.info(ROUTE, 'Importing sales', { businessId, filename: file.name, valid_rows: validRows.length, row_errors: rowErrors.length })
     const result = await runSalesImport(supabase, businessId, file.name, validRows)
+    logger.info(ROUTE, 'Import complete', { businessId, ...result })
 
     return NextResponse.json({ ...result, row_errors: rowErrors })
-  } catch (e) { return authErrorResponse(e) }
+  } catch (e) {
+    logError(ROUTE, e)
+    return authErrorResponse(e, ROUTE)
+  }
 }

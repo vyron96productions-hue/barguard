@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { extractFromImage, extractFromPdf } from '@/lib/document-extraction'
 import { resolveInventoryItemId } from '@/lib/aliases'
+import { logger, logError } from '@/lib/logger'
+
+const ROUTE = 'uploads/purchase-scan'
 
 export const maxDuration = 60
 
@@ -35,6 +38,8 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     const base64 = buffer.toString('base64')
 
+    logger.info(ROUTE, 'Scanning document', { businessId, filename: file.name, mimeType, size_kb: Math.round(file.size / 1024) })
+
     let parsed
     try {
       if (mimeType === 'application/pdf') {
@@ -42,8 +47,9 @@ export async function POST(req: NextRequest) {
       } else {
         parsed = await extractFromImage(buffer, mimeType as 'image/jpeg' | 'image/png' | 'image/webp')
       }
+      logger.info(ROUTE, 'AI extraction complete', { businessId, line_items: parsed.line_items?.length ?? 0, confidence: parsed.overall_confidence, vendor: parsed.vendor_name })
     } catch (claudeErr) {
-      console.error('[purchase-scan] Claude extraction failed:', claudeErr)
+      logError(ROUTE, claudeErr, { businessId, filename: file.name })
       return NextResponse.json({ error: `AI extraction failed: ${claudeErr instanceof Error ? claudeErr.message : String(claudeErr)}` }, { status: 500 })
     }
 
@@ -60,7 +66,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (docError) {
-      console.error('[purchase-scan] document_uploads insert failed:', docError)
+      logger.error(ROUTE, 'document_uploads insert failed', { businessId, error: docError.message })
       return NextResponse.json({ error: `DB error (document_uploads): ${docError.message}` }, { status: 500 })
     }
 
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (draftError) {
-      console.error('[purchase-scan] purchase_import_drafts insert failed:', draftError)
+      logger.error(ROUTE, 'purchase_import_drafts insert failed', { businessId, error: draftError.message })
       return NextResponse.json({ error: `DB error (purchase_import_drafts): ${draftError.message}` }, { status: 500 })
     }
 
@@ -110,11 +116,12 @@ export async function POST(req: NextRequest) {
         .from('purchase_import_draft_lines')
         .insert(draftLines)
       if (linesError) {
-        console.error('[purchase-scan] purchase_import_draft_lines insert failed:', linesError)
+        logger.error(ROUTE, 'purchase_import_draft_lines insert failed', { businessId, error: linesError.message })
         return NextResponse.json({ error: `DB error (draft_lines): ${linesError.message}` }, { status: 500 })
       }
     }
 
+    logger.info(ROUTE, 'Scan complete — draft created', { businessId, draft_id: draft.id, line_count: draftLines.length })
     return NextResponse.json({
       draft_id: draft.id,
       confidence: parsed.overall_confidence,
@@ -122,6 +129,7 @@ export async function POST(req: NextRequest) {
       line_count: draftLines.length,
     })
   } catch (err: unknown) {
-    return authErrorResponse(err)
+    logError(ROUTE, err)
+    return authErrorResponse(err, ROUTE)
   }
 }

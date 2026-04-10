@@ -4,6 +4,9 @@ import { parseCsvText } from '@/lib/csv'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
 import { parseQuantityString, normalizeUnitType, PACKAGE_TYPE_SIZES } from '@/lib/beer-packaging'
+import { logger, logError } from '@/lib/logger'
+
+const ROUTE = 'uploads/inventory'
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,8 +65,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (validRows.length === 0) {
+      logger.warn(ROUTE, 'No valid rows', { businessId, filename: file.name, row_errors: rowErrors.length })
       return NextResponse.json({ error: 'No valid rows found', details: rowErrors }, { status: 400 })
     }
+
+    logger.info(ROUTE, 'Importing inventory count', { businessId, filename: file.name, valid_rows: validRows.length })
 
     const countDate = validRows[0].count_date
 
@@ -124,6 +130,10 @@ export async function POST(req: NextRequest) {
 
     const unresolved = [...new Set(counts.filter((c) => !c.inventory_item_id).map((c) => c.raw_item_name))]
 
+    logger.info(ROUTE, 'Import complete', { businessId, rows_imported: validRows.length, items_created: itemsCreated, unresolved: unresolved.length })
     return NextResponse.json({ upload_id: upload.id, rows_imported: validRows.length, items_created: itemsCreated, unresolved_aliases: unresolved, row_errors: rowErrors })
-  } catch (e) { return authErrorResponse(e) }
+  } catch (e) {
+    logError(ROUTE, e)
+    return authErrorResponse(e, ROUTE)
+  }
 }

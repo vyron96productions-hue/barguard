@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { logError } from '@/lib/logger'
 
 export class AuthError extends Error {
   constructor(message: string, public status = 401) { super(message) }
@@ -33,10 +34,14 @@ export async function getAuthContext() {
 /**
  * Converts an error thrown by getAuthContext (or any handler) into a NextResponse.
  */
-export function authErrorResponse(e: unknown): NextResponse {
+export function authErrorResponse(e: unknown, route?: string): NextResponse {
   if (e instanceof AuthError) {
+    // 401/403 are expected — log as warn only
+    logError(route ?? 'unknown', e, { status: e.status })
     return NextResponse.json({ error: e.message }, { status: e.status })
   }
+  // Unexpected error — log as error with full context
+  logError(route ?? 'unknown', e)
   const msg = e instanceof Error ? e.message : 'Internal server error'
   return NextResponse.json({ error: msg }, { status: 500 })
 }

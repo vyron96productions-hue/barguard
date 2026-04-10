@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { PRICE_IDS } from '@/lib/plans'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'stripe/webhook'
 
 const PAYMENT_GRACE_DAYS = 3
 
@@ -36,13 +39,16 @@ export async function POST(req: NextRequest) {
     .insert({ provider: 'stripe', event_id: event.id })
 
   if (dedupError?.code === '23505') {
+    logger.info(ROUTE, 'Duplicate event — skipping', { event_id: event.id, type: event.type })
     return NextResponse.json({ ok: true }) // already processed — safe no-op
   }
   if (dedupError) {
     // Non-duplicate error (e.g. 42P01 = table missing, network issue).
     // Log prominently but continue processing — failing a billing event is worse than a rare duplicate.
-    console.error(`[stripe] dedup insert failed: code=${dedupError.code} msg=${dedupError.message} event=${event.id}`)
+    logger.error(ROUTE, 'Dedup insert failed — continuing anyway', { event_id: event.id, code: dedupError.code, error: dedupError.message })
   }
+
+  logger.info(ROUTE, 'Processing event', { event_id: event.id, type: event.type })
 
   // ── Checkout completed → activate paid plan ────────────────────────────────
   if (event.type === 'checkout.session.completed') {
@@ -64,9 +70,9 @@ export async function POST(req: NextRequest) {
           payment_grace_ends_at: null, // clear any prior payment issue
         })
         .eq('id', businessId)
-      console.log(`[stripe] checkout.completed: business=${businessId} plan=${plan} sub=${subscription.id}`)
+      logger.info(ROUTE, 'Checkout completed — plan activated', { businessId, plan, subscription_id: subscription.id })
     } else {
-      console.warn(`[stripe] checkout.completed: unknown priceId=${priceId} business=${businessId}`)
+      logger.warn(ROUTE, 'Checkout completed — unknown priceId', { businessId, price_id: priceId })
     }
   }
 
@@ -81,28 +87,24 @@ export async function POST(req: NextRequest) {
         .from('businesses')
         .update({ plan })
         .eq('stripe_subscription_id', subscription.id)
-      console.log(`[stripe] subscription.updated: sub=${subscription.id} plan=${plan}`)
+      logger.info(ROUTE, 'Subscription updated', { subscription_id: subscription.id, plan })
     } else {
-      console.warn(`[stripe] subscription.updated: unknown priceId=${priceId} sub=${subscription.id}`)
+      logger.warn(ROUTE, 'Subscription updated — unknown priceId', { subscription_id: subscription.id, price_id: priceId })
     }
   }
 
   // ── Subscription cancelled/expired → lock the account ─────────────────────
-  // Do NOT set plan to 'legacy' — legacy is only granted manually by the platform owner.
-  // Set plan to null so the middleware locks them out (trial gate or pricing redirect).
   if (event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object as Stripe.Subscription
     await adminSupabase
       .from('businesses')
       .update({ plan: null, stripe_subscription_id: null, payment_grace_ends_at: null })
       .eq('stripe_subscription_id', subscription.id)
-    console.log(`[stripe] subscription.deleted: sub=${subscription.id} — account locked`)
+    logger.info(ROUTE, 'Subscription deleted — account locked', { subscription_id: subscription.id })
   }
 
   // ── Payment failed → open a 3-day grace period ────────────────────────────
-  // Only set the grace period on the first failure — don't extend it on Stripe retries.
   if (event.type === 'invoice.payment_failed') {
-    // Stripe SDK v20 removed .subscription from Invoice types; it still exists in the runtime payload
     const invoice = event.data.object as Stripe.Invoice & { subscription: string | Stripe.Subscription | null }
     const subscriptionId = typeof invoice.subscription === 'string'
       ? invoice.subscription
@@ -110,20 +112,17 @@ export async function POST(req: NextRequest) {
 
     if (subscriptionId) {
       const graceEndsAt = new Date(Date.now() + PAYMENT_GRACE_DAYS * 24 * 60 * 60 * 1000).toISOString()
-
-      // Only write if payment_grace_ends_at is not already set (first failure only)
       await adminSupabase
         .from('businesses')
         .update({ payment_grace_ends_at: graceEndsAt })
         .eq('stripe_subscription_id', subscriptionId)
-        .is('payment_grace_ends_at', null) // don't overwrite — first failure sets the clock
-      console.log(`[stripe] invoice.payment_failed: sub=${subscriptionId} grace_ends=${graceEndsAt}`)
+        .is('payment_grace_ends_at', null)
+      logger.warn(ROUTE, 'Payment failed — grace period opened', { subscription_id: subscriptionId, grace_ends_at: graceEndsAt })
     }
   }
 
   // ── Payment succeeded → clear grace period ────────────────────────────────
   if (event.type === 'invoice.payment_succeeded') {
-    // Stripe SDK v20 removed .subscription from Invoice types; it still exists in the runtime payload
     const invoice = event.data.object as Stripe.Invoice & { subscription: string | Stripe.Subscription | null }
     const subscriptionId = typeof invoice.subscription === 'string'
       ? invoice.subscription
@@ -134,7 +133,7 @@ export async function POST(req: NextRequest) {
         .from('businesses')
         .update({ payment_grace_ends_at: null })
         .eq('stripe_subscription_id', subscriptionId)
-      console.log(`[stripe] invoice.payment_succeeded: sub=${subscriptionId} — grace period cleared`)
+      logger.info(ROUTE, 'Payment succeeded — grace period cleared', { subscription_id: subscriptionId })
     }
   }
 
