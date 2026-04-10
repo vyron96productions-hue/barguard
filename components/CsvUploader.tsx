@@ -12,7 +12,7 @@ const REQUIRED_FIELDS: Record<CsvUploadType, string[]> = {
 
 const OPTIONAL_FIELDS: Record<CsvUploadType, string[]> = {
   sales: ['gross_sales', 'station'],
-  inventory: ['unit_type'],
+  inventory: ['unit_type', 'category', 'cost_per_unit'],
   purchases: ['vendor_name', 'unit_cost', 'unit_type'],
 }
 

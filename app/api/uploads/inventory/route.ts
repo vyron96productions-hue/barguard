@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Too many rows. Maximum is ${MAX_ROWS} per upload.` }, { status: 400 })
     }
 
-    const validRows: { count_date: string; item_name: string; quantity: number; unit_type: string | null }[] = []
+    const validRows: { count_date: string; item_name: string; quantity: number; unit_type: string | null; category: string | null; cost_per_unit: number | null }[] = []
     const rowErrors: string[] = []
 
     for (let i = 0; i < rows.length; i++) {
@@ -54,7 +54,11 @@ export async function POST(req: NextRequest) {
       const rawUnitType = mapping.unit_type ? row[mapping.unit_type] || null : null
       const unitType = rawUnitType ? normalizeUnitType(rawUnitType).unit : null
 
-      validRows.push({ count_date: countDate, item_name: itemName, quantity, unit_type: unitType })
+      const rawCategory = mapping.category ? row[mapping.category]?.trim() || null : null
+      const rawCost = mapping.cost_per_unit ? row[mapping.cost_per_unit] : null
+      const costPerUnit = rawCost ? parseFloatSafe(rawCost) : null
+
+      validRows.push({ count_date: countDate, item_name: itemName, quantity, unit_type: unitType, category: rawCategory, cost_per_unit: costPerUnit })
     }
 
     if (validRows.length === 0) {
@@ -88,9 +92,12 @@ export async function POST(req: NextRequest) {
             unit === 'quarterkeg' ? { pack_size: 62,                         package_type: 'quarter keg' } :
             unit === 'sixthkeg'   ? { pack_size: 41,                         package_type: 'sixth keg' } :
             null
+          const newItemPayload: Record<string, unknown> = { business_id: businessId, name: r.item_name, unit, item_type, ...packMeta }
+          if (r.category) newItemPayload.category = r.category
+          if (r.cost_per_unit !== null) newItemPayload.cost_per_unit = r.cost_per_unit
           const { data: newItem } = await supabase
             .from('inventory_items')
-            .insert({ business_id: businessId, name: r.item_name, unit, item_type, ...packMeta })
+            .insert(newItemPayload)
             .select('id')
             .single()
 

@@ -351,7 +351,7 @@ function AliasRow({
 function SampleCsv({ type }: { type: CsvUploadType }) {
   const samples: Record<CsvUploadType, string> = {
     sales: 'date,item_name,quantity_sold,gross_sales\n2024-03-01,Vodka Soda,12,84.00\n2024-03-01,Margarita,8,64.00',
-    inventory: 'count_date,item_name,quantity_on_hand,unit_type\n2024-03-01,Tito\'s Vodka,48.5,oz\n2024-03-01,Bacardi White Rum,32,oz',
+    inventory: 'count_date,item_name,quantity_on_hand,unit_type,category,cost_per_unit\n2024-03-01,Tito\'s Vodka,48.5,oz,vodka,22.50\n2024-03-01,Bacardi White Rum,32,oz,rum,18.99',
     purchases: 'purchase_date,item_name,quantity_purchased,vendor_name,unit_cost\n2024-03-05,Tito\'s Vodka,1,Southern Glazer\'s,22.50',
   }
   return (

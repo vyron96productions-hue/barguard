@@ -6,6 +6,7 @@ import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/li
 import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS } from '@/lib/conversions'
 import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { InventoryItem, Vendor } from '@/types'
+import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 
 const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
 const FOOD_UNITS = INVENTORY_FOOD_UNITS
@@ -49,6 +50,15 @@ export default function InventoryItemsPage() {
   const [selectMode,     setSelectMode]     = useState(false)
   const [selectedIds,    setSelectedIds]    = useState<Set<string>>(new Set())
   const [bulkDeleting,   setBulkDeleting]   = useState(false)
+
+  // AI auto-categorize
+  const [aiCatMode,      setAiCatMode]      = useState(false)
+  const [aiCatLoading,   setAiCatLoading]   = useState(false)
+  const [aiCatSuggestions, setAiCatSuggestions] = useState<AiCategorizeSuggestion[]>([])
+  const [aiCatApplying,  setAiCatApplying]  = useState(false)
+  const [aiCatDone,      setAiCatDone]      = useState(false)
+  const [aiCatError,     setAiCatError]     = useState<string | null>(null)
+  const [aiCatSkipped,   setAiCatSkipped]   = useState<Set<string>>(new Set())
 
   const [editingId,      setEditingId]      = useState<string | null>(null)
   const [editName,       setEditName]       = useState('')
@@ -230,6 +240,46 @@ export default function InventoryItemsPage() {
     } else {
       const d = await res.json().catch(() => ({}))
       setBulkPriceError(d?.error ?? 'Failed to save prices — please try again')
+    }
+  }
+
+  async function openAiCategorize() {
+    setAiCatMode(true)
+    setAiCatLoading(true)
+    setAiCatError(null)
+    setAiCatDone(false)
+    setAiCatSkipped(new Set())
+    setAiCatSuggestions([])
+    try {
+      const res = await fetch('/api/inventory-items/ai-categorize')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Failed to fetch suggestions')
+      setAiCatSuggestions(Array.isArray(data) ? data : [])
+    } catch (e) {
+      setAiCatError(e instanceof Error ? e.message : 'Error')
+    }
+    setAiCatLoading(false)
+  }
+
+  async function applyAiCategories() {
+    const updates = aiCatSuggestions
+      .filter((s) => !aiCatSkipped.has(s.id))
+      .map((s) => ({ id: s.id, category: s.suggested_category }))
+    if (updates.length === 0) { setAiCatMode(false); return }
+    setAiCatApplying(true)
+    const res = await fetch('/api/inventory-items/bulk-categories', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ updates }),
+    })
+    setAiCatApplying(false)
+    if (res.ok) {
+      setAiCatDone(true)
+      await fetchItems()
+      setTimeout(() => { setAiCatMode(false); setAiCatDone(false) }, 1400)
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setAiCatError(d?.error ?? 'Failed to apply categories')
     }
   }
 
@@ -468,12 +518,22 @@ export default function InventoryItemsPage() {
               {selectMode ? 'Cancel' : 'Select'}
             </button>
             {!selectMode && (
-              <button
-                onClick={openBulkPriceMode}
-                className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
-              >
-                Edit Prices
-              </button>
+              <>
+                <button
+                  onClick={openBulkPriceMode}
+                  className="shrink-0 px-4 py-2 bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  Edit Prices
+                </button>
+                {items.some((i) => !i.category) && (
+                  <button
+                    onClick={openAiCategorize}
+                    className="shrink-0 px-4 py-2 bg-slate-800 border border-amber-500/30 text-amber-400 text-sm font-semibold rounded-lg hover:bg-amber-500/10 transition-colors"
+                  >
+                    Auto Categorize
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -750,6 +810,94 @@ export default function InventoryItemsPage() {
                 </button>
               </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* AI Auto Categorize overlay */}
+      {aiCatMode && (
+        <div className="fixed inset-0 z-50 bg-slate-950 flex flex-col">
+          <div className="border-b border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0">
+            <div>
+              <h2 className="text-lg font-bold text-slate-100">Auto Categorize</h2>
+              <p className="text-xs text-slate-500 mt-0.5">AI-suggested categories for uncategorized items. Deselect any you want to skip.</p>
+            </div>
+            <button onClick={() => setAiCatMode(false)} className="text-slate-500 hover:text-slate-300 text-2xl leading-none p-1">✕</button>
+          </div>
+
+          {aiCatDone ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <p className="text-4xl">✓</p>
+              <p className="text-lg font-semibold text-emerald-400">Categories applied!</p>
+            </div>
+          ) : aiCatLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <p className="text-slate-400 text-sm animate-pulse">Analyzing your items…</p>
+            </div>
+          ) : aiCatError && aiCatSuggestions.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <p className="text-red-400 text-sm">{aiCatError}</p>
+              <button onClick={() => setAiCatMode(false)} className="text-slate-400 text-sm hover:text-slate-200">Close</button>
+            </div>
+          ) : aiCatSuggestions.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <p className="text-slate-500 text-sm">All items already have a category.</p>
+              <button onClick={() => setAiCatMode(false)} className="text-slate-400 text-sm hover:text-slate-200">Close</button>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto">
+                <div className="sticky top-0 bg-slate-950 border-b border-slate-800 px-4 py-2 hidden sm:grid grid-cols-[1fr_180px_60px] gap-4">
+                  {['Item', 'Suggested Category', ''].map((h) => (
+                    <p key={h} className="text-[10px] text-slate-600 uppercase tracking-wider font-semibold">{h}</p>
+                  ))}
+                </div>
+                <div className="divide-y divide-slate-800/60">
+                  {aiCatSuggestions.map((s) => {
+                    const skipped = aiCatSkipped.has(s.id)
+                    return (
+                      <div key={s.id} className={`px-4 py-3 flex items-center gap-4 transition-colors ${skipped ? 'opacity-40' : ''}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-200 truncate">{s.name}</p>
+                          <p className="text-xs text-slate-600 sm:hidden mt-0.5">{s.suggested_category}</p>
+                        </div>
+                        <p className="hidden sm:block w-[180px] text-xs text-amber-400 font-medium">{s.suggested_category}</p>
+                        <button
+                          onClick={() => setAiCatSkipped((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(s.id)) next.delete(s.id); else next.add(s.id)
+                            return next
+                          })}
+                          className={`shrink-0 text-xs px-2 py-1 rounded transition-colors ${skipped ? 'text-amber-400 hover:text-slate-400' : 'text-slate-600 hover:text-slate-400'}`}
+                        >
+                          {skipped ? 'undo' : 'skip'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="border-t border-slate-800 px-4 py-4 flex items-center justify-between gap-4 shrink-0 bg-slate-950/95 backdrop-blur">
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs text-slate-500">
+                    {aiCatSuggestions.length - aiCatSkipped.size} of {aiCatSuggestions.length} will be updated
+                  </p>
+                  {aiCatError && <p className="text-xs text-red-400">{aiCatError}</p>}
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => setAiCatMode(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={applyAiCategories}
+                    disabled={aiCatApplying || aiCatSuggestions.length === aiCatSkipped.size}
+                    className="px-6 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg text-sm hover:bg-amber-400 disabled:opacity-50 transition-colors"
+                  >
+                    {aiCatApplying ? 'Applying…' : 'Apply Categories'}
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}
