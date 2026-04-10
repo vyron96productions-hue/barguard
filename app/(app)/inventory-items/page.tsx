@@ -60,6 +60,8 @@ export default function InventoryItemsPage() {
   const [aiCatError,     setAiCatError]     = useState<string | null>(null)
   const [aiCatSkipped,   setAiCatSkipped]   = useState<Set<string>>(new Set())
 
+  const [collapsedCats,  setCollapsedCats]  = useState<Set<string>>(new Set())
+
   const [editingId,      setEditingId]      = useState<string | null>(null)
   const [editName,       setEditName]       = useState('')
   const [editUnit,       setEditUnit]       = useState('')
@@ -310,13 +312,32 @@ export default function InventoryItemsPage() {
   const foodItems = items.filter(i => i.item_type === 'food')
   const showTypeSections = typeFilter === 'all' && beverageItems.length > 0 && foodItems.length > 0
 
+  function toggleCat(cat: string) {
+    setCollapsedCats((prev) => {
+      const next = new Set(prev)
+      if (next.has(cat)) next.delete(cat); else next.add(cat)
+      return next
+    })
+  }
+
   function renderCategoryGroups(list: InventoryItem[]) {
     const grouped = groupByCategory(list)
-    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([cat, catItems]) => (
+    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([cat, catItems]) => {
+      const collapsed = collapsedCats.has(cat)
+      return (
       <div key={cat} className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="px-4 sm:px-5 py-3 border-b border-slate-800 bg-slate-800/40">
-          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{cat}</h3>
-        </div>
+        <button
+          type="button"
+          onClick={() => toggleCat(cat)}
+          className="w-full px-4 sm:px-5 py-3 flex items-center justify-between gap-3 bg-slate-800/40 hover:bg-slate-800/60 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{cat}</h3>
+            <span className="text-[10px] text-slate-700">{catItems.length}</span>
+          </div>
+          <span className={`text-slate-600 text-xs transition-transform ${collapsed ? '-rotate-90' : ''}`}>▾</span>
+        </button>
+        {!collapsed && (
         <div className="divide-y divide-slate-800/50">
           {catItems.map((item) => (
             <div key={item.id}>
@@ -494,8 +515,9 @@ export default function InventoryItemsPage() {
             </div>
           ))}
         </div>
+        )}
       </div>
-    ))
+    )})
   }
 
   return (
