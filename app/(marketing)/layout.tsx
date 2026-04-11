@@ -100,8 +100,8 @@ export default async function MarketingLayout({ children }: { children: React.Re
           <div style={{ borderTop: '1px solid #1e293b', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 13, color: '#64748b' }}>© 2026 BarGuard. All rights reserved.</p>
             <a href="https://verdictiq.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-              <span style={{ fontSize: 12, color: '#475569', fontWeight: 600, letterSpacing: '0.04em' }}>Engineered By</span>
-              <Image src="/verdictiq-logo.png" alt="VerdictIQ" width={120} height={40} style={{ height: 28, width: 'auto', display: 'block', filter: 'invert(1) hue-rotate(180deg) saturate(1.5)' }} />
+              <span style={{ fontSize: 16, color: '#475569', fontWeight: 600, letterSpacing: '0.04em' }}>Engineered By</span>
+              <Image src="/verdictiq-logo.png" alt="VerdictIQ" width={240} height={80} style={{ height: 56, width: 'auto', display: 'block', filter: 'invert(1) hue-rotate(180deg) saturate(1.5)' }} />
             </a>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <a href="https://www.facebook.com/profile.php?id=61577657877985" target="_blank" rel="noreferrer" data-gtm-event="footer_click" data-gtm-label="footer_facebook" aria-label="BarGuard on Facebook" className="footer-social">

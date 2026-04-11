@@ -18,8 +18,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </TrialBanner>
           <div style={{ borderTop: '1px solid #1e293b', padding: '12px 24px', display: 'flex', justifyContent: 'center' }}>
             <a href="https://verdictiq.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-              <span style={{ fontSize: 11, color: '#334155', fontWeight: 600, letterSpacing: '0.04em' }}>Engineered By</span>
-              <Image src="/verdictiq-logo.png" alt="VerdictIQ" width={100} height={34} style={{ height: 22, width: 'auto', display: 'block', filter: 'invert(1) hue-rotate(180deg) saturate(1.5)', opacity: 0.5 }} />
+              <span style={{ fontSize: 14, color: '#334155', fontWeight: 600, letterSpacing: '0.04em' }}>Engineered By</span>
+              <Image src="/verdictiq-logo.png" alt="VerdictIQ" width={200} height={68} style={{ height: 44, width: 'auto', display: 'block', filter: 'invert(1) hue-rotate(180deg) saturate(1.5)', opacity: 0.5 }} />
             </a>
           </div>
         </main>
