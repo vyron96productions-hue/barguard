@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import DemoVideo from '@/components/DemoVideo'
 
 export const metadata: Metadata = {
   title: 'Stop Bar Loss Now — BarGuard',
@@ -399,6 +400,17 @@ export default function ScanPage() {
               </span>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── DEMO VIDEO ── */}
+      <section style={{ padding: '0 24px 80px' }}>
+        <div style={{ maxWidth: 880, margin: '0 auto' }}>
+          <p style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#64748b', marginBottom: 14 }}>See it in action</p>
+          <h2 style={{ textAlign: 'center', fontSize: 'clamp(22px, 3.5vw, 34px)', fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 32, fontFamily: 'var(--font-montserrat), sans-serif' }}>
+            Watch How Bar Owners Catch Losses in Minutes
+          </h2>
+          <DemoVideo />
         </div>
       </section>
 
