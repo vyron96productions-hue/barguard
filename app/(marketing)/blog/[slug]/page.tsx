@@ -14,6 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.metaTitle ?? `${post.title} — BarGuard Blog`,
     description: post.metaDescription ?? post.excerpt,
+    alternates: { canonical: `https://barguard.app/blog/${slug}` },
     openGraph: {
       title: post.metaTitle ?? post.title,
       description: post.metaDescription ?? post.excerpt,

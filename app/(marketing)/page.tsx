@@ -4,7 +4,8 @@ import DemoVideo from '@/components/DemoVideo'
 
 export const metadata: Metadata = {
   title: 'BarGuard — AI Bar Inventory Loss Detection Software',
-  description: 'Stop losing money to shrinkage, over-pouring, and theft. BarGuard tracks your bar inventory, syncs with Square and Clover, and shows you exactly where product is disappearing.',
+  description: 'Stop losing money to over-pouring, shrinkage, and theft. BarGuard tracks your bar inventory, syncs with your POS, and shows exactly where product disappears.',
+  alternates: { canonical: 'https://barguard.app' },
   openGraph: { url: 'https://barguard.app' },
 }
 

@@ -17,5 +17,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog/bar-inventory-management-guide`, lastModified: new Date('2026-03-10'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/over-pouring-bar-losses`, lastModified: new Date('2026-03-05'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/bartender-theft-signs-prevention`, lastModified: new Date('2026-03-31'), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/blog/how-to-reduce-liquor-cost-percentage`, lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.6 },
   ]
 }

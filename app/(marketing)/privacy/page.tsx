@@ -1,3 +1,12 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy — BarGuard',
+  description: 'Learn how BarGuard collects, uses, stores, and protects your data. We take your privacy seriously — read our full privacy policy here.',
+  alternates: { canonical: 'https://barguard.app/privacy' },
+  openGraph: { url: 'https://barguard.app/privacy' },
+}
+
 export default function PrivacyPage() {
   const h2Style: React.CSSProperties = {
     fontFamily: 'var(--font-montserrat)',

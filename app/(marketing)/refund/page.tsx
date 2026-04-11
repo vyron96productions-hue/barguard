@@ -1,3 +1,12 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Refund Policy — BarGuard',
+  description: 'BarGuard\'s refund and cancellation policy. Learn when refunds apply, how to cancel your subscription, and how to request a refund.',
+  alternates: { canonical: 'https://barguard.app/refund' },
+  openGraph: { url: 'https://barguard.app/refund' },
+}
+
 export default function RefundPage() {
   const h2Style: React.CSSProperties = {
     fontFamily: 'var(--font-montserrat)',

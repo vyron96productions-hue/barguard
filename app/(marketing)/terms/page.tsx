@@ -1,3 +1,12 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service — BarGuard',
+  description: 'Review BarGuard\'s terms of service governing your use of our bar inventory loss detection platform. Updated April 2026.',
+  alternates: { canonical: 'https://barguard.app/terms' },
+  openGraph: { url: 'https://barguard.app/terms' },
+}
+
 export default function TermsPage() {
   const h2Style: React.CSSProperties = {
     fontFamily: 'var(--font-montserrat)',

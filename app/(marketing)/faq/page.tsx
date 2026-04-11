@@ -4,6 +4,7 @@ import FAQClient from './FAQClient'
 export const metadata: Metadata = {
   title: 'Bar Inventory Software FAQ — BarGuard',
   description: 'Common questions about BarGuard — pricing plans, setup time, POS integrations with Square and Clover, data privacy, and how variance detection works.',
+  alternates: { canonical: 'https://barguard.app/faq' },
   openGraph: { url: 'https://barguard.app/faq' },
 }
 

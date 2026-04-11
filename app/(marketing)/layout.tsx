@@ -13,9 +13,7 @@ export const metadata: Metadata = {
   title: 'BarGuard — Stop Losing Money at Your Bar',
   description: 'AI-powered inventory loss detection for bars. Catch shrinkage, over-pouring, and stock discrepancies before they cost thousands.',
   metadataBase: new URL('https://barguard.app'),
-  alternates: { canonical: 'https://barguard.app' },
   openGraph: {
-    url: 'https://barguard.app',
     images: [{ url: '/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
   },
 }
