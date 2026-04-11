@@ -99,6 +99,10 @@ export default async function MarketingLayout({ children }: { children: React.Re
           </div>
           <div style={{ borderTop: '1px solid #1e293b', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <p style={{ fontSize: 13, color: '#64748b' }}>© 2026 BarGuard. All rights reserved.</p>
+            <a href="https://verdictiq.org" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+              <span style={{ fontSize: 12, color: '#475569', fontWeight: 600, letterSpacing: '0.04em' }}>Engineered By</span>
+              <Image src="/verdictiq-logo.png" alt="VerdictIQ" width={120} height={40} style={{ height: 28, width: 'auto', display: 'block', filter: 'invert(1) hue-rotate(180deg) saturate(1.5)' }} />
+            </a>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <a href="https://www.facebook.com/profile.php?id=61577657877985" target="_blank" rel="noreferrer" data-gtm-event="footer_click" data-gtm-label="footer_facebook" aria-label="BarGuard on Facebook" className="footer-social">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
