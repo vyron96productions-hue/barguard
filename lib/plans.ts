@@ -2,7 +2,7 @@ export type Plan = 'legacy' | 'basic' | 'pro' | 'enterprise'
 
 export const PRICE_IDS: Record<string, string> = {
   basic: 'price_1TC61SB1YIRqnSkI1hcpGoBP',
-  pro: 'price_1TC622B1YIRqnSkIWpD43TAi',
+  pro: 'price_1TLJxfB1YIRqnSkI7cUPFTiO',
   enterprise: 'price_1TC63DB1YIRqnSkIvxC4eHAu',
 }
 
