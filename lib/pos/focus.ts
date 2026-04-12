@@ -1,12 +1,12 @@
 import type { NormalizedSaleItem } from './types'
 
 // Focus POS API — credential-based (Basic Auth)
-// Base URL: https://focuslink.focuspos.com
+// Base URL: https://[focusDns].focuspos.com  (each client has their own subdomain)
 // Auth: Base64(apiKey:apiSecret) in Authorization header
-// venueKey identifies the location
+// storeKey (4–6 digit int) identifies the location
 
-function focusBase() {
-  return 'https://focuslink.focuspos.com'
+function focusBase(focusDns: string) {
+  return `https://${focusDns.trim().toLowerCase()}.focuspos.com`
 }
 
 function focusHeaders(apiKey: string, apiSecret: string) {
@@ -18,13 +18,14 @@ function focusHeaders(apiKey: string, apiSecret: string) {
   }
 }
 
-// Verify credentials by fetching checks — returns venue name
+// Verify credentials by fetching store info — returns venue name
 export async function connectFocus(
-  venueKey: string,
+  focusDns: string,
+  storeKey: string,
   apiKey: string,
   apiSecret: string
 ): Promise<{ location_name: string }> {
-  const res = await fetch(`${focusBase()}/v3/stores/${venueKey}/pos/checks`, {
+  const res = await fetch(`${focusBase(focusDns)}/v3/stores/${storeKey}/pos/checks`, {
     headers: focusHeaders(apiKey, apiSecret),
   })
 
@@ -32,20 +33,20 @@ export async function connectFocus(
     throw new Error('Invalid credentials — please check your Focus POS API key and secret')
   }
   if (!res.ok) {
-    throw new Error(`Focus POS connection failed (${res.status})`)
+    throw new Error(`Focus POS connection failed (${res.status}) — check your Focus DNS name and Store Key`)
   }
 
-  // Try to get venue name from first check's owner field, fallback to venueKey
   const data = await res.json()
   const checks = Array.isArray(data) ? data : (data.results ?? [])
-  const locationName = checks?.[0]?.owner ?? `Venue ${venueKey}`
+  const locationName = checks?.[0]?.owner ?? `${focusDns} / Store ${storeKey}`
 
   return { location_name: locationName }
 }
 
 // Fetch all closed checks for a date range, return normalized sale items
 export async function fetchFocusSales(
-  venueKey: string,
+  focusDns: string,
+  storeKey: string,
   apiKey: string,
   apiSecret: string,
   startDate: string,  // YYYY-MM-DD
@@ -54,7 +55,6 @@ export async function fetchFocusSales(
   const headers = focusHeaders(apiKey, apiSecret)
   const result: NormalizedSaleItem[] = []
 
-  // Iterate each day in the range
   const start = new Date(startDate)
   const end = new Date(endDate)
 
@@ -62,7 +62,7 @@ export async function fetchFocusSales(
     const businessDate = d.toISOString().slice(0, 10)
 
     const res = await fetch(
-      `${focusBase()}/v3/stores/${venueKey}/pos/checks?businessDate=${businessDate}`,
+      `${focusBase(focusDns)}/v3/stores/${storeKey}/pos/checks?businessDate=${businessDate}`,
       { headers }
     )
 
@@ -72,16 +72,14 @@ export async function fetchFocusSales(
     const checks = Array.isArray(data) ? data : (data.results ?? [])
 
     for (const check of checks) {
-      // Skip open/unclosed checks
-      if (check.open === true) continue
+      if (check.open === true) continue  // skip open/unclosed checks
 
       const saleDate = check.businessDate?.slice(0, 10) ?? businessDate
       const station = check.owner ?? null
 
       for (const seat of check.seats ?? []) {
         for (const item of seat.items ?? []) {
-          // Skip modifiers (level > 0) and zero/negative quantities
-          if ((item.level ?? 0) > 0) continue
+          if ((item.level ?? 0) > 0) continue  // skip modifiers
           const qty = typeof item.quantity === 'number' ? item.quantity : parseFloat(item.quantity ?? '1')
           if (!item.name || qty <= 0) continue
 

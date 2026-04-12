@@ -57,12 +57,12 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
     description: 'Connect your Focus POS system to automatically sync sales data.',
     authType: 'credentials',
     credentialFields: [
-      { key: 'venueKey', label: 'Venue Key', placeholder: '7166' },
+      { key: 'focusDns', label: 'Focus DNS Name', placeholder: 'mybar (from mybar.focuspos.com)' },
+      { key: 'storeKey', label: 'Store Key', placeholder: '7166 — 4–6 digit number from Focus support' },
       { key: 'apiKey', label: 'API Key', placeholder: 'Your Focus POS API key' },
       { key: 'apiSecret', label: 'API Secret', placeholder: '••••••••', type: 'password' },
     ],
-    docsUrl: 'https://focuslink.focuspos.com',
-    comingSoon: true,
+    docsUrl: 'https://focuspos.com',
   },
   {
     id: 'heartland',

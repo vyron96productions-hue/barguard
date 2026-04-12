@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { fetchFocusSales } from '@/lib/pos/focus'
-import { importPosItemsToSupabase, logPosSync } from '@/lib/pos/sync'
+import { importPosItemsToSupabase, autoCreateMenuItemsFromSales, logPosSync } from '@/lib/pos/sync'
 
 export async function POST(req: Request) {
   try {
@@ -27,19 +27,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Focus POS not connected' }, { status: 400 })
     }
 
-    const items = await fetchFocusSales(
-      conn.merchant_id,   // venueKey
-      conn.access_token,  // apiKey
-      conn.refresh_token, // apiSecret
-      period_start,
-      period_end
-    )
+    const focusDns  = conn.location_id   // DNS subdomain
+    const storeKey  = conn.merchant_id   // store key
+    const apiKey    = conn.access_token
+    const apiSecret = conn.refresh_token
+
+    if (!focusDns || !storeKey || !apiKey || !apiSecret) {
+      return NextResponse.json({ error: 'Focus POS credentials incomplete — please reconnect' }, { status: 400 })
+    }
+
+    const items = await fetchFocusSales(focusDns, storeKey, apiKey, apiSecret, period_start, period_end)
 
     const count = await importPosItemsToSupabase('focus', period_start, period_end, items, businessId)
+    await autoCreateMenuItemsFromSales(items, businessId)
     await logPosSync('focus', period_start, period_end, 'success', count, businessId)
 
     return NextResponse.json({ imported: count })
   } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Sync failed'
+    await logPosSync('focus', '', '', 'error', 0, '', msg).catch(() => {})
     return authErrorResponse(e)
   }
 }
