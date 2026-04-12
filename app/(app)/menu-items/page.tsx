@@ -68,6 +68,8 @@ export default function RecipeMappingPage() {
   const [inlineUnit, setInlineUnit]   = useState('oz')
   const [inlineErr, setInlineErr]     = useState<string | null>(null)
   const [inlineSaving, setInlineSaving] = useState(false)
+  const [inlineSearch, setInlineSearch] = useState('')
+  const [inlineDropOpen, setInlineDropOpen] = useState(false)
 
   // Inline recipe editing
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
@@ -357,6 +359,13 @@ export default function RecipeMappingPage() {
   function openExpanded(id: string) {
     setExpandedId(id === expandedId ? null : id)
     setInlineInvId(''); setInlineQty(''); setInlineUnit('oz'); setInlineErr(null)
+    setInlineSearch(''); setInlineDropOpen(false)
+  }
+
+  function cancelAddIngredient() {
+    setExpandedId(null)
+    setInlineInvId(''); setInlineQty(''); setInlineUnit('oz'); setInlineErr(null)
+    setInlineSearch(''); setInlineDropOpen(false)
   }
 
   async function handleAddIngredient(menuItemId: string) {
@@ -378,7 +387,7 @@ export default function RecipeMappingPage() {
     })
     const data = await res.json()
     if (!res.ok) { setInlineErr(data.error); setInlineSaving(false); return }
-    setInlineInvId(''); setInlineQty('')
+    setInlineInvId(''); setInlineQty(''); setInlineSearch(''); setInlineDropOpen(false)
     await fetchAll()
     setInlineSaving(false)
   }
@@ -659,20 +668,64 @@ export default function RecipeMappingPage() {
         {/* Inline add ingredient */}
         {isOpen && (
           <div className="border-t border-amber-500/20 bg-amber-500/[0.03] px-4 sm:px-5 py-4">
-            <p className="text-[10px] text-amber-500/60 uppercase tracking-wider font-semibold mb-3">
-              Add ingredient to {item.name}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={inlineInvId}
-                onChange={(e) => setInlineInvId(e.target.value)}
-                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] text-amber-500/60 uppercase tracking-wider font-semibold">
+                Add ingredient to {item.name}
+              </p>
+              <button
+                onClick={cancelAddIngredient}
+                className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-0.5 rounded hover:bg-slate-800"
               >
-                <option value="">Select ingredient…</option>
-                {inventoryItems.map((i) => (
-                  <option key={i.id} value={i.id}>{i.name}</option>
-                ))}
-              </select>
+                Cancel
+              </button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {/* Searchable ingredient combobox */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="Search ingredient…"
+                  value={inlineSearch}
+                  onChange={(e) => { setInlineSearch(e.target.value); setInlineDropOpen(true) }}
+                  onFocus={() => setInlineDropOpen(true)}
+                  onBlur={() => setTimeout(() => setInlineDropOpen(false), 150)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 placeholder-slate-500"
+                />
+                {inlineInvId && !inlineDropOpen && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-amber-400 pointer-events-none">
+                    ✓
+                  </span>
+                )}
+                {inlineDropOpen && (
+                  <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                    {inventoryItems
+                      .filter((inv) => inv.name.toLowerCase().includes(inlineSearch.toLowerCase()))
+                      .length === 0 ? (
+                      <p className="px-3 py-2 text-xs text-slate-500">No ingredients match</p>
+                    ) : (
+                      inventoryItems
+                        .filter((inv) => inv.name.toLowerCase().includes(inlineSearch.toLowerCase()))
+                        .map((inv) => (
+                          <button
+                            key={inv.id}
+                            type="button"
+                            onMouseDown={() => {
+                              setInlineInvId(inv.id)
+                              setInlineSearch(inv.name)
+                              setInlineDropOpen(false)
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm hover:bg-slate-700 transition-colors ${
+                              inlineInvId === inv.id ? 'text-amber-400 bg-slate-700/50' : 'text-slate-200'
+                            }`}
+                          >
+                            {inv.name}
+                            <span className="text-slate-500 text-xs ml-1">({inv.unit})</span>
+                          </button>
+                        ))
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2 sm:w-44">
                 <input
                   type="number"

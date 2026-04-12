@@ -135,7 +135,8 @@ export default function InventoryItemsPage() {
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
-    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setReorderLevel(''); setVendorId(''); setItemType('beverage')
+    setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setReorderLevel(''); setVendorId('')
+    setItemType(typeFilter === 'food' ? 'food' : 'beverage')
     if (data.auto_menu_item) {
       setAutoLinked(data.auto_menu_item)
       setTimeout(() => setAutoLinked(null), 5000)
