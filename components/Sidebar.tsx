@@ -3,18 +3,20 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useBusinessContext } from '@/app/(app)/BusinessContext'
-import { NAV_SECTIONS } from '@/lib/navigation'
+import { filteredNavSections } from '@/lib/navigation'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const { businessName, isAdmin } = useBusinessContext()
+  const { businessName, isAdmin, clientRole } = useBusinessContext()
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
     router.push('/login')
     router.refresh()
   }
+
+  const sections = filteredNavSections(clientRole)
 
   return (
     <aside className="hidden md:flex w-56 bg-slate-950 border-r border-slate-800/60 flex-col shrink-0">
@@ -31,7 +33,7 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0 overflow-y-auto">
-        {NAV_SECTIONS.map((section, si) => (
+        {sections.map((section, si) => (
           <div key={si} className={si > 0 ? 'mt-4 pt-4 border-t border-slate-800/50' : ''}>
             {section.label && (
               <p className="px-3 mb-1.5 text-[9px] font-semibold text-slate-700 uppercase tracking-[0.15em]">
@@ -64,14 +66,14 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Admin section — only visible to admins */}
+      {/* Internal BarGuard admin section — only for is_admin users */}
       {isAdmin && (
         <div className="px-3 pb-2 border-t border-slate-800/60 pt-3">
           <p className="px-3 mb-1.5 text-[9px] font-semibold text-red-700 uppercase tracking-[0.15em]">Admin</p>
           <div className="space-y-0.5">
             {[
-              { href: '/admin', label: 'Accounts' },
-              { href: '/admin/partners', label: 'Partners' },
+              { href: '/admin',         label: 'Accounts' },
+              { href: '/admin/partners',label: 'Partners' },
             ].map((item) => {
               const active = pathname.startsWith(item.href) && (item.href === '/admin' ? pathname === '/admin' : true)
               return (

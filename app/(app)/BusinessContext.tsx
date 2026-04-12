@@ -1,13 +1,16 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import type { ClientRole } from '@/lib/client-access'
 
 interface BusinessData {
   businessName: string | null
   username:     string | null
   plan:         string | null
   trialEndsAt:  string | null
-  isAdmin:      boolean
+  isAdmin:      boolean     // internal BarGuard admin — unrelated to client_role
+  clientRole:   ClientRole  // customer-facing permission tier
+  isOwner:      boolean
   /** True while the initial fetch is in flight */
   loading:      boolean
 }
@@ -18,6 +21,8 @@ const defaultData: BusinessData = {
   plan:         null,
   trialEndsAt:  null,
   isAdmin:      false,
+  clientRole:   'admin',   // safe default — UI hides nothing until we know
+  isOwner:      false,
   loading:      true,
 }
 
@@ -32,15 +37,17 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
       .then((d) => {
         setData({
           businessName: d.business_name ?? null,
-          username:     d.username     ?? null,
-          plan:         d.plan         ?? null,
+          username:     d.username      ?? null,
+          plan:         d.plan          ?? null,
           trialEndsAt:  d.trial_ends_at ?? null,
-          isAdmin:      d.is_admin     ?? false,
+          isAdmin:      d.is_admin      ?? false,
+          clientRole:   d.client_role   ?? 'admin',
+          isOwner:      d.is_owner      ?? false,
           loading:      false,
         })
       })
       .catch(() => setData({ ...defaultData, loading: false }))
-  }, []) // fetch once — data changes are rare and handled by full page reloads
+  }, [])
 
   return (
     <BusinessContext.Provider value={data}>

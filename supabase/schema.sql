@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS businesses (
 );
 
 -- ── user_businesses ─────────────────────────────────────────
--- Maps auth.users → businesses (many-to-many, typically one each for now)
+-- Maps auth.users → businesses.
+-- role = 'owner' | 'member'. client_role controls in-app permissions.
 CREATE TABLE IF NOT EXISTS user_businesses (
   id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     uuid        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -46,9 +47,40 @@ CREATE TABLE IF NOT EXISTS user_businesses (
   created_at  timestamptz DEFAULT now(),
   UNIQUE (user_id, business_id)
 );
--- Idempotent column additions for existing databases
--- is_admin was added via partner_migration.sql; this ensures fresh schema runs include it.
-ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS is_admin boolean NOT NULL DEFAULT false;
+-- Idempotent column additions (safe to rerun on existing databases)
+ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS is_admin            boolean     NOT NULL DEFAULT false;
+ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS client_role         text        NOT NULL DEFAULT 'admin';
+ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS membership_status   text        NOT NULL DEFAULT 'active';
+ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS invited_by_user_id  uuid        REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE user_businesses ADD COLUMN IF NOT EXISTS joined_at           timestamptz NOT NULL DEFAULT now();
+-- Constraints (drop first to make this idempotent)
+ALTER TABLE user_businesses DROP CONSTRAINT IF EXISTS ub_client_role_check;
+ALTER TABLE user_businesses ADD  CONSTRAINT ub_client_role_check      CHECK (client_role       IN ('admin','manager','employee'));
+ALTER TABLE user_businesses DROP CONSTRAINT IF EXISTS ub_membership_status_check;
+ALTER TABLE user_businesses ADD  CONSTRAINT ub_membership_status_check CHECK (membership_status IN ('active','removed'));
+
+-- ── business_user_invites ────────────────────────────────────
+-- Pending/accepted/revoked invite records for multi-user team access.
+-- See f001_team_invites.sql for the canonical migration source.
+CREATE TABLE IF NOT EXISTS business_user_invites (
+  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id         uuid        NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  email               text        NOT NULL,
+  normalized_email    text        NOT NULL,
+  client_role         text        NOT NULL CHECK (client_role IN ('admin','manager','employee')),
+  token_hash          text        NOT NULL UNIQUE,
+  invited_by_user_id  uuid        NOT NULL REFERENCES auth.users(id),
+  invitee_user_id     uuid        REFERENCES auth.users(id),
+  expires_at          timestamptz NOT NULL,
+  accepted_at         timestamptz,
+  revoked_at          timestamptz,
+  created_at          timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_bui_business_email ON business_user_invites(business_id, normalized_email);
+CREATE INDEX IF NOT EXISTS idx_bui_token_hash     ON business_user_invites(token_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_bui_open_invite
+  ON business_user_invites(business_id, normalized_email)
+  WHERE accepted_at IS NULL AND revoked_at IS NULL;
 
 -- ── vendors ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS vendors (
@@ -541,7 +573,9 @@ CREATE POLICY IF NOT EXISTS "pos_sync_logs_business" ON pos_sync_logs
 -- SECTION 10: Helper functions
 -- ============================================================
 
--- Returns the business_id for the currently authenticated user
+-- Returns the business_id for the currently authenticated user.
+-- Only considers ACTIVE memberships — removed members get NULL, which causes
+-- all downstream tenant_all RLS policies to reject their requests.
 CREATE OR REPLACE FUNCTION current_business_id()
 RETURNS uuid
 LANGUAGE sql
@@ -550,8 +584,58 @@ SECURITY DEFINER
 AS $$
   SELECT business_id
   FROM   user_businesses
-  WHERE  user_id = auth.uid()
+  WHERE  user_id           = auth.uid()
+    AND  membership_status = 'active'
   LIMIT  1
+$$;
+
+-- current_client_role(): effective permission tier for current user.
+-- Owners always resolve to 'admin'.
+CREATE OR REPLACE FUNCTION current_client_role()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT CASE
+    WHEN role = 'owner' THEN 'admin'
+    ELSE client_role
+  END
+  FROM user_businesses
+  WHERE user_id           = auth.uid()
+    AND membership_status = 'active'
+  LIMIT 1
+$$;
+
+-- is_business_owner(): true if current user has role = 'owner' in their active business.
+CREATE OR REPLACE FUNCTION is_business_owner()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_businesses
+    WHERE user_id           = auth.uid()
+      AND membership_status = 'active'
+      AND role              = 'owner'
+  )
+$$;
+
+-- has_minimum_client_role(required): true if effective role >= required.
+-- Role order: employee(1) < manager(2) < admin(3).
+CREATE OR REPLACE FUNCTION has_minimum_client_role(required text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+AS $$
+  SELECT CASE current_client_role()
+    WHEN 'admin'    THEN true
+    WHEN 'manager'  THEN required IN ('manager','employee')
+    WHEN 'employee' THEN required = 'employee'
+    ELSE false
+  END
 $$;
 
 -- Timestamp-aware sales query used by the calculations route.
@@ -598,22 +682,69 @@ $$;
 -- ============================================================
 
 -- ── user_businesses ──────────────────────────────────────────
+-- Self-select + admin/owner can view active members of their business
 DROP POLICY IF EXISTS "ub_select" ON user_businesses;
 CREATE POLICY "ub_select" ON user_businesses
-  FOR SELECT USING (user_id = auth.uid());
+  FOR SELECT USING (
+    user_id = auth.uid()
+    OR (
+      business_id      = current_business_id()
+      AND membership_status = 'active'
+      AND has_minimum_client_role('admin')
+    )
+  );
 
+-- Inserts via user session (original signup). Invite acceptance uses service role.
 DROP POLICY IF EXISTS "ub_insert" ON user_businesses;
 CREATE POLICY "ub_insert" ON user_businesses
   FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- Admin/owner can update non-owner active members (role changes, soft-delete)
+DROP POLICY IF EXISTS "ub_update" ON user_businesses;
+CREATE POLICY "ub_update" ON user_businesses
+  FOR UPDATE USING (
+    business_id      = current_business_id()
+    AND role        != 'owner'
+    AND membership_status = 'active'
+    AND has_minimum_client_role('admin')
+  );
 
 -- ── businesses ───────────────────────────────────────────────
 DROP POLICY IF EXISTS "biz_select" ON businesses;
 CREATE POLICY "biz_select" ON businesses
   FOR SELECT USING (id = current_business_id());
 
+-- Only admin/owner can update business settings
 DROP POLICY IF EXISTS "biz_update" ON businesses;
 CREATE POLICY "biz_update" ON businesses
-  FOR UPDATE USING (id = current_business_id());
+  FOR UPDATE USING (
+    id = current_business_id()
+    AND has_minimum_client_role('admin')
+  );
+
+-- ── business_user_invites ─────────────────────────────────────
+ALTER TABLE business_user_invites ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "bui_select" ON business_user_invites;
+CREATE POLICY "bui_select" ON business_user_invites
+  FOR SELECT USING (
+    business_id = current_business_id()
+    AND has_minimum_client_role('admin')
+  );
+
+DROP POLICY IF EXISTS "bui_insert" ON business_user_invites;
+CREATE POLICY "bui_insert" ON business_user_invites
+  FOR INSERT WITH CHECK (
+    business_id = current_business_id()
+    AND has_minimum_client_role('admin')
+  );
+
+DROP POLICY IF EXISTS "bui_update" ON business_user_invites;
+CREATE POLICY "bui_update" ON business_user_invites
+  FOR UPDATE USING (
+    business_id = current_business_id()
+    AND has_minimum_client_role('admin')
+  );
 
 -- ── tenant_all macro (business_id column present) ────────────
 DROP POLICY IF EXISTS "tenant_all" ON vendors;

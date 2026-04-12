@@ -4,6 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS_EXACT = ['/']
 const PUBLIC_PREFIXES = [
   '/login', '/signup', '/forgot-password', '/reset-password', '/check-email', '/verify-email', '/partner-login',
+  // accept-invite is public so unauthenticated users can land directly from email link
+  '/accept-invite',
   '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
   '/api/pos/square/callback', '/api/pos/clover/callback', '/api/pos/lightspeed/callback',
   '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
@@ -55,14 +57,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Email verification gate ────────────────────────────────────────────────
-  // app_metadata.email_verified is set server-side — no extra DB query needed.
-  // Treat undefined as verified (covers Google OAuth users).
   const emailVerified = user.app_metadata?.email_verified !== false
   if (!emailVerified) {
     return NextResponse.redirect(new URL('/check-email', request.url))
   }
 
   // ── Onboarding gate ────────────────────────────────────────────────────────
+  // Invited members have onboarding_complete set at invite acceptance time,
+  // so they bypass this redirect. Only genuine new owners hit it.
   const onboardingComplete = user.user_metadata?.onboarding_complete === true
   const isProfilePath  = pathname.startsWith('/profile')  || pathname.startsWith('/api/profile')
   const isPricingPath  = pathname.startsWith('/pricing')
@@ -73,66 +75,77 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Subscription / trial access gate ──────────────────────────────────────
-  // Only runs for app pages — not API routes, profile, pricing, admin, welcome.
   const isApiPath   = pathname.startsWith('/api/')
   const isAdminPath = pathname.startsWith('/admin')
   const isAppPage   = !isApiPath && !isProfilePath && !isPricingPath && !isAdminPath && !isWelcomePath
 
   if (isAppPage) {
-    // Short-circuit: if the access cookie is present the DB was already checked
-    // recently (within ACCESS_CACHE_SECONDS). Skips a Postgres round-trip on every
-    // page navigation. Stripe webhooks set plan/grace columns; worst-case lag = cache TTL.
-    const ACCESS_CACHE_SECONDS = 300 // 5 minutes
+    const ACCESS_CACHE_SECONDS = 300 // 5 min — see note below
     const ACCESS_COOKIE = 'bg_access'
 
+    // Short-circuit: cache hit means we already verified access recently.
+    // NOTE: If a member is removed, they retain access for up to ACCESS_CACHE_SECONDS
+    // after removal. This is an acceptable trade-off to avoid a DB round-trip on
+    // every page navigation. getAuthContext() (called by every API route) does NOT
+    // use a cache and will reject removed members immediately.
     if (request.cookies.get(ACCESS_COOKIE)?.value === user.id) {
       return response
     }
 
     const { data: ubRow } = await supabase
       .from('user_businesses')
-      .select('businesses(plan, trial_ends_at, stripe_subscription_id, payment_grace_ends_at)')
+      .select('role, businesses(plan, trial_ends_at, stripe_subscription_id, payment_grace_ends_at)')
       .eq('user_id', user.id)
+      .eq('membership_status', 'active')  // removed members get no valid ubRow here
       .single()
 
     const biz = (ubRow as any)?.businesses
+    const memberRole = (ubRow as any)?.role as string | undefined
 
-    if (biz) {
-      const now         = new Date()
-      const plan        = biz.plan as string | null
-      const subId       = biz.stripe_subscription_id as string | null
-      const trialEndsAt = biz.trial_ends_at ? new Date(biz.trial_ends_at) : null
-      const graceEndsAt = biz.payment_grace_ends_at ? new Date(biz.payment_grace_ends_at) : null
-
-      // ① Legacy plan — Vyron's permanent grant, always allow.
-      if (plan === 'legacy') {
-        console.log(`[middleware] legacy access: user=${user.id} path=${pathname}`)
-        response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
-        return response
-      }
-
-      // ② Payment grace period expired — payment failed > 3 days ago, still unpaid.
-      if (graceEndsAt && graceEndsAt <= now) {
-        response.cookies.delete(ACCESS_COOKIE)
-        return NextResponse.redirect(new URL('/pricing?payment_failed=1', request.url))
-      }
-
-      // ③ Active paid subscription (with or without an open grace period).
-      if (subId) {
-        response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
-        return response
-      }
-
-      // ④ No subscription — check trial.
-      if (trialEndsAt && trialEndsAt > now) {
-        response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
-        return response
-      }
-
-      // ⑤ Trial expired, no subscription, not legacy → lock out to pricing.
+    // No active membership found — user was removed or their business was deleted.
+    if (!biz) {
       response.cookies.delete(ACCESS_COOKIE)
-      return NextResponse.redirect(new URL('/pricing?expired=1', request.url))
+      return NextResponse.redirect(new URL('/login?error=access_revoked', request.url))
     }
+
+    const now         = new Date()
+    const plan        = biz.plan as string | null
+    const subId       = biz.stripe_subscription_id as string | null
+    const trialEndsAt = biz.trial_ends_at ? new Date(biz.trial_ends_at) : null
+    const graceEndsAt = biz.payment_grace_ends_at ? new Date(biz.payment_grace_ends_at) : null
+
+    // ① Legacy plan — always allow.
+    if (plan === 'legacy') {
+      response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
+      return response
+    }
+
+    // ② Payment grace period expired.
+    if (graceEndsAt && graceEndsAt <= now) {
+      response.cookies.delete(ACCESS_COOKIE)
+      // Non-owner members should not see the owner billing/trial flow.
+      const isOwner = memberRole === 'owner'
+      const dest = isOwner ? '/pricing?payment_failed=1' : '/pricing?member_locked=1'
+      return NextResponse.redirect(new URL(dest, request.url))
+    }
+
+    // ③ Active paid subscription.
+    if (subId) {
+      response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
+      return response
+    }
+
+    // ④ No subscription — check trial.
+    if (trialEndsAt && trialEndsAt > now) {
+      response.cookies.set(ACCESS_COOKIE, user.id, { maxAge: ACCESS_CACHE_SECONDS, httpOnly: true, sameSite: 'lax', path: '/' })
+      return response
+    }
+
+    // ⑤ Trial expired, no subscription, not legacy.
+    response.cookies.delete(ACCESS_COOKIE)
+    const isOwner = memberRole === 'owner'
+    const dest = isOwner ? '/pricing?expired=1' : '/pricing?member_locked=1'
+    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   return response

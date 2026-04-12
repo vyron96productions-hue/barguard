@@ -30,6 +30,8 @@ function LoginForm() {
       setError('Sign-in failed. If you registered with a username and password, use those to sign in — then you can link Google from your profile.')
     } else if (urlError === 'missing_code') {
       setError('Something went wrong with the sign-in flow. Please try again.')
+    } else if (urlError === 'access_revoked') {
+      setError('Your access to this bar has been removed. Contact the bar owner if you believe this is a mistake.')
     }
   }, [searchParams])
 

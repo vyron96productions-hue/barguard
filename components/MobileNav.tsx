@@ -4,13 +4,13 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useBusinessContext } from '@/app/(app)/BusinessContext'
-import { NAV_SECTIONS } from '@/lib/navigation'
+import { filteredNavSections } from '@/lib/navigation'
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { businessName } = useBusinessContext()
+  const { businessName, clientRole } = useBusinessContext()
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -18,6 +18,8 @@ export default function MobileNav() {
     router.push('/login')
     router.refresh()
   }
+
+  const sections = filteredNavSections(clientRole)
 
   return (
     <>
@@ -75,7 +77,7 @@ export default function MobileNav() {
 
             {/* Nav links */}
             <nav className="flex-1 px-3 py-4 space-y-0 overflow-y-auto">
-              {NAV_SECTIONS.map((section, si) => (
+              {sections.map((section, si) => (
                 <div key={si} className={si > 0 ? 'mt-4 pt-4 border-t border-slate-800/50' : ''}>
                   {section.label && (
                     <p className="px-3 mb-1.5 text-[9px] font-semibold text-slate-700 uppercase tracking-[0.15em]">

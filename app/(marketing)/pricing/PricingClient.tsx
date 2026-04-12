@@ -27,7 +27,8 @@ function PricingPageContent({ isSignedIn }: { isSignedIn: boolean }) {
   const [annual, setAnnual] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const expired = searchParams.get('expired') === '1'
+  const expired      = searchParams.get('expired')      === '1'
+  const memberLocked = searchParams.get('member_locked') === '1'
 
   async function handlePlanClick(plan: string) {
     if (!isSignedIn) {
@@ -97,22 +98,32 @@ function PricingPageContent({ isSignedIn }: { isSignedIn: boolean }) {
 
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
 
-        {/* Trial expired banner */}
-        {expired && (
+        {/* Trial expired banner — owner */}
+        {expired && !memberLocked && (
           <div style={{
-            margin: '24px 0 -24px',
-            padding: '14px 20px',
-            borderRadius: 12,
-            background: 'rgba(239,68,68,0.08)',
-            border: '1px solid rgba(239,68,68,0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
+            margin: '24px 0 -24px', padding: '14px 20px', borderRadius: 12,
+            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+            display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <span style={{ fontSize: 16 }}>⏰</span>
             <div>
               <p style={{ color: '#fca5a5', fontSize: 14, fontWeight: 600, margin: 0 }}>Your free trial has expired</p>
               <p style={{ color: '#f87171', fontSize: 12, margin: '2px 0 0', opacity: 0.8 }}>Choose a plan below to keep using BarGuard.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Access suspended banner — invited member (not the owner) */}
+        {memberLocked && (
+          <div style={{
+            margin: '24px 0 -24px', padding: '14px 20px', borderRadius: 12,
+            background: 'rgba(100,116,139,0.12)', border: '1px solid rgba(100,116,139,0.3)',
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <span style={{ fontSize: 16 }}>🔒</span>
+            <div>
+              <p style={{ color: '#cbd5e1', fontSize: 14, fontWeight: 600, margin: 0 }}>Your access is currently suspended</p>
+              <p style={{ color: '#94a3b8', fontSize: 12, margin: '2px 0 0', opacity: 0.9 }}>The bar owner needs to update their subscription to restore access. Please contact them directly.</p>
             </div>
           </div>
         )}

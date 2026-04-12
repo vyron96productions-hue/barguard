@@ -44,6 +44,8 @@ function ProfileContent() {
   const [usernameMsg, setUsernameMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isOwner, setIsOwner] = useState(false)
+  const [clientRole, setClientRole] = useState<string>('admin')
 
   useEffect(() => {
     fetch('/api/profile')
@@ -58,10 +60,15 @@ function ProfileContent() {
         setNewUsername(d.username ?? '')
         setPlan(d.plan ?? 'basic')
         setHasSubscription(d.has_subscription ?? false)
+        setIsOwner(d.is_owner ?? false)
+        setClientRole(d.client_role ?? 'admin')
         setLoading(false)
       })
       .catch(() => setLoading(false))
   }, [])
+
+  // Convenience — admin/owner can edit business settings
+  const canEditBusiness = clientRole === 'admin'
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
@@ -151,10 +158,13 @@ function ProfileContent() {
       <div>
         <h1 className="text-xl font-bold text-slate-100">Account Settings</h1>
         {username && <p className="text-sm text-slate-500 mt-1">@{username}</p>}
+        {!isOwner && (
+          <p className="text-xs text-slate-600 mt-1 capitalize">{clientRole} — contact the bar owner to change business settings</p>
+        )}
       </div>
 
-      {/* Bar Info */}
-      <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
+      {/* Bar Info — admin/owner only */}
+      {canEditBusiness && <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-slate-300 mb-5 uppercase tracking-wider">Bar Info</h2>
         <form onSubmit={handleSaveProfile} className="space-y-4">
           <div>
@@ -239,10 +249,10 @@ function ProfileContent() {
             {saving ? 'Saving…' : isNew ? 'Save & Choose a Plan →' : 'Save Changes'}
           </button>
         </form>
-      </div>
+      </div>}
 
-      {/* Change Username */}
-      <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
+      {/* Change Username — owner only (maps to username@barguard.app auth) */}
+      {isOwner && <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-slate-300 mb-1 uppercase tracking-wider">Change Username</h2>
         <p className="text-xs text-slate-600 mb-5">This is what you use to log in to BarGuard.</p>
         <form onSubmit={handleChangeUsername} className="space-y-4">
@@ -279,9 +289,9 @@ function ProfileContent() {
             {savingUsername ? 'Updating…' : 'Update Username'}
           </button>
         </form>
-      </div>
+      </div>}
 
-      {/* Change Password */}
+      {/* Change Password — all users */}
       <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-slate-300 mb-5 uppercase tracking-wider">Change Password</h2>
         <form onSubmit={handleChangePassword} className="space-y-4">
@@ -331,8 +341,8 @@ function ProfileContent() {
         </form>
       </div>
 
-      {/* Billing / Plan */}
-      <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
+      {/* Billing / Plan — owner only */}
+      {isOwner && <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-slate-300 mb-5 uppercase tracking-wider">Billing &amp; Plan</h2>
 
         {/* Current plan */}
@@ -409,7 +419,7 @@ function ProfileContent() {
             {managingBilling ? 'Redirecting…' : 'Manage subscription / Cancel'}
           </button>
         )}
-      </div>
+      </div>}
     </div>
   )
 }

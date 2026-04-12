@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 
+// GET — read drink library: all active members (including employees) can access
 export async function GET(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
+    // requireMinimumClientRole not called here — any active member may read
     const { searchParams } = new URL(req.url)
     const q = searchParams.get('q')?.trim().toLowerCase() ?? ''
 
@@ -39,9 +42,13 @@ export async function GET(req: NextRequest) {
   } catch (e) { return authErrorResponse(e) }
 }
 
+// POST — create/edit drink library entries: manager+ only
 export async function POST(req: NextRequest) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+
+    const { supabase, businessId } = ctx
     const body = await req.json()
     const { name, category, glassware, garnish, instructions, notes, ingredients } = body
 
@@ -50,13 +57,13 @@ export async function POST(req: NextRequest) {
     const { data: item, error } = await supabase
       .from('drink_library_items')
       .insert({
-        business_id: businessId,
-        name: name.trim(),
-        category: category?.trim() || null,
-        glassware: glassware?.trim() || null,
-        garnish: garnish?.trim() || null,
+        business_id:  businessId,
+        name:         name.trim(),
+        category:     category?.trim()     || null,
+        glassware:    glassware?.trim()    || null,
+        garnish:      garnish?.trim()      || null,
         instructions: instructions?.trim() || null,
-        notes: notes?.trim() || null,
+        notes:        notes?.trim()        || null,
       })
       .select('id')
       .single()

@@ -3,10 +3,8 @@ import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const { supabase, user, businessId } = await getAuthContext()
+    const { supabase, user, businessId, clientRole, isOwner } = await getAuthContext()
 
-    // Single query — join businesses + is_admin flag in one round-trip.
-    // is_admin is not in the generated types (added via migration) — cast the result shape explicitly.
     const { data: ubRaw } = await supabase
       .from('user_businesses')
       .select('is_admin, businesses(name, plan, trial_ends_at)')
@@ -31,7 +29,9 @@ export async function GET() {
       business_name: biz?.name ?? null,
       plan:          biz?.plan ?? null,
       trial_ends_at: biz?.trial_ends_at ?? null,
-      is_admin:      ub?.is_admin ?? false,
+      is_admin:      ub?.is_admin ?? false,  // internal BarGuard admin — unrelated to client_role
+      client_role:   clientRole,
+      is_owner:      isOwner,
     })
   } catch (e) {
     return authErrorResponse(e)
