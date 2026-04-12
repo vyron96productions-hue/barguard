@@ -128,6 +128,28 @@ export async function POST(req: NextRequest) {
       `,
     })
 
+    // Notify support of new signup (fire-and-forget — don't block on failure)
+    resend.emails.send({
+      from: 'BarGuard <noreply@barguard.app>',
+      to: 'support@barguard.app',
+      subject: `New signup: ${barName}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0f172a;color:#e2e8f0;border-radius:12px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+            <div style="width:40px;height:40px;background:#f59e0b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#0f172a">BG</div>
+            <span style="font-size:18px;font-weight:bold;color:#f1f5f9">BarGuard</span>
+          </div>
+          <h2 style="color:#f1f5f9;margin:0 0 16px">New account created</h2>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="color:#64748b;padding:6px 0;width:120px">Bar name</td><td style="color:#e2e8f0;padding:6px 0"><strong>${barName}</strong></td></tr>
+            <tr><td style="color:#64748b;padding:6px 0">Username</td><td style="color:#e2e8f0;padding:6px 0">@${username.toLowerCase().trim()}</td></tr>
+            <tr><td style="color:#64748b;padding:6px 0">Email</td><td style="color:#e2e8f0;padding:6px 0">${normalizedEmail}</td></tr>
+            <tr><td style="color:#64748b;padding:6px 0">Signed up</td><td style="color:#e2e8f0;padding:6px 0">${new Date().toUTCString()}</td></tr>
+          </table>
+        </div>
+      `,
+    }).catch(() => {/* ignore notification failures */})
+
     // Sign in so they get a session cookie (but email_verified = false gates the app)
     const supabase = await createSupabaseServerClient()
     await supabase.auth.signInWithPassword({ email: authEmail, password })
