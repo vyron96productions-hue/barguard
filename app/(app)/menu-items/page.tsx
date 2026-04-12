@@ -427,6 +427,17 @@ export default function RecipeMappingPage() {
     fetchAll()
   }
 
+  async function toggleItemType(item: MenuItemWithRecipes) {
+    const newType = isFood(item.item_type) ? 'drink' : 'food'
+    // Optimistic update
+    setMenuItems((prev) => prev.map((i) => i.id === item.id ? { ...i, item_type: newType as 'drink' | 'food' | 'beer' | 'other' } : i))
+    await fetch('/api/menu-items', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: item.id, item_type: newType }),
+    })
+  }
+
   async function saveSellPrice(menuItemId: string) {
     setPriceSaving(true)
     const res = await fetch('/api/menu-items', {
@@ -481,9 +492,17 @@ export default function RecipeMappingPage() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <p className="font-semibold text-slate-200 text-sm truncate">{item.name}</p>
-                {isFood(item.item_type) && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400/80 font-medium shrink-0">food</span>
-                )}
+                <button
+                  onClick={() => toggleItemType(item)}
+                  title={isFood(item.item_type) ? 'Click to mark as drink' : 'Click to mark as food'}
+                  className={`text-[10px] px-1.5 py-0.5 rounded border font-medium shrink-0 transition-colors ${
+                    isFood(item.item_type)
+                      ? 'bg-orange-500/10 border-orange-500/20 text-orange-400/80 hover:bg-orange-500/20'
+                      : 'bg-slate-800/60 border-slate-700/60 text-slate-600 hover:text-slate-400 hover:border-slate-600'
+                  }`}
+                >
+                  {isFood(item.item_type) ? 'food' : 'drink'}
+                </button>
               </div>
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 {item.category && (
