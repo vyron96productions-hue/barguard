@@ -7,6 +7,10 @@
     {
       "path": "/api/email-imports/cleanup",
       "schedule": "15 3 * * *"
+    },
+    {
+      "path": "/api/cron/sync-pos-sales",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

@@ -63,6 +63,16 @@ export default function SalesLogPage() {
     setLoading(false)
   }, [])
 
+  // When viewing today, auto-sync POS in the background then refresh data
+  useEffect(() => {
+    const isToday = mode === 'day' && date === today()
+    if (!isToday) return
+    fetch('/api/pos/auto-sync', { method: 'POST' })
+      .then((r) => r.json())
+      .then((res) => { if (res.synced) fetchData(date, date, stationFilter) })
+      .catch(() => {}) // Never block the page on sync failure
+  }, [date, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Refetch when date/station changes (day mode) or when station changes with a valid range
   useEffect(() => {
     if (mode === 'day') fetchData(date, date, stationFilter)
