@@ -104,15 +104,20 @@ export async function fetchToastSales(
     if (!Array.isArray(orders) || orders.length === 0) break
 
     for (const order of orders as any[]) {
+      // businessDate is YYYYMMDD integer — prefer it for the calendar date
       const saleDate = (order.businessDate as string | undefined)
         ? `${String(order.businessDate).slice(0, 4)}-${String(order.businessDate).slice(4, 6)}-${String(order.businessDate).slice(6, 8)}`
         : (order.openedDate as string | undefined)?.slice(0, 10) ?? startDate
+
+      // openedDate is an ISO 8601 timestamp — use it for precise shift filtering
+      const saleTimestamp: string | null = (order.openedDate as string | undefined) ?? null
 
       for (const check of order.checks ?? []) {
         for (const sel of check.selections ?? []) {
           if (!sel.displayName) continue
           items.push({
             sale_date: saleDate,
+            sale_timestamp: saleTimestamp,
             raw_item_name: sel.displayName as string,
             quantity_sold: typeof sel.quantity === 'number' ? sel.quantity : 1,
             gross_sales: typeof sel.preDiscountPrice === 'number' ? sel.preDiscountPrice : null,

@@ -62,6 +62,7 @@ export async function importPosItemsToSupabase(
       upload_id: upload.id,
       business_id: businessId,
       sale_date: item.sale_date,
+      sale_timestamp: item.sale_timestamp ?? null,
       raw_item_name: item.raw_item_name,
       menu_item_id: resolveMenuItemId(item.raw_item_name),
       quantity_sold: item.quantity_sold,

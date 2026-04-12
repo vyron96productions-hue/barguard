@@ -81,7 +81,8 @@ export const POS_PROVIDERS: PosProviderMeta[] = [
 
 // Normalized sale item — common format across all POS providers
 export interface NormalizedSaleItem {
-  sale_date: string      // YYYY-MM-DD
+  sale_date: string           // YYYY-MM-DD
+  sale_timestamp?: string | null  // full ISO 8601 UTC timestamp — enables shift time-window filtering
   raw_item_name: string
   quantity_sold: number
   gross_sales: number | null
