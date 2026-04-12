@@ -63,6 +63,7 @@ export default function InventoryItemsPage() {
   const [aiCatSkipped,   setAiCatSkipped]   = useState<Set<string>>(new Set())
 
   const [collapsedCats,  setCollapsedCats]  = useState<Set<string>>(new Set())
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   // Expected on hand (auto-calculated from sales + recipes since last count)
   const [expectedMap,    setExpectedMap]    = useState<Record<string, ExpectedOnHandItem>>({})
@@ -310,7 +311,15 @@ export default function InventoryItemsPage() {
     }
   }
 
-  const filteredItems = typeFilter === 'all' ? items : items.filter((i) => (i.item_type ?? 'beverage') === typeFilter)
+  const typeFilteredItems = typeFilter === 'all' ? items : items.filter((i) => (i.item_type ?? 'beverage') === typeFilter)
+  const filteredItems = categoryFilter === 'all'
+    ? typeFilteredItems
+    : typeFilteredItems.filter((i) => (i.category ?? 'Uncategorized') === categoryFilter)
+
+  // Categories present in the type-filtered set (for the category strip)
+  const availableCategories = ['all', ...Array.from(
+    new Set(typeFilteredItems.map((i) => i.category ?? 'Uncategorized'))
+  ).sort()]
 
   function groupByCategory(list: InventoryItem[]) {
     return list.reduce<Record<string, InventoryItem[]>>((acc, item) => {
@@ -326,9 +335,9 @@ export default function InventoryItemsPage() {
     ...items.map((i) => i.category).filter(Boolean) as string[],
   ])].sort()
 
-  const beverageItems = items.filter(i => (i.item_type ?? 'beverage') === 'beverage')
-  const foodItems = items.filter(i => i.item_type === 'food')
-  const showTypeSections = typeFilter === 'all' && beverageItems.length > 0 && foodItems.length > 0
+  const beverageItems = typeFilteredItems.filter(i => (i.item_type ?? 'beverage') === 'beverage')
+  const foodItems = typeFilteredItems.filter(i => i.item_type === 'food')
+  const showTypeSections = typeFilter === 'all' && categoryFilter === 'all' && beverageItems.length > 0 && foodItems.length > 0
 
   function toggleCat(cat: string) {
     setCollapsedCats((prev) => {
@@ -761,24 +770,55 @@ export default function InventoryItemsPage() {
         </div>
       )}
 
-      {/* Type filter */}
+      {/* Type filter + Category filter */}
       {items.length > 0 && (
-        <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
-          {(['all', 'beverage', 'food'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                typeFilter === t ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {t === 'all'
-                ? `All (${items.length})`
-                : t === 'beverage'
-                  ? `Beverages (${beverageItems.length})`
-                  : `Food (${foodItems.length})`}
-            </button>
-          ))}
+        <div className="space-y-2">
+          {/* Type strip */}
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
+            {(['all', 'beverage', 'food'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => { setTypeFilter(t); setCategoryFilter('all') }}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                  typeFilter === t ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {t === 'all'
+                  ? `All (${items.length})`
+                  : t === 'beverage'
+                    ? `Beverages (${beverageItems.length})`
+                    : `Food (${foodItems.length})`}
+              </button>
+            ))}
+          </div>
+
+          {/* Category strip — only when there are 2+ categories */}
+          {availableCategories.length > 2 && (
+            <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-0.5">
+              <div className="flex items-center gap-1 min-w-max">
+                {availableCategories.map((cat) => {
+                  const count = cat === 'all'
+                    ? typeFilteredItems.length
+                    : typeFilteredItems.filter((i) => (i.category ?? 'Uncategorized') === cat).length
+                  const active = categoryFilter === cat
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoryFilter(cat)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border ${
+                        active
+                          ? 'bg-slate-700 border-slate-600 text-slate-100'
+                          : 'bg-slate-900/50 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                      }`}
+                    >
+                      {cat === 'all' ? 'All Categories' : cat}
+                      <span className={`ml-1.5 ${active ? 'text-slate-400' : 'text-slate-700'}`}>{count}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1005,6 +1045,10 @@ export default function InventoryItemsPage() {
             <SectionDivider label="Food & Kitchen" count={foodItems.length} />
             {renderCategoryGroups(foodItems)}
           </div>
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="text-center py-12 text-slate-700 border border-slate-800 border-dashed rounded-2xl">
+          <p className="text-sm">No items in this category.</p>
         </div>
       ) : (
         <div className="space-y-3">
