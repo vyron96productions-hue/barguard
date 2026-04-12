@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { PRICE_IDS } from '@/lib/plans'
 import { logger } from '@/lib/logger'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 const ROUTE = 'stripe/webhook'
 
@@ -13,6 +16,30 @@ function getPlanFromPriceId(priceId: string) {
     if (id === priceId) return plan
   }
   return null
+}
+
+async function getBarInfo(subscriptionId: string): Promise<{ name: string; email: string } | null> {
+  const { data } = await adminSupabase
+    .from('businesses')
+    .select('name, contact_email')
+    .eq('stripe_subscription_id', subscriptionId)
+    .single()
+  return data ? { name: data.name ?? 'Unknown bar', email: data.contact_email ?? '' } : null
+}
+
+function notifySupport(subject: string, html: string) {
+  resend.emails.send({
+    from: 'BarGuard <noreply@barguard.app>',
+    to: 'support@barguard.app',
+    subject,
+    html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#0f172a;color:#e2e8f0;border-radius:12px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <div style="width:40px;height:40px;background:#f59e0b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;color:#0f172a">BG</div>
+        <span style="font-size:18px;font-weight:bold;color:#f1f5f9">BarGuard</span>
+      </div>
+      ${html}
+    </div>`,
+  }).catch(() => {/* ignore notification failures */})
 }
 
 export async function POST(req: NextRequest) {
@@ -101,6 +128,18 @@ export async function POST(req: NextRequest) {
       .update({ plan: null, stripe_subscription_id: null, payment_grace_ends_at: null })
       .eq('stripe_subscription_id', subscription.id)
     logger.info(ROUTE, 'Subscription deleted — account locked', { subscription_id: subscription.id })
+
+    const bar = await getBarInfo(subscription.id).catch(() => null)
+    notifySupport(
+      `Cancellation: ${bar?.name ?? subscription.id}`,
+      `<h2 style="color:#f1f5f9;margin:0 0 16px">Subscription cancelled</h2>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="color:#64748b;padding:6px 0;width:120px">Bar</td><td style="color:#e2e8f0;padding:6px 0"><strong>${bar?.name ?? '—'}</strong></td></tr>
+        <tr><td style="color:#64748b;padding:6px 0">Email</td><td style="color:#e2e8f0;padding:6px 0">${bar?.email ?? '—'}</td></tr>
+        <tr><td style="color:#64748b;padding:6px 0">Subscription</td><td style="color:#e2e8f0;padding:6px 0">${subscription.id}</td></tr>
+        <tr><td style="color:#64748b;padding:6px 0">Time</td><td style="color:#e2e8f0;padding:6px 0">${new Date().toUTCString()}</td></tr>
+      </table>`
+    )
   }
 
   // ── Payment failed → open a 3-day grace period ────────────────────────────
@@ -118,6 +157,19 @@ export async function POST(req: NextRequest) {
         .eq('stripe_subscription_id', subscriptionId)
         .is('payment_grace_ends_at', null)
       logger.warn(ROUTE, 'Payment failed — grace period opened', { subscription_id: subscriptionId, grace_ends_at: graceEndsAt })
+
+      const bar = await getBarInfo(subscriptionId).catch(() => null)
+      notifySupport(
+        `Payment failed: ${bar?.name ?? subscriptionId}`,
+        `<h2 style="color:#f1f5f9;margin:0 0 16px">Payment failed</h2>
+        <p style="color:#94a3b8;margin:0 0 16px">Their card was declined. They have a <strong style="color:#f59e0b">${PAYMENT_GRACE_DAYS}-day grace period</strong> before access is suspended.</p>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="color:#64748b;padding:6px 0;width:120px">Bar</td><td style="color:#e2e8f0;padding:6px 0"><strong>${bar?.name ?? '—'}</strong></td></tr>
+          <tr><td style="color:#64748b;padding:6px 0">Email</td><td style="color:#e2e8f0;padding:6px 0">${bar?.email ?? '—'}</td></tr>
+          <tr><td style="color:#64748b;padding:6px 0">Subscription</td><td style="color:#e2e8f0;padding:6px 0">${subscriptionId}</td></tr>
+          <tr><td style="color:#64748b;padding:6px 0">Grace ends</td><td style="color:#e2e8f0;padding:6px 0">${new Date(graceEndsAt).toUTCString()}</td></tr>
+        </table>`
+      )
     }
   }
 
