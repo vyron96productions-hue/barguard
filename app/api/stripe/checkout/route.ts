@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const { supabase, user, businessId } = await getAuthContext()
     const { plan, billing } = await req.json()
 
-    const priceId = PRICE_IDS[plan]
+    const priceKey = billing === 'annual' ? `${plan}_annual` : plan
+    const priceId = PRICE_IDS[priceKey]
     if (!priceId) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }

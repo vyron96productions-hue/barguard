@@ -4,6 +4,9 @@ export const PRICE_IDS: Record<string, string> = {
   basic: 'price_1TC61SB1YIRqnSkI1hcpGoBP',
   pro: 'price_1TLJxfB1YIRqnSkI7cUPFTiO',
   enterprise: 'price_1TC63DB1YIRqnSkIvxC4eHAu',
+  basic_annual: 'price_1TLKClB1YIRqnSkIloTMe4Sl',
+  pro_annual: 'price_1TLKDPB1YIRqnSkIdJnVue2T',
+  enterprise_annual: 'price_1TLKDuB1YIRqnSkIhgmyixyr',
 }
 
 export const PLAN_ORDER: Plan[] = ['basic', 'pro', 'enterprise', 'legacy']
