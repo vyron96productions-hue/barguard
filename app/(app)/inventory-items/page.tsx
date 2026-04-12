@@ -5,8 +5,10 @@ import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS } from '@/lib/conversions'
 import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
+import { formatQty } from '@/lib/conversions'
 import type { InventoryItem, Vendor } from '@/types'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
+import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
 
 const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
 const FOOD_UNITS = INVENTORY_FOOD_UNITS
@@ -62,6 +64,18 @@ export default function InventoryItemsPage() {
 
   const [collapsedCats,  setCollapsedCats]  = useState<Set<string>>(new Set())
 
+  // Expected on hand (auto-calculated from sales + recipes since last count)
+  const [expectedMap,    setExpectedMap]    = useState<Record<string, ExpectedOnHandItem>>({})
+
+  async function fetchExpected() {
+    const res = await fetch('/api/inventory/expected-on-hand')
+    if (!res.ok) return
+    const data: ExpectedOnHandItem[] = await res.json()
+    const map: Record<string, ExpectedOnHandItem> = {}
+    for (const e of data) map[e.id] = e
+    setExpectedMap(map)
+  }
+
   const [editingId,      setEditingId]      = useState<string | null>(null)
   const [editName,       setEditName]       = useState('')
   const [editUnit,       setEditUnit]       = useState('')
@@ -83,6 +97,7 @@ export default function InventoryItemsPage() {
       setVendors(Array.isArray(vendorsData) ? vendorsData : [])
       setLoading(false)
     }).catch(() => setLoading(false))
+    fetchExpected()
   }, [])
 
   async function fetchItems() {
@@ -505,6 +520,14 @@ export default function InventoryItemsPage() {
                     {item.vendor_id && vendors.find((v) => v.id === item.vendor_id) && (
                       <span className="text-xs text-indigo-400/70 shrink-0 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
                         {vendors.find((v) => v.id === item.vendor_id)!.name}
+                      </span>
+                    )}
+                    {expectedMap[item.id] && (
+                      <span
+                        title={`Expected on hand as of today.\nLast count: ${expectedMap[item.id].last_count_qty} on ${expectedMap[item.id].last_count_date}\n+ ${formatQty(expectedMap[item.id].purchases_since_oz, 'oz')} oz purchased\n− ${formatQty(expectedMap[item.id].deductions_since_oz, 'oz')} oz sold`}
+                        className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded cursor-default"
+                      >
+                        ~{formatQty(expectedMap[item.id].expected_qty, expectedMap[item.id].unit)} expected
                       </span>
                     )}
                   </div>

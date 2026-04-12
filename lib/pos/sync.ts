@@ -15,6 +15,26 @@ export async function importPosItemsToSupabase(
 ): Promise<number> {
   if (items.length === 0) return 0
 
+  // ── Idempotency: delete existing transactions for this date range + provider ──
+  // This prevents double-deductions when re-syncing a range that overlaps a
+  // previously synced range (e.g. sync 4/10, then sync 4/10–4/12).
+  const { data: existingUploads } = await adminSupabase
+    .from('sales_uploads')
+    .select('id')
+    .eq('business_id', businessId)
+    .eq('pos_type', provider)
+
+  if (existingUploads?.length) {
+    const uploadIds = existingUploads.map((u: { id: string }) => u.id)
+    await adminSupabase
+      .from('sales_transactions')
+      .delete()
+      .eq('business_id', businessId)
+      .gte('sale_date', periodStart)
+      .lte('sale_date', periodEnd)
+      .in('upload_id', uploadIds)
+  }
+
   const { data: upload, error: uploadErr } = await adminSupabase
     .from('sales_uploads')
     .insert({
@@ -23,6 +43,7 @@ export async function importPosItemsToSupabase(
       period_start: periodStart,
       period_end: periodEnd,
       row_count: items.length,
+      pos_type: provider,
     })
     .select()
     .single()

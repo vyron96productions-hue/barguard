@@ -54,6 +54,13 @@ export function convertToOz(quantity: number, unit: string): number {
   return quantity * factor
 }
 
+/** Reverse of convertToOz — converts oz back to the item's native unit. */
+export function convertFromOz(oz: number, unit: string): number {
+  const factor = UNIT_TO_OZ[unit.toLowerCase().trim()]
+  if (!factor) return oz // food/unknown units — no conversion
+  return oz / factor
+}
+
 export function isSupportedUnit(unit: string): boolean {
   const n = unit.toLowerCase().trim()
   return n in UNIT_TO_OZ || FOOD_UNITS.has(n)
