@@ -69,6 +69,7 @@ export default function InventoryItemsPage() {
   const [editCost,       setEditCost]       = useState('')
   const [editReorderLevel, setEditReorderLevel] = useState('')
   const [editVendorId,   setEditVendorId]   = useState('')
+  const [editItemType,   setEditItemType]   = useState<ItemType>('beverage')
   const [editSaving,     setEditSaving]     = useState(false)
   const [editError,      setEditError]      = useState<string | null>(null)
 
@@ -176,6 +177,7 @@ export default function InventoryItemsPage() {
     setEditCost(item.cost_per_unit != null ? String(item.cost_per_unit) : '')
     setEditReorderLevel(item.reorder_level != null ? String(item.reorder_level) : '')
     setEditVendorId(item.vendor_id ?? '')
+    setEditItemType((item.item_type as ItemType) ?? 'beverage')
     setEditError(null)
   }
 
@@ -191,6 +193,7 @@ export default function InventoryItemsPage() {
         name: editName,
         unit: editUnit,
         category: editCat || null,
+        item_type: editItemType,
         cost_per_unit: editCost !== '' ? parseFloat(editCost) : null,
         reorder_level: editReorderLevel !== '' ? parseFloat(editReorderLevel) : null,
         vendor_id: editVendorId || null,
@@ -346,6 +349,24 @@ export default function InventoryItemsPage() {
                   <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Edit Item</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="col-span-2">
+                      <label className="text-[10px] text-slate-500 uppercase tracking-wider">Type</label>
+                      <div className="mt-1 flex rounded-lg overflow-hidden border border-slate-700 text-xs font-semibold">
+                        {(['beverage', 'food'] as ItemType[]).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => {
+                              setEditItemType(t)
+                              setEditUnit(t === 'food' ? 'each' : 'bottle')
+                            }}
+                            className={`flex-1 py-2 transition-colors ${editItemType === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}
+                          >
+                            {t === 'beverage' ? 'Beverage' : 'Food'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-span-2">
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">Name</label>
                       <input
                         value={editName}
@@ -360,16 +381,9 @@ export default function InventoryItemsPage() {
                         onChange={(e) => setEditUnit(e.target.value)}
                         className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
                       >
-                        <optgroup label="Food / Kitchen">
-                          {FOOD_UNITS.map((u) => (
-                            <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Beverage">
-                          {BEVERAGE_UNITS.map((u) => (
-                            <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
-                          ))}
-                        </optgroup>
+                        {(editItemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => (
+                          <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
