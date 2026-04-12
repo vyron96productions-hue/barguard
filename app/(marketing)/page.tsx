@@ -6,7 +6,14 @@ export const metadata: Metadata = {
   title: 'BarGuard — AI Bar Inventory Loss Detection Software',
   description: 'Stop losing money to over-pouring, shrinkage, and theft. BarGuard tracks your bar inventory, syncs with your POS, and shows exactly where product disappears.',
   alternates: { canonical: 'https://barguard.app' },
-  openGraph: { url: 'https://barguard.app' },
+  openGraph: {
+    title: 'BarGuard — AI Bar Inventory Loss Detection Software',
+    description: 'Stop losing money to over-pouring, shrinkage, and theft. BarGuard tracks your bar inventory, syncs with your POS, and shows exactly where product disappears.',
+    url: 'https://barguard.app',
+    type: 'website',
+    siteName: 'BarGuard',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 export default function HomePage() {
@@ -19,15 +26,7 @@ export default function HomePage() {
     url: 'https://barguard.app',
     description: 'AI-powered bar inventory loss detection. Track shrinkage, over-pouring, and stock discrepancies before they cost you thousands.',
     screenshot: 'https://barguard.app/images/Dashboard.png',
-    featureList: [
-      'AI invoice scanning',
-      'Variance reports',
-      'POS integration with Square and Clover',
-      'Smart reorder alerts',
-      'Profit intelligence',
-      'Stock level tracking',
-      'Sales analytics',
-    ],
+    featureList: 'AI invoice scanning, Variance reports, POS integration with Square and Clover, Smart reorder alerts, Profit intelligence, Stock level tracking, Sales analytics',
     offers: [
       { '@type': 'Offer', name: 'Basic', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Core inventory workflow, AI invoice scanning, variance reports' },
       { '@type': 'Offer', name: 'Pro', price: '249', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Full POS integration, multi-user logins, vendor management, automated reorder' },

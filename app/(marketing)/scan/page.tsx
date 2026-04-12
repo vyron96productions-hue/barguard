@@ -7,7 +7,14 @@ export const metadata: Metadata = {
   title: 'Stop Bar Loss Now — BarGuard',
   description: "Your bar is losing money every night to overpouring, waste, and missing inventory. BarGuard shows you exactly where it's happening.",
   alternates: { canonical: 'https://barguard.app/scan' },
-  openGraph: { url: 'https://barguard.app/scan' },
+  openGraph: {
+    title: 'Stop Bar Loss Now — BarGuard',
+    description: 'Your bar is losing money every night to overpouring, waste, and missing inventory. BarGuard shows you exactly where it\'s happening.',
+    url: 'https://barguard.app/scan',
+    type: 'website',
+    siteName: 'BarGuard',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 export default function ScanPage() {

@@ -14,7 +14,11 @@ export const metadata: Metadata = {
   description: 'AI-powered inventory loss detection for bars. Catch shrinkage, over-pouring, and stock discrepancies before they cost thousands.',
   metadataBase: new URL('https://barguard.app'),
   openGraph: {
-    images: [{ url: '/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+    type: 'website',
+    siteName: 'BarGuard',
+    title: 'BarGuard — Stop Losing Money at Your Bar',
+    description: 'AI-powered inventory loss detection for bars. Catch shrinkage, over-pouring, and stock discrepancies before they cost thousands.',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
   },
 }
 
@@ -77,8 +81,12 @@ export default async function MarketingLayout({ children }: { children: React.Re
                   <Link href="/how-it-works" data-gtm-event="footer_click" data-gtm-label="footer_screenshots" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>How It Works</Link>
                   <Link href="/faq" data-gtm-event="footer_click" data-gtm-label="footer_faq" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>FAQ</Link>
                   <Link href="/about" data-gtm-event="footer_click" data-gtm-label="footer_why_barguard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Why BarGuard</Link>
+                  <Link href="/scan" data-gtm-event="footer_click" data-gtm-label="footer_scan" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Stop Bar Loss</Link>
                   <Link href="/contact" data-gtm-event="footer_click" data-gtm-label="footer_contact" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Contact</Link>
-                  <Link href="/dashboard" data-gtm-event="footer_click" data-gtm-label="footer_dashboard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Dashboard</Link>
+                  {isSignedIn
+                    ? <Link href="/dashboard" data-gtm-event="footer_click" data-gtm-label="footer_dashboard" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Dashboard</Link>
+                    : <Link href="/signup" data-gtm-event="footer_click" data-gtm-label="footer_signup" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Start Free Trial</Link>
+                  }
                 </div>
               </div>
               <div>

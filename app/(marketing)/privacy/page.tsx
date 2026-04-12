@@ -4,7 +4,14 @@ export const metadata: Metadata = {
   title: 'Privacy Policy — BarGuard',
   description: 'Learn how BarGuard collects, uses, stores, and protects your data. We take your privacy seriously — read our full privacy policy here.',
   alternates: { canonical: 'https://barguard.app/privacy' },
-  openGraph: { url: 'https://barguard.app/privacy' },
+  openGraph: {
+    title: 'Privacy Policy — BarGuard',
+    description: 'Learn how BarGuard collects, uses, stores, and protects your data. We take your privacy seriously.',
+    url: 'https://barguard.app/privacy',
+    type: 'website',
+    siteName: 'BarGuard',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 export default function PrivacyPage() {

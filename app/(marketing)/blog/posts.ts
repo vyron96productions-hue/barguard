@@ -32,6 +32,8 @@ export const POSTS: Post[] = [
     readTime: '7 min read',
     image: '/images/blogs/bar-shrinkage-how-much-are-you-losing.png',
     imageAlt: 'bar owner reviewing inventory shrinkage data',
+    metaTitle: 'How Much Is Your Bar Losing to Shrinkage?',
+    metaDescription: 'The average bar loses 20–25% of inventory to shrinkage every year. Here\'s what\'s causing it, how to calculate your number, and how to stop it.',
     content: [
       {
         type: 'p',
@@ -173,6 +175,8 @@ export const POSTS: Post[] = [
     readTime: '9 min read',
     image: '/images/blogs/bar-inventory-management-guide.png',
     imageAlt: 'bar inventory management system overview',
+    metaTitle: 'Bar Inventory Management: Complete Guide for Bar Owners',
+    metaDescription: 'Most bars lose thousands a month to poor inventory tracking. This guide walks you through how to set up a real system and the key numbers to watch.',
     content: [
       {
         type: 'p',
@@ -325,6 +329,8 @@ export const POSTS: Post[] = [
     readTime: '6 min read',
     image: '/images/blogs/over-pouring-bar-losses.png',
     imageAlt: 'bartender overpouring drink causing bar revenue loss',
+    metaTitle: 'Over-Pouring: The Hidden Cost Draining Your Bar Revenue',
+    metaDescription: 'A quarter ounce of extra pour per drink costs hundreds per shift. Learn how to detect over-pouring and stop the silent profit leak at your bar.',
     content: [
       {
         type: 'p',
@@ -459,6 +465,8 @@ export const POSTS: Post[] = [
     excerpt: 'Internal theft is responsible for up to 40% of bar losses — and most owners only find out months later. Here\'s how to recognize the warning signs and stop it without torching your team culture.',
     category: 'Loss Prevention',
     date: 'March 31, 2026',
+    metaTitle: 'Bartender Theft: Signs & How to Stop It at Your Bar',
+    metaDescription: 'Internal theft causes up to 40% of bar losses — and most owners find out months too late. Learn the warning signs and how to stop it without destroying your team.',
     readTime: '8 min read',
     image: '/images/blogs/bartender-theft-signs-prevention.png',
     imageAlt: 'bar owner detecting bartender theft with inventory data',

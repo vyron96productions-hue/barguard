@@ -5,7 +5,14 @@ export const metadata: Metadata = {
   title: 'Bar Inventory Software FAQ — BarGuard',
   description: 'Common questions about BarGuard — pricing plans, setup time, POS integrations with Square and Clover, data privacy, and how variance detection works.',
   alternates: { canonical: 'https://barguard.app/faq' },
-  openGraph: { url: 'https://barguard.app/faq' },
+  openGraph: {
+    title: 'Bar Inventory Software FAQ — BarGuard',
+    description: 'Common questions about BarGuard — pricing, setup time, POS integrations, data privacy, and how variance detection works.',
+    url: 'https://barguard.app/faq',
+    type: 'website',
+    siteName: 'BarGuard',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 const faqSchema = {

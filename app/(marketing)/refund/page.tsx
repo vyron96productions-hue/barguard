@@ -4,7 +4,14 @@ export const metadata: Metadata = {
   title: 'Refund Policy — BarGuard',
   description: 'BarGuard\'s refund and cancellation policy. Learn when refunds apply, how to cancel your subscription, and how to request a refund.',
   alternates: { canonical: 'https://barguard.app/refund' },
-  openGraph: { url: 'https://barguard.app/refund' },
+  openGraph: {
+    title: 'Refund Policy — BarGuard',
+    description: 'BarGuard\'s refund and cancellation policy — when refunds apply, how to cancel, and how to request a refund.',
+    url: 'https://barguard.app/refund',
+    type: 'website',
+    siteName: 'BarGuard',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 export default function RefundPage() {

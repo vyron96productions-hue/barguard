@@ -4,7 +4,14 @@ export const metadata: Metadata = {
   title: 'Terms of Service — BarGuard',
   description: 'Review BarGuard\'s terms of service governing your use of our bar inventory loss detection platform. Updated April 2026.',
   alternates: { canonical: 'https://barguard.app/terms' },
-  openGraph: { url: 'https://barguard.app/terms' },
+  openGraph: {
+    title: 'Terms of Service — BarGuard',
+    description: 'Review BarGuard\'s terms of service governing your use of our bar inventory loss detection platform.',
+    url: 'https://barguard.app/terms',
+    type: 'website',
+    siteName: 'BarGuard',
+    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+  },
 }
 
 export default function TermsPage() {
