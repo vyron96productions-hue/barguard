@@ -159,7 +159,7 @@ export default function CategoryCombobox({
                 <button
                   key={cat}
                   type="button"
-                  onPointerDown={(e) => { e.preventDefault(); select(cat) }}
+                  onClick={() => select(cat)}
                   className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
                     isActive
                       ? 'bg-amber-500/15 text-amber-300'
@@ -177,7 +177,7 @@ export default function CategoryCombobox({
             {canCreate && (
               <button
                 type="button"
-                onPointerDown={(e) => { e.preventDefault(); select(query.trim()) }}
+                onClick={() => select(query.trim())}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
                   activeIdx === filtered.length
                     ? 'bg-amber-500/15 text-amber-300'
