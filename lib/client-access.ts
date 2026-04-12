@@ -4,7 +4,7 @@
  * team-access feature. Import from here instead of duplicating role logic.
  */
 
-import { AuthError } from '@/lib/auth'
+import { AuthError } from '@/lib/errors'
 
 export type ClientRole     = 'employee' | 'manager' | 'admin'
 export type MembershipRole = 'owner' | 'member'

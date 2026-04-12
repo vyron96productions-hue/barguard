@@ -3,10 +3,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { logError } from '@/lib/logger'
 import type { ClientRole, MembershipRole } from '@/lib/client-access'
 import { effectiveClientRole } from '@/lib/client-access'
+import { AuthError } from '@/lib/errors'
 
-export class AuthError extends Error {
-  constructor(message: string, public status = 401) { super(message) }
-}
+export { AuthError }
 
 /**
  * Call from any API route handler to get the authenticated user's context.
