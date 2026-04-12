@@ -5,9 +5,9 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
 const prices = {
-  basic: [99, 79],
-  pro: [199, 159],
-  ent: [399, 319],
+  basic: [129, 103],
+  pro: [249, 199],
+  ent: [449, 359],
 }
 
 function CheckIcon() {
@@ -224,7 +224,7 @@ function PricingPageContent({ isSignedIn }: { isSignedIn: boolean }) {
             <div style={{ fontSize: 11, fontFamily: 'monospace', letterSpacing: '0.08em', color: '#475569', textTransform: 'uppercase' as const, marginBottom: 14 }}>Included</div>
             <p style={{ fontSize: 12, color: '#475569', fontStyle: 'italic', borderLeft: '2px solid rgba(245,158,11,0.3)', paddingLeft: 10, marginBottom: 14, lineHeight: 1.5 }}>Everything in Basic, plus:</p>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 32 }}>
-              {['Full sales history', 'Vendor management', 'Automated reorder suggestions', 'POS integration', 'Data export'].map((f) => (
+              {['Multi-user logins', 'Full sales history', 'Vendor management', 'Automated reorder suggestions', 'POS integration', 'Data export'].map((f) => (
                 <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: '#94a3b8', lineHeight: 1.45 }}>
                   <CheckIcon />{f}
                 </li>

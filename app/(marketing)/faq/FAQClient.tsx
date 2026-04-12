@@ -41,7 +41,7 @@ const FAQS = [
       },
       {
         q: 'What is the annual discount?',
-        a: 'Paying annually saves 20% compared to monthly billing. Basic goes from $99/mo to $79/mo, Pro from $199/mo to $159/mo, and Enterprise from $399/mo to $319/mo. Annual plans are billed in full upfront and are eligible for pro-rated refunds if you cancel.',
+        a: 'Paying annually saves 20% compared to monthly billing. Basic goes from $129/mo to $103/mo, Pro from $249/mo to $199/mo, and Enterprise from $449/mo to $359/mo. Annual plans are billed in full upfront and are eligible for pro-rated refunds if you cancel.',
       },
       {
         q: 'Do you offer refunds?',

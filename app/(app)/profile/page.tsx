@@ -353,9 +353,9 @@ function ProfileContent() {
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
               {plan === 'legacy' && 'Full access — Legacy member'}
-              {plan === 'basic' && '$99/mo — Inventory, scanning, and alerts'}
-              {plan === 'pro' && '$199/mo — Everything + reorder & POS'}
-              {plan === 'enterprise' && '$399/mo — Everything + up to 5 locations'}
+              {plan === 'basic' && '$129/mo — Inventory, scanning, and alerts'}
+              {plan === 'pro' && '$249/mo — Everything + multi-user logins & POS'}
+              {plan === 'enterprise' && '$449/mo — Everything + up to 5 locations'}
             </p>
           </div>
           <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-400">Active</span>
@@ -367,8 +367,8 @@ function ProfileContent() {
             {plan === 'basic' && (
               <PlanCard
                 name="Pro"
-                price="$199/mo"
-                description="Full history, vendor management, automated reorder, POS integration, data export"
+                price="$249/mo"
+                description="Multi-user logins, full history, vendor management, automated reorder, POS integration, data export"
                 onUpgrade={async () => {
                   setUpgradingTo('pro')
                   const res = await fetch('/api/stripe/checkout', {
@@ -385,7 +385,7 @@ function ProfileContent() {
             )}
             <PlanCard
               name="Enterprise"
-              price="$399/mo"
+              price="$449/mo"
               description="Everything in Pro + up to 5 locations and priority support"
               onUpgrade={async () => {
                 setUpgradingTo('enterprise')

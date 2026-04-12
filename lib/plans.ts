@@ -24,7 +24,7 @@ export const PLAN_LABELS: Record<Plan, string> = {
 
 export const PLAN_PRICES: Record<Plan, string> = {
   legacy: 'Free',
-  basic: '$99/mo',
-  pro: '$199/mo',
-  enterprise: '$399/mo',
+  basic: '$129/mo',
+  pro: '$249/mo',
+  enterprise: '$449/mo',
 }

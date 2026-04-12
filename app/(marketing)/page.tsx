@@ -29,9 +29,9 @@ export default function HomePage() {
       'Sales analytics',
     ],
     offers: [
-      { '@type': 'Offer', name: 'Basic', price: '99', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Core inventory workflow, AI invoice scanning, variance reports' },
-      { '@type': 'Offer', name: 'Pro', price: '199', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Full POS integration, vendor management, automated reorder' },
-      { '@type': 'Offer', name: 'Enterprise', price: '399', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Multi-location, priority support, custom onboarding' },
+      { '@type': 'Offer', name: 'Basic', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Core inventory workflow, AI invoice scanning, variance reports' },
+      { '@type': 'Offer', name: 'Pro', price: '249', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Full POS integration, multi-user logins, vendor management, automated reorder' },
+      { '@type': 'Offer', name: 'Enterprise', price: '449', priceCurrency: 'USD', url: 'https://barguard.app/pricing', description: 'Multi-location, priority support, custom onboarding' },
     ],
   }
 
@@ -500,7 +500,7 @@ export default function HomePage() {
             Simple, <em style={{ color: '#f59e0b' }}>transparent</em> pricing
           </h2>
           <p style={{ fontSize: 16, color: '#64748b', marginBottom: 36, lineHeight: 1.65 }}>
-            Plans starting at $99/month. Try free for 14 days — no credit card required.
+            Plans starting at $129/month. Try free for 14 days — no credit card required.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' as const }}>
             <a href="/pricing" className="btn-primary" data-gtm-event="cta_click" data-gtm-label="homepage_pricing_see_plans" style={{ padding: '14px 28px', fontSize: 15 }}>
