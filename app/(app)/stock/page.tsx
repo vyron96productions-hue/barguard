@@ -6,6 +6,7 @@ import { formatPackBreakdown } from '@/lib/beer-packaging'
 import { UNIT_LABELS, formatQty, INVENTORY_BEVERAGE_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
 import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
+import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
 
 const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
 const FOOD_UNITS_LIST = Array.from(FOOD_UNITS_SET)
@@ -105,6 +106,9 @@ export default function StockPage() {
   const [aiCatError, setAiCatError] = useState('')
   const [aiCatInfo, setAiCatInfo] = useState('')
 
+  // Expected on hand — fetched from sales × recipes since last physical count
+  const [expectedMap, setExpectedMap] = useState<Record<string, ExpectedOnHandItem>>({})
+
   // Bottle scan
   const [scanTarget, setScanTarget] = useState<{ itemId: string; itemName: string; unit: string } | null>(null)
 
@@ -119,11 +123,21 @@ export default function StockPage() {
       .then((data) => setItems(Array.isArray(data) ? data : []))
   }
 
+  async function fetchExpected() {
+    const res = await fetch('/api/inventory/expected-on-hand')
+    if (!res.ok) return
+    const data: ExpectedOnHandItem[] = await res.json()
+    const map: Record<string, ExpectedOnHandItem> = {}
+    for (const e of data) map[e.id] = e
+    setExpectedMap(map)
+  }
+
   useEffect(() => {
     fetch('/api/stock-levels')
       .then((r) => r.json())
       .then((data) => { setItems(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => setLoading(false))
+    fetchExpected()
   }, [])
 
   function openCountMode() {
@@ -134,6 +148,7 @@ export default function StockPage() {
     setAnalyzing(false)
     setAnalysisResult(null)
     setCountMode(true)
+    fetchExpected() // refresh so we have latest sales deductions
   }
 
   async function openAiCategorize() {
@@ -245,12 +260,28 @@ export default function StockPage() {
     }
   }
 
-  const countFiltered = items.filter((i) => {
-    if (countTypeFilter === 'beverage' && isFood(i)) return false
-    if (countTypeFilter === 'food' && !isFood(i)) return false
-    if (countSearch && !i.name.toLowerCase().includes(countSearch.toLowerCase())) return false
-    return true
-  })
+  // Items with sales since their last physical count — need to be checked first
+  const needsAttentionIds = new Set(
+    items
+      .filter((i) => (expectedMap[i.id]?.deductions_since_oz ?? 0) > 0)
+      .map((i) => i.id)
+  )
+  const needsAttentionCount = needsAttentionIds.size
+
+  const countFiltered = items
+    .filter((i) => {
+      if (countTypeFilter === 'beverage' && isFood(i)) return false
+      if (countTypeFilter === 'food' && !isFood(i)) return false
+      if (countSearch && !i.name.toLowerCase().includes(countSearch.toLowerCase())) return false
+      return true
+    })
+    .sort((a, b) => {
+      // Items sold since last count float to the top
+      const aNeeds = needsAttentionIds.has(a.id) ? 0 : 1
+      const bNeeds = needsAttentionIds.has(b.id) ? 0 : 1
+      if (aNeeds !== bNeeds) return aNeeds - bNeeds
+      return a.name.localeCompare(b.name)
+    })
 
   const countEntered = Object.values(countValues).filter((v) => v !== '').length
 
@@ -362,9 +393,14 @@ export default function StockPage() {
           )}
           <button
             onClick={openCountMode}
-            className="text-sm px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-bold hover:bg-amber-400 active:bg-amber-300 transition-colors"
+            className="relative text-sm px-4 py-2 rounded-lg bg-amber-500 text-slate-900 font-bold hover:bg-amber-400 active:bg-amber-300 transition-colors"
           >
             Count Now
+            {needsAttentionCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-amber-300 text-slate-900 text-[10px] font-bold px-1">
+                {needsAttentionCount}
+              </span>
+            )}
           </button>
           <a
             href="/uploads"
@@ -635,6 +671,16 @@ export default function StockPage() {
           </div>
         </div>
 
+        {/* Attention banner — only shown if there are items that need counting */}
+        {needsAttentionCount > 0 && !countDone && (
+          <div className="px-4 py-2.5 bg-amber-500/[0.07] border-b border-amber-500/20 flex items-center gap-2 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+            <p className="text-xs text-amber-300/80">
+              <span className="font-semibold">{needsAttentionCount} item{needsAttentionCount !== 1 ? 's' : ''}</span> sold since last count — sorted to top
+            </p>
+          </div>
+        )}
+
         {/* Item list */}
         <div className="flex-1 overflow-y-auto">
           {countDone ? (
@@ -724,7 +770,18 @@ export default function StockPage() {
               {countFiltered.map((item) => {
                 const val = countValues[item.id] ?? ''
                 const hasVal = val !== ''
-                const expected = item.has_estimate ? item.estimated_qty : item.quantity_on_hand
+
+                // Use real expected-on-hand if available (accounts for sales since last count),
+                // else fall back to stock-levels estimate or last physical count
+                const expItem = expectedMap[item.id]
+                const expected = expItem
+                  ? expItem.expected_qty
+                  : (item.has_estimate ? item.estimated_qty : item.quantity_on_hand)
+
+                // Highlight when this item has been sold since last count and isn't entered yet
+                const soldSinceCount = needsAttentionIds.has(item.id)
+                const needsHighlight = soldSinceCount && !hasVal
+
                 const actual = hasVal ? parseFloat(val) : null
                 const gapSeverity = (() => {
                   if (actual === null || expected === null || expected <= 0) return 'none'
@@ -733,12 +790,14 @@ export default function StockPage() {
                   if (pct <= 0.15) return 'warn'
                   return 'critical'
                 })()
-                const inputBorder = {
-                  none: 'border-slate-700 focus:border-amber-500/60',
-                  ok: 'border-emerald-500/60 focus:border-emerald-500',
-                  warn: 'border-amber-500/60 focus:border-amber-500',
-                  critical: 'border-red-500/60 focus:border-red-500',
-                }[gapSeverity]
+                const inputBorder = needsHighlight
+                  ? 'border-amber-500/40 focus:border-amber-500'
+                  : {
+                    none: 'border-slate-700 focus:border-amber-500/60',
+                    ok: 'border-emerald-500/60 focus:border-emerald-500',
+                    warn: 'border-amber-500/60 focus:border-amber-500',
+                    critical: 'border-red-500/60 focus:border-red-500',
+                  }[gapSeverity]
                 const gapIndicator = {
                   none: null,
                   ok: <span className="text-emerald-400 text-sm leading-none">✓</span>,
@@ -749,20 +808,34 @@ export default function StockPage() {
                 return (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                      gapSeverity === 'critical' ? 'bg-red-500/5' :
-                      gapSeverity === 'warn' ? 'bg-amber-500/5' :
-                      gapSeverity === 'ok' ? 'bg-emerald-500/5' : ''
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors border-l-2 ${
+                      needsHighlight
+                        ? 'bg-amber-500/[0.06] border-amber-500/50'
+                        : gapSeverity === 'critical' ? 'bg-red-500/5 border-transparent' :
+                          gapSeverity === 'warn'     ? 'bg-amber-500/5 border-transparent' :
+                          gapSeverity === 'ok'       ? 'bg-emerald-500/5 border-transparent' :
+                                                       'border-transparent'
                     }`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-200 truncate">{item.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-medium truncate ${needsHighlight ? 'text-amber-100' : 'text-slate-200'}`}>
+                          {item.name}
+                        </p>
+                        {needsHighlight && (
+                          <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-amber-500/80 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                            Count this
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {item.category && <span className="text-xs text-slate-600">{item.category}</span>}
                         {expected !== null ? (
-                          <span className="text-xs text-slate-500">
-                            Expected: <span className="text-slate-300 font-medium">{Number(expected.toFixed(2))} {UNIT_LABELS[item.unit] ?? item.unit}</span>
-                            {item.has_estimate && <span className="ml-1 text-sky-500/70">est.</span>}
+                          <span className={`text-xs ${needsHighlight ? 'text-amber-400/90' : 'text-slate-500'}`}>
+                            Expected:{' '}
+                            <span className={`font-medium ${needsHighlight ? 'text-amber-300' : 'text-slate-300'}`}>
+                              {Number(expected.toFixed(2))} {UNIT_LABELS[item.unit] ?? item.unit}
+                            </span>
                           </span>
                         ) : (
                           <span className="text-xs text-slate-600">No prior count</span>
