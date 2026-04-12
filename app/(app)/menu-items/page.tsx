@@ -78,6 +78,8 @@ export default function RecipeMappingPage() {
   const [editRecipeUnit, setEditRecipeUnit]   = useState('oz')
   const [editRecipeSaving, setEditRecipeSaving] = useState(false)
   const [editRecipeErr, setEditRecipeErr]     = useState<string | null>(null)
+  const [editSearch, setEditSearch]           = useState('')
+  const [editDropOpen, setEditDropOpen]       = useState(false)
   const [recipeActionErr, setRecipeActionErr] = useState<string | null>(null)
 
   // Inline sell price editing
@@ -403,11 +405,14 @@ export default function RecipeMappingPage() {
     fetchAll()
   }
 
-  function startEditRecipe(r: { id: string; quantity: number; unit: string; inventory_item?: { id: string } }) {
+  function startEditRecipe(r: { id: string; quantity: number; unit: string; inventory_item?: { id: string; name?: string } }) {
     setEditingRecipeId(r.id)
     setEditRecipeInvId(r.inventory_item?.id ?? '')
     setEditRecipeQty(r.quantity.toString())
     setEditRecipeUnit(r.unit)
+    const matched = inventoryItems.find((i) => i.id === r.inventory_item?.id)
+    setEditSearch(matched?.name ?? r.inventory_item?.name ?? '')
+    setEditDropOpen(false)
   }
 
   async function saveEditRecipe() {
@@ -600,13 +605,46 @@ export default function RecipeMappingPage() {
               <div key={r.id} className="px-4 sm:px-5 py-2.5 bg-slate-800/20">
                 {editingRecipeId === r.id ? (
                   <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      value={editRecipeInvId}
-                      onChange={(e) => setEditRecipeInvId(e.target.value)}
-                      className="flex-1 min-w-0 bg-slate-800 border border-amber-500/40 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
-                    >
-                      {inventoryItems.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                    </select>
+                    <div className="flex-1 min-w-[140px] relative">
+                      <input
+                        type="text"
+                        placeholder="Search ingredient…"
+                        value={editSearch}
+                        onChange={(e) => { setEditSearch(e.target.value); setEditDropOpen(true) }}
+                        onFocus={() => setEditDropOpen(true)}
+                        onBlur={() => setTimeout(() => setEditDropOpen(false), 150)}
+                        className="w-full bg-slate-800 border border-amber-500/40 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60 placeholder-slate-500"
+                      />
+                      {editDropOpen && (
+                        <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                          {inventoryItems
+                            .filter((inv) => inv.name.toLowerCase().includes(editSearch.toLowerCase()))
+                            .length === 0 ? (
+                            <p className="px-3 py-2 text-xs text-slate-500">No ingredients match</p>
+                          ) : (
+                            inventoryItems
+                              .filter((inv) => inv.name.toLowerCase().includes(editSearch.toLowerCase()))
+                              .map((inv) => (
+                                <button
+                                  key={inv.id}
+                                  type="button"
+                                  onMouseDown={() => {
+                                    setEditRecipeInvId(inv.id)
+                                    setEditSearch(inv.name)
+                                    setEditDropOpen(false)
+                                  }}
+                                  className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-700 transition-colors ${
+                                    editRecipeInvId === inv.id ? 'text-amber-400 bg-slate-700/50' : 'text-slate-200'
+                                  }`}
+                                >
+                                  {inv.name}
+                                  <span className="text-slate-500 ml-1">({inv.unit})</span>
+                                </button>
+                              ))
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <input
                       type="number"
                       step="0.01"
