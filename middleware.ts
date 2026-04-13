@@ -1,26 +1,75 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS_EXACT = ['/']
-const PUBLIC_PREFIXES = [
-  '/login', '/signup', '/forgot-password', '/reset-password', '/check-email', '/verify-email', '/partner-login',
-  // accept-invite is public so unauthenticated users can land directly from email link
-  '/accept-invite',
-  '/api/auth/', '/api/webhooks/', '/api/stripe/webhook',
-  '/api/pos/square/callback', '/api/pos/clover/callback', '/api/pos/lightspeed/callback',
-  '/pricing', '/privacy', '/terms', '/refund', '/features', '/faq', '/about', '/contact', '/api/contact',
-  '/how-it-works', '/partners', '/api/chat', '/api/partner/interest', '/status', '/api/status',
-  '/blog', '/sitemap.xml', '/robots.txt',
-  '/api/email-imports/poll', '/api/email-imports/cleanup',
+/**
+ * PRIVATE ROUTES — require authentication.
+ *
+ * Architecture: blocklist, not allowlist.
+ * Any route NOT listed here is public by default — no auth check, HTTP 200,
+ * fully crawlable. New marketing pages never need to be registered anywhere.
+ * Only new app/private routes need to be added to this list.
+ */
+const PRIVATE_APP_PREFIXES = [
+  '/dashboard',
+  '/profile',
+  '/welcome',
+  '/admin',
+  '/aliases',
+  '/connections',
+  '/drink-library',
+  '/email-imports',
+  '/expenses',
+  '/inventory-items',
+  '/menu-items',
+  '/modifier-rules',
+  '/profit-intelligence',
+  '/purchase-scan',
+  '/reorder',
+  '/sales',
+  '/stock',
+  '/uploads',
+  '/variance-reports',
+  '/vendors',
+  '/partner/',   // partner portal — /partners (marketing page) starts with /partners, not /partner/
 ]
+
+/**
+ * PUBLIC API ROUTES — excluded from the /api/* private default.
+ * All other /api/* routes are private.
+ */
+const PUBLIC_API_PREFIXES = [
+  '/api/auth/',
+  '/api/webhooks/',
+  '/api/stripe/webhook',
+  '/api/pos/square/callback',
+  '/api/pos/clover/callback',
+  '/api/pos/lightspeed/callback',
+  '/api/contact',
+  '/api/chat',
+  '/api/partner/interest',
+  '/api/status',
+  '/api/email-imports/poll',
+  '/api/email-imports/cleanup',
+]
+
+function isPrivateRoute(pathname: string): boolean {
+  // All /api/* are private unless explicitly whitelisted above
+  if (pathname.startsWith('/api/')) {
+    return !PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))
+  }
+  // App shell routes are private
+  return PRIVATE_APP_PREFIXES.some((p) => pathname.startsWith(p))
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (PUBLIC_PATHS_EXACT.includes(pathname) || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+  // ── Public route — pass straight through, no auth check ────────────────────
+  if (!isPrivateRoute(pathname)) {
     return NextResponse.next()
   }
 
+  // ── Private route — auth required below this line ──────────────────────────
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -66,18 +115,17 @@ export async function middleware(request: NextRequest) {
   // Invited members have onboarding_complete set at invite acceptance time,
   // so they bypass this redirect. Only genuine new owners hit it.
   const onboardingComplete = user.user_metadata?.onboarding_complete === true
-  const isProfilePath  = pathname.startsWith('/profile')  || pathname.startsWith('/api/profile')
-  const isPricingPath  = pathname.startsWith('/pricing')
-  const isWelcomePath  = pathname.startsWith('/welcome')
+  const isProfilePath = pathname.startsWith('/profile') || pathname.startsWith('/api/profile')
+  const isWelcomePath = pathname.startsWith('/welcome')
 
-  if (!onboardingComplete && !isProfilePath && !isPricingPath && !isWelcomePath) {
+  if (!onboardingComplete && !isProfilePath && !isWelcomePath) {
     return NextResponse.redirect(new URL('/profile?new=1', request.url))
   }
 
   // ── Subscription / trial access gate ──────────────────────────────────────
   const isApiPath   = pathname.startsWith('/api/')
   const isAdminPath = pathname.startsWith('/admin')
-  const isAppPage   = !isApiPath && !isProfilePath && !isPricingPath && !isAdminPath && !isWelcomePath
+  const isAppPage   = !isApiPath && !isProfilePath && !isAdminPath && !isWelcomePath
 
   if (isAppPage) {
     const ACCESS_CACHE_SECONDS = 300 // 5 min — see note below
@@ -96,7 +144,7 @@ export async function middleware(request: NextRequest) {
       .from('user_businesses')
       .select('role, businesses(plan, trial_ends_at, stripe_subscription_id, payment_grace_ends_at)')
       .eq('user_id', user.id)
-      .eq('membership_status', 'active')  // removed members get no valid ubRow here
+      .eq('membership_status', 'active')
       .single()
 
     const biz = (ubRow as any)?.businesses
@@ -123,7 +171,6 @@ export async function middleware(request: NextRequest) {
     // ② Payment grace period expired.
     if (graceEndsAt && graceEndsAt <= now) {
       response.cookies.delete(ACCESS_COOKIE)
-      // Non-owner members should not see the owner billing/trial flow.
       const isOwner = memberRole === 'owner'
       const dest = isOwner ? '/pricing?payment_failed=1' : '/pricing?member_locked=1'
       return NextResponse.redirect(new URL(dest, request.url))
