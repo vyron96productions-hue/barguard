@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     // Validate the invite
     const { data: invite, error: inviteErr } = await adminSupabase
       .from('business_user_invites')
-      .select('id, email, normalized_email, client_role, expires_at, accepted_at, revoked_at, business_id, invited_by_user_id')
+      .select('id, email, normalized_email, client_role, expires_at, accepted_at, revoked_at, business_id, invited_by_user_id, display_name')
       .eq('token_hash', hashToken(token))
       .single()
 
@@ -216,6 +216,8 @@ async function insertMembership(
     business_id: string
     client_role: string
     invited_by_user_id: string
+    email: string
+    display_name?: string | null
   }
 ) {
   // Use adminSupabase (service role) to bypass the ub_insert RLS policy,
@@ -230,6 +232,8 @@ async function insertMembership(
       membership_status:  'active',
       invited_by_user_id: invite.invited_by_user_id,
       joined_at:          new Date().toISOString(),
+      email:              invite.email,
+      display_name:       invite.display_name ?? null,
     })
 
   await adminSupabase

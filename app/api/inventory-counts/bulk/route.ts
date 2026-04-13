@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { adminSupabase } from '@/lib/supabase/admin'
+import { logTeamActivity } from '@/lib/team-activity'
 
 export async function POST(req: NextRequest) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const { supabase, businessId, user } = await getAuthContext()
     const { counts } = await req.json() as {
       counts: Array<{ id: string; quantity: number }>
     }
@@ -63,6 +65,18 @@ export async function POST(req: NextRequest) {
       .upsert(rows, { onConflict: 'business_id,inventory_item_id,count_date' })
 
     if (countError) return NextResponse.json({ error: countError.message }, { status: 500 })
+
+    // Log the count action (fire-and-forget)
+    const { data: ub } = await adminSupabase
+      .from('user_businesses')
+      .select('display_name')
+      .eq('user_id', user.id)
+      .eq('business_id', businessId)
+      .single()
+    logTeamActivity(businessId, user.id, ub?.display_name ?? null, 'inventory_count', {
+      item_count: validCounts.length,
+      count_date: today,
+    })
 
     return NextResponse.json({ saved: validCounts.length, date: today })
   } catch (e) { return authErrorResponse(e) }

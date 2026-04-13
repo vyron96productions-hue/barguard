@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { requireMinimumClientRole } from '@/lib/client-access'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { logTeamActivity } from '@/lib/team-activity'
 import { Resend } from 'resend'
 import { randomBytes, createHash } from 'crypto'
 
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     requireMinimumClientRole(ctx, 'admin')
 
     const { businessId, user } = ctx
-    const { email, client_role } = await req.json()
+    const { email, client_role, display_name } = await req.json()
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
         email:              email.trim(),
         normalized_email:   normalizedEmail,
         client_role,
+        display_name:       display_name?.trim() || null,
         token_hash:         tokenHash,
         invited_by_user_id: user.id,
         expires_at:         expiresAt,
@@ -92,6 +94,19 @@ export async function POST(req: NextRequest) {
       to:      email.trim(),
       subject: `You've been invited to join ${biz?.name ?? 'a bar'} on BarGuard`,
       html:    buildInviteEmail(inviteLink, biz?.name ?? 'your bar', roleLabel),
+    })
+
+    // Log the invite action (fire-and-forget)
+    const { data: inviterUb } = await adminSupabase
+      .from('user_businesses')
+      .select('display_name')
+      .eq('user_id', user.id)
+      .eq('business_id', businessId)
+      .single()
+    logTeamActivity(businessId, user.id, inviterUb?.display_name ?? null, 'member_invited', {
+      invited_email: email.trim(),
+      invited_name:  display_name?.trim() || null,
+      role:          client_role,
     })
 
     return NextResponse.json({ ok: true, invite_id: invite.id })
