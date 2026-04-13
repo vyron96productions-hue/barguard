@@ -15,9 +15,21 @@ export const metadata: Metadata = {
   },
 }
 
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BarGuard Bar Profit Tracking',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://barguard.app/bar-profit-tracking',
+  description: 'Bar profit tracking software that connects POS revenue to inventory costs — showing drink-level margins, pour cost %, and variance-adjusted net profit.',
+  offers: { '@type': 'Offer', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing' },
+}
+
 export default function BarProfitTrackingPage() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', color: '#f1f5f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .bpt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .bpt-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }

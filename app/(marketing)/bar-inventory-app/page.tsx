@@ -15,9 +15,21 @@ export const metadata: Metadata = {
   },
 }
 
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BarGuard Bar Inventory App',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://barguard.app/bar-inventory-app',
+  description: 'Bar inventory app with automatic POS sync, mobile count screen, AI invoice scanning, and shift-based variance reports. No download required.',
+  offers: { '@type': 'Offer', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing' },
+}
+
 export default function BarInventoryAppPage() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', color: '#f1f5f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .bia-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .bia-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }

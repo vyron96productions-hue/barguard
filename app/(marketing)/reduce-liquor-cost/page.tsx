@@ -15,9 +15,21 @@ export const metadata: Metadata = {
   },
 }
 
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BarGuard — Reduce Liquor Cost',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://barguard.app/reduce-liquor-cost',
+  description: 'Bar inventory software that identifies the exact items driving your pour cost above target — over-pouring, shrinkage, and recipe drift — by shift.',
+  offers: { '@type': 'Offer', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing' },
+}
+
 export default function ReduceLiquorCostPage() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', color: '#f1f5f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .rlc-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .rlc-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }

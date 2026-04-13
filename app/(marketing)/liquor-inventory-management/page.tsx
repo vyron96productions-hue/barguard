@@ -15,9 +15,21 @@ export const metadata: Metadata = {
   },
 }
 
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BarGuard Liquor Inventory Management',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://barguard.app/liquor-inventory-management',
+  description: 'Liquor inventory management software with oz-level tracking, POS-linked expected usage, shift-based variance reports, and AI summaries.',
+  offers: { '@type': 'Offer', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing' },
+}
+
 export default function LiquorInventoryManagementPage() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', color: '#f1f5f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .lim-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .lim-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }

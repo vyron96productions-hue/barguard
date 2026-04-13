@@ -15,9 +15,21 @@ export const metadata: Metadata = {
   },
 }
 
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BarGuard — Bartender Theft Detection',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://barguard.app/stop-bartender-theft',
+  description: 'Bar inventory software that uses shift-based variance analysis to detect over-pouring, ghost pours, and missing bottles — with item-level evidence.',
+  offers: { '@type': 'Offer', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing' },
+}
+
 export default function StopBartenderTheftPage() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', color: '#f1f5f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .sbt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .sbt-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }

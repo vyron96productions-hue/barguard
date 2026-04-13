@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Automated Inventory System for Bars — No More Spreadsheets',
-  description: 'BarGuard automates bar inventory tracking with POS sync every 5 minutes, AI invoice scanning, and shift-based variance calculations — so you spend minutes, not hours.',
+  description: 'BarGuard automates bar inventory with POS sync every 5 minutes, AI invoice scanning, and shift variance calculations — spend minutes, not hours.',
   alternates: { canonical: 'https://barguard.app/automated-inventory-system' },
   openGraph: {
     title: 'Automated Inventory System for Bars — No More Spreadsheets | BarGuard',
@@ -15,9 +15,21 @@ export const metadata: Metadata = {
   },
 }
 
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'BarGuard Automated Inventory System',
+  applicationCategory: 'BusinessApplication',
+  operatingSystem: 'Web',
+  url: 'https://barguard.app/automated-inventory-system',
+  description: 'Automated bar inventory system with POS sync every 5 minutes, AI invoice scanning, email import, reorder alerts, and instant variance calculations.',
+  offers: { '@type': 'Offer', price: '129', priceCurrency: 'USD', url: 'https://barguard.app/pricing' },
+}
+
 export default function AutomatedInventorySystemPage() {
   return (
     <div style={{ backgroundColor: '#020817', minHeight: '100vh', color: '#f1f5f9' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <style>{`
         .ais-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .ais-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
