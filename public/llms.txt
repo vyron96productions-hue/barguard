@@ -1,0 +1,68 @@
+# BarGuard — Bar Inventory & Loss Detection Software
+# https://barguard.app
+
+BarGuard is a bar inventory management platform that connects POS sales data to inventory counts to calculate variance, track pour cost, and detect over-pouring or theft — shift by shift, drink by drink.
+
+## Core Platform
+
+- Homepage: https://barguard.app
+- How It Works: https://barguard.app/how-it-works
+- Features: https://barguard.app/features
+- Pricing: https://barguard.app/pricing ($129/mo Basic, $249/mo Pro, $449/mo Enterprise)
+- FAQ: https://barguard.app/faq
+- About: https://barguard.app/about
+- Contact: https://barguard.app/contact
+
+## Product Pages
+
+- Bar Inventory Software: https://barguard.app/bar-inventory-software
+- Restaurant Inventory Software: https://barguard.app/restaurant-inventory-software
+- Bar Inventory App: https://barguard.app/bar-inventory-app
+- Liquor Inventory Management: https://barguard.app/liquor-inventory-management
+- Automated Inventory System: https://barguard.app/automated-inventory-system
+
+## Pain Point Pages
+
+- Reduce Liquor Cost: https://barguard.app/reduce-liquor-cost
+- Stop Bartender Theft: https://barguard.app/stop-bartender-theft
+- Bar Profit Tracking: https://barguard.app/bar-profit-tracking
+
+## Blog
+
+- Blog Index: https://barguard.app/blog
+- Bar Shrinkage — How Much Are You Losing?: https://barguard.app/blog/bar-shrinkage-how-much-are-you-losing
+- Bar Inventory Management Guide: https://barguard.app/blog/bar-inventory-management-guide
+- Over-Pouring & Bar Losses: https://barguard.app/blog/over-pouring-bar-losses
+- Bartender Theft — Signs & Prevention: https://barguard.app/blog/bartender-theft-signs-prevention
+- How to Reduce Liquor Cost Percentage: https://barguard.app/blog/how-to-reduce-liquor-cost-percentage
+
+## Key Features
+
+- POS integrations: Square (OAuth), Toast (credentials), Clover (OAuth), Focus POS (credentials)
+- POS sync every 5 minutes via Vercel Cron
+- AI invoice scanning — photograph paper invoices, AI reads every line item
+- Email invoice import — Gmail inbox polling for distributor invoices
+- Shift-based variance calculations (Happy Hour, Dinner, Late Night)
+- Per-item variance with Normal / Warning / Critical status flags
+- AI-written variance summaries after every calculation
+- Drink profit tracking — revenue, pour cost, and margin per menu item
+- Reorder alerts — configurable per-item minimum stock thresholds
+- Multi-user team access with role-based permissions (Admin, Manager, Staff)
+- Team activity log — tracks who ran counts, changed roles, or invited members
+- Expense receipt scanning — OCR for non-inventory receipts
+- Health score dashboard — 0–100 score based on variance risk
+- Partial bottle level detection via phone camera scan
+
+## Legal
+
+- Privacy Policy: https://barguard.app/privacy
+- Terms of Service: https://barguard.app/terms
+- Refund Policy: https://barguard.app/refund
+
+## Partners
+
+- Partner Program: https://barguard.app/partners
+
+## System Status
+
+- Status: https://barguard.app/status
