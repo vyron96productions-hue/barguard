@@ -26,3 +26,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ ...draft, lines: lines ?? [] })
   } catch (e) { return authErrorResponse(e) }
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { supabase, businessId } = await getAuthContext()
+    const { id } = await params
+
+    // Delete draft lines first (no cascade), then the draft itself
+    await supabase.from('purchase_import_draft_lines').delete().eq('draft_id', id)
+
+    const { error } = await supabase
+      .from('purchase_import_drafts')
+      .delete()
+      .eq('id', id)
+      .eq('business_id', businessId)
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
+  } catch (e) { return authErrorResponse(e) }
+}

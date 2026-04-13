@@ -209,7 +209,11 @@ export default function PurchaseScanPage() {
           </button>
         </div>
       ) : (
-        <DraftList drafts={drafts} loading={loadingDrafts} />
+        <DraftList
+          drafts={drafts}
+          loading={loadingDrafts}
+          onDelete={(id) => setDrafts((prev) => prev ? prev.filter((d) => d.id !== id) : prev)}
+        />
       )}
     </div>
   )
@@ -234,10 +238,27 @@ function groupByUploadMonth(drafts: PurchaseImportDraft[]): { label: string; dra
 function DraftList({
   drafts,
   loading,
+  onDelete,
 }: {
   drafts: PurchaseImportDraft[] | null
   loading: boolean
+  onDelete: (id: string) => void
 }) {
+  const [deleting, setDeleting] = useState<string | null>(null)
+
+  async function handleDelete(e: React.MouseEvent, id: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm('Delete this scan? This cannot be undone.')) return
+    setDeleting(id)
+    try {
+      await fetch(`/api/purchase-import-drafts/${id}`, { method: 'DELETE' })
+      onDelete(id)
+    } finally {
+      setDeleting(null)
+    }
+  }
+
   if (loading || drafts === null) {
     return (
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
@@ -267,32 +288,41 @@ function DraftList({
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-xl divide-y divide-gray-800">
             {group.drafts.map((draft) => (
-              <a
-                key={draft.id}
-                href={`/purchase-scan/${draft.id}`}
-                className="flex items-center justify-between px-5 py-4 hover:bg-gray-800/50 transition-colors group"
-              >
-                <div className="space-y-0.5 min-w-0">
-                  <p className="text-sm font-medium text-slate-200 truncate">
-                    {draft.document_upload?.filename ?? 'Unnamed document'}
-                  </p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-slate-500">
-                      {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
-                    </span>
-                    {draft.vendor_name && (
-                      <span className="text-xs text-slate-500">{draft.vendor_name}</span>
-                    )}
-                    {draft.purchase_date && (
-                      <span className="text-xs text-slate-500">· invoice {draft.purchase_date}</span>
-                    )}
+              <div key={draft.id} className="flex items-center group hover:bg-gray-800/50 transition-colors">
+                <a
+                  href={`/purchase-scan/${draft.id}`}
+                  className="flex-1 flex items-center justify-between px-5 py-4 min-w-0"
+                >
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="text-sm font-medium text-slate-200 truncate">
+                      {draft.document_upload?.filename ?? 'Unnamed document'}
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-slate-500">
+                        {new Date(draft.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}
+                      </span>
+                      {draft.vendor_name && (
+                        <span className="text-xs text-slate-500">{draft.vendor_name}</span>
+                      )}
+                      {draft.purchase_date && (
+                        <span className="text-xs text-slate-500">· invoice {draft.purchase_date}</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <StatusPill status={draft.status} />
-                  <span className="text-slate-600 group-hover:text-slate-400 text-xs">→</span>
-                </div>
-              </a>
+                  <div className="flex items-center gap-3 shrink-0 ml-3">
+                    <StatusPill status={draft.status} />
+                    <span className="text-slate-600 group-hover:text-slate-400 text-xs">→</span>
+                  </div>
+                </a>
+                <button
+                  onClick={(e) => handleDelete(e, draft.id)}
+                  disabled={deleting === draft.id}
+                  className="px-4 py-4 text-slate-700 hover:text-red-400 disabled:opacity-40 transition-colors text-lg leading-none shrink-0"
+                  title="Delete scan"
+                >
+                  {deleting === draft.id ? '…' : '×'}
+                </button>
+              </div>
             ))}
           </div>
         </div>
