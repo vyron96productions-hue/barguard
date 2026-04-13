@@ -1,26 +1,58 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { PurchaseImportDraftWithLines, PurchaseImportDraftLine, InventoryItem } from '@/types'
 
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 
-const UNIT_OPTIONS = ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg']
-const UNIT_LABELS: Record<string, string> = {
-  bottle:      'Bottle (750ml)',
-  '1L':        'Bottle (1L)',
-  '1.75L':     'Handle (1.75L)',
-  can:         'Beer Can (12oz)',
-  beer_bottle: 'Beer Bottle (12oz)',
-  pint:        'Pint (16oz)',
-  case:        'Case (24 × 12oz)',
-  keg:         'Keg (½ bbl · 1984oz)',
-  quarterkeg:  'Quarter Keg',
-  sixthkeg:    'Sixth Keg',
+type ScanType = 'liquor' | 'food' | 'supplies'
+
+const ALL_UNIT_LABELS: Record<string, string> = {
+  // Liquor / beer / wine
+  bottle:             'Bottle (750ml)',
+  '1L':               'Bottle (1L)',
+  '1.75L':            'Handle (1.75L)',
+  can:                'Beer Can (12oz)',
+  beer_bottle:        'Beer Bottle (12oz)',
+  beer_bottle_16oz:   'Beer Bottle (16oz)',
+  wine_bottle:        'Wine Bottle (750ml)',
+  pint:               'Pint (16oz)',
+  case:               'Case (24 × 12oz)',
+  keg:                'Keg (½ bbl · 1984oz)',
+  quarterkeg:         'Quarter Keg',
+  sixthkeg:           'Sixth Keg',
+  // Food
+  lb:                 'Pound (lb)',
+  oz:                 'Ounce (oz)',
+  kg:                 'Kilogram (kg)',
+  each:               'Each',
+  box:                'Box',
+  bag:                'Bag',
+  gallon:             'Gallon',
+  quart:              'Quart',
+  flat:               'Flat',
+  bunch:              'Bunch',
+  dozen:              'Dozen',
+  // Supplies
+  roll:               'Roll',
+  pack:               'Pack',
+  sleeve:             'Sleeve',
+  carton:             'Carton',
 }
-const CATEGORY_OPTIONS = ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'supply', 'other', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac']
+
+const UNIT_OPTIONS_BY_TYPE: Record<ScanType, string[]> = {
+  liquor:   ['bottle', '1L', '1.75L', 'can', 'beer_bottle', 'beer_bottle_16oz', 'wine_bottle', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg'],
+  food:     ['lb', 'oz', 'kg', 'each', 'case', 'box', 'bag', 'gallon', 'quart', 'flat', 'bunch', 'dozen'],
+  supplies: ['each', 'case', 'box', 'roll', 'pack', 'sleeve', 'carton'],
+}
+
+const CATEGORY_OPTIONS_BY_TYPE: Record<ScanType, string[]> = {
+  liquor:   ['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'liqueur', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac', 'other'],
+  food:     ['produce', 'protein', 'seafood', 'dairy', 'dry goods', 'frozen', 'condiment', 'bread', 'dessert', 'other'],
+  supplies: ['paper goods', 'cleaning', 'smallwares', 'packaging', 'equipment', 'other'],
+}
 
 interface EditableLine {
   id: string
@@ -60,6 +92,11 @@ function toEditableLine(line: PurchaseImportDraftLine): EditableLine {
 export default function PurchaseScanReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const rawType = searchParams.get('type') as ScanType | null
+  const scanType: ScanType = rawType && rawType in UNIT_OPTIONS_BY_TYPE ? rawType : 'liquor'
+  const unitOptions = UNIT_OPTIONS_BY_TYPE[scanType]
+  const categoryOptions = CATEGORY_OPTIONS_BY_TYPE[scanType]
 
   const [draft, setDraft] = useState<PurchaseImportDraftWithLines | null>(null)
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
@@ -345,6 +382,8 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
               key={line.id}
               line={line}
               inventoryItems={inventoryItems}
+              unitOptions={unitOptions}
+              categoryOptions={categoryOptions}
               onChange={(patch) => updateLine(idx, patch)}
               onRemove={() => removeLine(idx)}
               onNewInventoryItem={(item) => {
@@ -378,6 +417,8 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
                   key={line.id}
                   line={line}
                   inventoryItems={inventoryItems}
+                  unitOptions={unitOptions}
+                  categoryOptions={categoryOptions}
                   onChange={(patch) => updateLine(idx, patch)}
                   onRemove={() => removeLine(idx)}
                   onNewInventoryItem={(item) => {
@@ -489,17 +530,19 @@ function MatchBadge({ status, confidence }: { status: EditableLine['match_status
 
 // ── Add to inventory inline form ──────────────────────────────────────────────
 
-function AddToInventoryForm({ rawName, onSave, onCancel }: {
+function AddToInventoryForm({ rawName, unitOptions, categoryOptions, onSave, onCancel }: {
   rawName: string
+  unitOptions: string[]
+  categoryOptions: string[]
   onSave: (item: InventoryItem) => void
   onCancel: () => void
 }) {
   const [name, setName] = useState(rawName)
-  const [unit, setUnit] = useState('bottle')
+  const [unit, setUnit] = useState(unitOptions[0] ?? 'each')
   const [category, setCategory] = useState('')
   const [packageType, setPackageType] = useState('')
   const [packSize, setPackSize] = useState('')
-  const [existingCategories, setExistingCategories] = useState<string[]>(CATEGORY_OPTIONS)
+  const [existingCategories, setExistingCategories] = useState<string[]>(categoryOptions)
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -562,7 +605,7 @@ function AddToInventoryForm({ rawName, onSave, onCancel }: {
         <div className="grid grid-cols-2 gap-2">
           <select value={unit} onChange={(e) => setUnit(e.target.value)}
             className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
-            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
+            {unitOptions.map((u) => <option key={u} value={u}>{ALL_UNIT_LABELS[u] ?? u}</option>)}
           </select>
           <CategoryCombobox
             value={category}
@@ -605,9 +648,11 @@ function AddToInventoryForm({ rawName, onSave, onCancel }: {
 
 // ── Mobile card per line ──────────────────────────────────────────────────────
 
-function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInventoryItem }: {
+function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, onChange, onRemove, onNewInventoryItem }: {
   line: EditableLine
   inventoryItems: InventoryItem[]
+  unitOptions: string[]
+  categoryOptions: string[]
   onChange: (patch: Partial<EditableLine>) => void
   onRemove: () => void
   onNewInventoryItem: (item: InventoryItem) => void
@@ -673,6 +718,8 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
         {showAdd && (
           <AddToInventoryForm
             rawName={line.raw_item_name}
+            unitOptions={unitOptions}
+            categoryOptions={categoryOptions}
             onSave={(item) => { onNewInventoryItem(item); setShowAdd(false) }}
             onCancel={() => setShowAdd(false)}
           />
@@ -721,7 +768,7 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
           <select value={line.unit_type} onChange={(e) => onChange({ unit_type: e.target.value })}
             className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
             <option value="">—</option>
-            {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
+            {unitOptions.map((u) => <option key={u} value={u}>{ALL_UNIT_LABELS[u] ?? u}</option>)}
           </select>
         </div>
       </div>
@@ -752,9 +799,11 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
 
 // ── Desktop table row ─────────────────────────────────────────────────────────
 
-function DesktopLineRow({ line, inventoryItems, onChange, onRemove, onNewInventoryItem }: {
+function DesktopLineRow({ line, inventoryItems, unitOptions, categoryOptions, onChange, onRemove, onNewInventoryItem }: {
   line: EditableLine
   inventoryItems: InventoryItem[]
+  unitOptions: string[]
+  categoryOptions: string[]
   onChange: (patch: Partial<EditableLine>) => void
   onRemove: () => void
   onNewInventoryItem: (item: InventoryItem) => void
@@ -843,7 +892,7 @@ function DesktopLineRow({ line, inventoryItems, onChange, onRemove, onNewInvento
         <select value={line.unit_type} onChange={(e) => onChange({ unit_type: e.target.value })}
           className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
           <option value="">—</option>
-          {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
+          {unitOptions.map((u) => <option key={u} value={u}>{ALL_UNIT_LABELS[u] ?? u}</option>)}
         </select>
       </td>
       <td className="px-2 py-2">

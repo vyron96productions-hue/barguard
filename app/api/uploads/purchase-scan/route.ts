@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
-import { extractFromImage, extractFromPdf } from '@/lib/document-extraction'
+import { extractFromImage, extractFromPdf, type ScanType } from '@/lib/document-extraction'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { logger, logError } from '@/lib/logger'
+
+const VALID_SCAN_TYPES: ScanType[] = ['liquor', 'food', 'supplies']
 
 const ROUTE = 'uploads/purchase-scan'
 
@@ -17,6 +19,10 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData()
     const file = formData.get('file') as File | null
+    const rawScanType = formData.get('scanType') as string | null
+    const scanType: ScanType = VALID_SCAN_TYPES.includes(rawScanType as ScanType)
+      ? (rawScanType as ScanType)
+      : 'liquor'
 
     if (!file) {
       return NextResponse.json({ error: 'file is required' }, { status: 400 })
@@ -38,14 +44,14 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer())
     const base64 = buffer.toString('base64')
 
-    logger.info(ROUTE, 'Scanning document', { businessId, filename: file.name, mimeType, size_kb: Math.round(file.size / 1024) })
+    logger.info(ROUTE, 'Scanning document', { businessId, filename: file.name, mimeType, size_kb: Math.round(file.size / 1024), scanType })
 
     let parsed
     try {
       if (mimeType === 'application/pdf') {
-        parsed = await extractFromPdf(buffer)
+        parsed = await extractFromPdf(buffer, scanType)
       } else {
-        parsed = await extractFromImage(buffer, mimeType as 'image/jpeg' | 'image/png' | 'image/webp')
+        parsed = await extractFromImage(buffer, mimeType as 'image/jpeg' | 'image/png' | 'image/webp', scanType)
       }
       logger.info(ROUTE, 'AI extraction complete', { businessId, line_items: parsed.line_items?.length ?? 0, confidence: parsed.overall_confidence, vendor: parsed.vendor_name })
     } catch (claudeErr) {
@@ -134,9 +140,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    logger.info(ROUTE, 'Scan complete — draft created', { businessId, draft_id: draft.id, line_count: insertedCount })
+    logger.info(ROUTE, 'Scan complete — draft created', { businessId, draft_id: draft.id, line_count: insertedCount, scanType })
     return NextResponse.json({
       draft_id: draft.id,
+      scan_type: scanType,
       confidence: parsed.overall_confidence,
       warning_message: parsed.warning_message,
       line_count: insertedCount,

@@ -8,6 +8,13 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pd
 const ACCEPTED_EXT = '.jpg,.jpeg,.png,.webp,.pdf'
 
 type UploadState = 'idle' | 'uploading' | 'done' | 'error'
+type ScanType = 'liquor' | 'food' | 'supplies'
+
+const SCAN_TYPES: { value: ScanType; label: string; description: string; icon: string }[] = [
+  { value: 'liquor', label: 'Liquor / Beer / Wine', description: 'Spirits, beer, wine, mixers', icon: '🍾' },
+  { value: 'food',   label: 'Food & Kitchen',       description: 'Proteins, produce, dairy, dry goods', icon: '🥩' },
+  { value: 'supplies', label: 'Paper & Supplies',   description: 'Disposables, cleaning, smallwares', icon: '🧻' },
+]
 
 export default function PurchaseScanPage() {
   const router = useRouter()
@@ -16,6 +23,7 @@ export default function PurchaseScanPage() {
   const [dragOver, setDragOver] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [scanType, setScanType] = useState<ScanType>('liquor')
   const [drafts, setDrafts] = useState<PurchaseImportDraft[] | null>(null)
   const [loadingDrafts, setLoadingDrafts] = useState(false)
   const [draftTab, setDraftTab] = useState(false)
@@ -49,6 +57,7 @@ export default function PurchaseScanPage() {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
+      formData.append('scanType', scanType)
 
       const res = await fetch('/api/uploads/purchase-scan', { method: 'POST', body: formData })
       const data = await res.json()
@@ -60,7 +69,7 @@ export default function PurchaseScanPage() {
       }
 
       setUploadState('done')
-      router.push(`/purchase-scan/${data.draft_id}`)
+      router.push(`/purchase-scan/${data.draft_id}?type=${data.scan_type ?? scanType}`)
     } catch {
       setErrorMsg('Upload failed. Please try again.')
       setUploadState('error')
@@ -114,6 +123,29 @@ export default function PurchaseScanPage() {
 
       {!draftTab ? (
         <div className="space-y-4">
+          {/* Scan type selector */}
+          <div>
+            <p className="text-xs font-medium text-slate-400 mb-2">What are you scanning?</p>
+            <div className="grid grid-cols-3 gap-2">
+              {SCAN_TYPES.map((st) => (
+                <button
+                  key={st.value}
+                  type="button"
+                  onClick={() => setScanType(st.value)}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-colors ${
+                    scanType === st.value
+                      ? 'border-amber-500/60 bg-amber-500/10 text-amber-300'
+                      : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600 hover:text-slate-300'
+                  }`}
+                >
+                  <span className="text-xl leading-none">{st.icon}</span>
+                  <span className="text-xs font-medium leading-tight">{st.label}</span>
+                  <span className="text-[10px] text-slate-500 leading-tight hidden sm:block">{st.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Drop zone */}
           <div
             onClick={() => fileInputRef.current?.click()}
