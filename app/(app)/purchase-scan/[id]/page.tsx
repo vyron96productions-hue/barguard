@@ -699,28 +699,30 @@ function MobileLineCard({ line, inventoryItems, onChange, onRemove, onNewInvento
       </div>
 
       {/* Qty / unit / cost */}
-      <div className="grid grid-cols-3 gap-2">
-        <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-            {line.units_per_package && parseInt(line.units_per_package) > 1 ? 'Packs' : 'Qty'}
-          </label>
-          <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
-            placeholder="0"
-            className={`mt-1 w-full bg-slate-800/60 border rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider">
+              {line.units_per_package && parseInt(line.units_per_package) > 1 ? 'Packs' : 'Qty'}
+            </label>
+            <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
+              placeholder="0"
+              className={`mt-1 w-full bg-slate-800/60 border rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider">Cost ($)</label>
+            <input type="number" step="0.01" value={line.unit_cost} onChange={(e) => onChange({ unit_cost: e.target.value })}
+              placeholder="0.00"
+              className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
+          </div>
         </div>
         <div>
           <label className="text-[10px] text-slate-500 uppercase tracking-wider">Unit</label>
           <select value={line.unit_type} onChange={(e) => onChange({ unit_type: e.target.value })}
-            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
+            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
             <option value="">—</option>
             {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>)}
           </select>
-        </div>
-        <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Cost ($)</label>
-          <input type="number" step="0.01" value={line.unit_cost} onChange={(e) => onChange({ unit_cost: e.target.value })}
-            placeholder="0.00"
-            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
         </div>
       </div>
 

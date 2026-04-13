@@ -92,17 +92,18 @@ export async function POST(req: NextRequest) {
     const draftLines = await Promise.all(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       parsed.line_items.map(async (item: any, idx: number) => {
-        const inventoryItemId = await resolveInventoryItemId(item.raw_item_name, supabase, businessId)
+        const name = typeof item.raw_item_name === 'string' ? item.raw_item_name.trim() : ''
+        const inventoryItemId = name ? await resolveInventoryItemId(name, supabase, businessId) : null
         return {
           draft_id: draft.id,
-          raw_item_name: item.raw_item_name,
+          raw_item_name: name || `Line ${idx + 1}`,
           inventory_item_id: inventoryItemId,
-          quantity: item.quantity,
-          unit_type: item.unit_type,
-          unit_cost: item.unit_cost,
-          line_total: item.line_total,
+          quantity: typeof item.quantity === 'number' ? item.quantity : null,
+          unit_type: item.unit_type ?? null,
+          unit_cost: typeof item.unit_cost === 'number' ? item.unit_cost : null,
+          line_total: typeof item.line_total === 'number' ? item.line_total : null,
           match_status: inventoryItemId ? 'matched' : 'unmatched',
-          confidence: item.confidence,
+          confidence: item.confidence ?? 'low',
           is_approved: true,
           sort_order: idx,
           package_type: item.package_type ?? null,
@@ -111,22 +112,34 @@ export async function POST(req: NextRequest) {
       })
     )
 
+    // Try batch insert first; fall back to per-line so one bad row never kills the whole scan
+    let insertedCount = 0
     if (draftLines.length > 0) {
-      const { error: linesError } = await supabase
+      const { error: batchError } = await supabase
         .from('purchase_import_draft_lines')
         .insert(draftLines)
-      if (linesError) {
-        logger.error(ROUTE, 'purchase_import_draft_lines insert failed', { businessId, error: linesError.message })
-        return NextResponse.json({ error: `DB error (draft_lines): ${linesError.message}` }, { status: 500 })
+
+      if (batchError) {
+        logger.warn(ROUTE, 'Batch line insert failed — falling back to per-line', { businessId, error: batchError.message })
+        for (const line of draftLines) {
+          const { error: lineErr } = await supabase.from('purchase_import_draft_lines').insert(line)
+          if (lineErr) {
+            logger.warn(ROUTE, 'Skipping invalid draft line', { error: lineErr.message, raw_item_name: line.raw_item_name })
+          } else {
+            insertedCount++
+          }
+        }
+      } else {
+        insertedCount = draftLines.length
       }
     }
 
-    logger.info(ROUTE, 'Scan complete — draft created', { businessId, draft_id: draft.id, line_count: draftLines.length })
+    logger.info(ROUTE, 'Scan complete — draft created', { businessId, draft_id: draft.id, line_count: insertedCount })
     return NextResponse.json({
       draft_id: draft.id,
       confidence: parsed.overall_confidence,
       warning_message: parsed.warning_message,
-      line_count: draftLines.length,
+      line_count: insertedCount,
     })
   } catch (err: unknown) {
     logError(ROUTE, err)
