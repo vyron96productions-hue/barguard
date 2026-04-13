@@ -19,7 +19,7 @@ export interface InventoryItem {
   name: string
   unit: string // oz, ml, bottle, case, keg, each, lb, portion, etc.
   category: string | null
-  item_type: 'beverage' | 'food' | 'other' // used for filtering
+  item_type: 'beverage' | 'food' | 'paper' | 'other' // used for filtering
   pack_size: number | null    // units per package (e.g. 6 for a 6-pack)
   package_type: string | null // label for package format (e.g. '6-pack', 'case', 'keg')
   cost_per_oz: number | null  // cost in USD per oz (beverages)
