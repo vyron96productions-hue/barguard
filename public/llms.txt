@@ -35,6 +35,7 @@ BarGuard is a bar inventory management platform that connects POS sales data to 
 - Over-Pouring & Bar Losses: https://barguard.app/blog/over-pouring-bar-losses
 - Bartender Theft — Signs & Prevention: https://barguard.app/blog/bartender-theft-signs-prevention
 - How to Reduce Liquor Cost Percentage: https://barguard.app/blog/how-to-reduce-liquor-cost-percentage
+- Stop Bartender Theft — How to Catch It Early: https://barguard.app/blog/stop-bartender-theft
 
 ## Key Features
 
