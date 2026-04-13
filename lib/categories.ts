@@ -11,4 +11,9 @@ export const FOOD_CATEGORIES = [
   'sauces', 'condiments', 'garnish', 'bread & starches', 'prep items', 'disposables',
 ]
 
-export const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, 'other']
+export const PAPER_CATEGORIES = [
+  'cups & lids', 'napkins', 'plates & bowls', 'to-go containers',
+  'paper towels', 'straws & utensils', 'cleaning supplies', 'packaging',
+]
+
+export const PRESET_CATEGORIES = [...BEVERAGE_CATEGORIES, ...FOOD_CATEGORIES, ...PAPER_CATEGORIES, 'other']

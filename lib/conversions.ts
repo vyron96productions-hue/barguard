@@ -41,6 +41,8 @@ export const FOOD_UNITS = new Set([
   'bag', 'tray', 'box', 'flat',
   'cup', 'tbsp', 'tsp',
   'jar', 'packet',
+  // Paper / supply units
+  'pack', 'sleeve', 'roll',
 ])
 
 export function isLiquidUnit(unit: string): boolean {
@@ -79,6 +81,11 @@ export const INVENTORY_FOOD_UNITS = [
   'bag', 'box', 'tray', 'flat', 'jar', 'packet',
 ]
 
+/** Units used for counting paper goods / supplies inventory (shown in UI dropdowns) */
+export const INVENTORY_PAPER_UNITS = [
+  'each', 'pack', 'sleeve', 'roll', 'box', 'bag',
+]
+
 /** Human-friendly labels for inventory unit values */
 export const UNIT_LABELS: Record<string, string> = {
   // Beverage
@@ -114,6 +121,10 @@ export const UNIT_LABELS: Record<string, string> = {
   flat:        'Flat',
   jar:         'Jar',
   packet:      'Packet',
+  // Paper / supply
+  pack:        'Pack',
+  sleeve:      'Sleeve',
+  roll:        'Roll',
 }
 
 /** Returns the friendly label for a unit, falling back to the raw value */
@@ -159,6 +170,7 @@ export function itemCostPerOz(costPerUnit: number | null | undefined, unit: stri
 const WHOLE_UNITS = new Set([
   'bottle', 'wine_bottle', 'beer_bottle', 'beer_bottle_16oz', 'can', 'can_16oz', 'case', '1L', '1.75L',
   'each', 'piece', 'portion', 'serving', 'slice', 'bag', 'tray', 'box', 'flat', 'jar', 'packet',
+  'pack', 'sleeve', 'roll',
 ])
 // Kegs intentionally excluded — partial keg counts (e.g. 0.75) are meaningful and must not be rounded.
 
@@ -184,4 +196,6 @@ export const ALL_UNITS = [
   // Food / kitchen
   'each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g',
   'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet',
+  // Paper / supply
+  'pack', 'sleeve', 'roll',
 ]

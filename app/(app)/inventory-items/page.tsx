@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
-import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS } from '@/lib/conversions'
-import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
+import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS, INVENTORY_PAPER_UNITS } from '@/lib/conversions'
+import { PRESET_CATEGORIES } from '@/lib/categories'
 import { formatQty } from '@/lib/conversions'
 import type { InventoryItem, Vendor } from '@/types'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
@@ -12,8 +12,9 @@ import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/ro
 
 const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
 const FOOD_UNITS = INVENTORY_FOOD_UNITS
+const PAPER_UNITS = INVENTORY_PAPER_UNITS
 
-type ItemType = 'beverage' | 'food'
+type ItemType = 'beverage' | 'food' | 'paper'
 
 function SectionDivider({ label, count }: { label: string; count: number }) {
   return (
@@ -136,7 +137,7 @@ export default function InventoryItemsPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
     setName(''); setCategory(''); setPackageType(''); setPackSize(''); setCostPerUnit(''); setReorderLevel(''); setVendorId('')
-    setItemType(typeFilter === 'food' ? 'food' : 'beverage')
+    setItemType(typeFilter === 'food' ? 'food' : typeFilter === 'paper' ? 'paper' : 'beverage')
     if (data.auto_menu_item) {
       setAutoLinked(data.auto_menu_item)
       setTimeout(() => setAutoLinked(null), 5000)
@@ -338,7 +339,9 @@ export default function InventoryItemsPage() {
 
   const beverageItems = typeFilteredItems.filter(i => (i.item_type ?? 'beverage') === 'beverage')
   const foodItems = typeFilteredItems.filter(i => i.item_type === 'food')
-  const showTypeSections = typeFilter === 'all' && categoryFilter === 'all' && beverageItems.length > 0 && foodItems.length > 0
+  const paperItems = typeFilteredItems.filter(i => i.item_type === 'paper')
+  const typesWithItems = [beverageItems, foodItems, paperItems].filter(g => g.length > 0).length
+  const showTypeSections = typeFilter === 'all' && categoryFilter === 'all' && typesWithItems > 1
 
   function toggleCat(cat: string) {
     setCollapsedCats((prev) => {
@@ -376,17 +379,17 @@ export default function InventoryItemsPage() {
                     <div className="col-span-2">
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">Type</label>
                       <div className="mt-1 flex rounded-lg overflow-hidden border border-slate-700 text-xs font-semibold">
-                        {(['beverage', 'food'] as ItemType[]).map((t) => (
+                        {(['beverage', 'food', 'paper'] as ItemType[]).map((t) => (
                           <button
                             key={t}
                             type="button"
                             onClick={() => {
                               setEditItemType(t)
-                              setEditUnit(t === 'food' ? 'each' : 'bottle')
+                              setEditUnit(t === 'beverage' ? 'bottle' : 'each')
                             }}
                             className={`flex-1 py-2 transition-colors ${editItemType === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}
                           >
-                            {t === 'beverage' ? 'Beverage' : 'Food'}
+                            {t === 'beverage' ? 'Beverage' : t === 'food' ? 'Food' : 'Paper'}
                           </button>
                         ))}
                       </div>
@@ -406,7 +409,7 @@ export default function InventoryItemsPage() {
                         onChange={(e) => setEditUnit(e.target.value)}
                         className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
                       >
-                        {(editItemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => (
+                        {(editItemType === 'beverage' ? BEVERAGE_UNITS : editItemType === 'paper' ? PAPER_UNITS : FOOD_UNITS).map((u) => (
                           <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
                         ))}
                       </select>
@@ -613,20 +616,20 @@ export default function InventoryItemsPage() {
         <div className="flex items-center justify-between">
           <h2 className="font-medium text-slate-200 text-sm">Add Item</h2>
           <div className="flex gap-1 bg-slate-800 rounded-lg p-0.5">
-            {(['beverage', 'food'] as ItemType[]).map((t) => (
+            {(['beverage', 'food', 'paper'] as ItemType[]).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => {
                   setItemType(t)
-                  setUnit(t === 'food' ? 'each' : 'bottle')
+                  setUnit(t === 'beverage' ? 'bottle' : 'each')
                   setPackageType(''); setPackSize('')
                 }}
                 className={`px-3 py-1 rounded text-xs font-medium transition-colors capitalize ${
                   itemType === t ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {t}
+                {t === 'paper' ? 'Paper' : t}
               </button>
             ))}
           </div>
@@ -635,7 +638,7 @@ export default function InventoryItemsPage() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={itemType === 'food' ? 'Item name (e.g. Burger Patty, Lettuce)' : "Item name (e.g. Corona Extra, Tito's Vodka)"}
+            placeholder={itemType === 'food' ? 'Item name (e.g. Burger Patty, Lettuce)' : itemType === 'paper' ? 'Item name (e.g. 12oz Cups, Napkins, To-Go Boxes)' : "Item name (e.g. Corona Extra, Tito's Vodka)"}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
           />
           <div className="grid grid-cols-2 gap-3">
@@ -646,7 +649,7 @@ export default function InventoryItemsPage() {
                 onChange={(e) => setUnit(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
               >
-                {(itemType === 'food' ? FOOD_UNITS : BEVERAGE_UNITS).map((u) => (
+                {(itemType === 'beverage' ? BEVERAGE_UNITS : itemType === 'paper' ? PAPER_UNITS : FOOD_UNITS).map((u) => (
                   <option key={u} value={u}>{UNIT_LABELS[u] ?? u}</option>
                 ))}
               </select>
@@ -776,7 +779,7 @@ export default function InventoryItemsPage() {
         <div className="space-y-2">
           {/* Type strip */}
           <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
-            {(['all', 'beverage', 'food'] as const).map((t) => (
+            {(['all', 'beverage', 'food', 'paper'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => { setTypeFilter(t); setCategoryFilter('all') }}
@@ -788,7 +791,9 @@ export default function InventoryItemsPage() {
                   ? `All (${items.length})`
                   : t === 'beverage'
                     ? `Beverages (${beverageItems.length})`
-                    : `Food (${foodItems.length})`}
+                    : t === 'food'
+                      ? `Food (${foodItems.length})`
+                      : `Paper (${paperItems.length})`}
               </button>
             ))}
           </div>
@@ -1038,14 +1043,24 @@ export default function InventoryItemsPage() {
         </div>
       ) : showTypeSections ? (
         <div className="space-y-4">
-          <div className="space-y-3">
-            <SectionDivider label="Beverages" count={beverageItems.length} />
-            {renderCategoryGroups(beverageItems)}
-          </div>
-          <div className="space-y-3">
-            <SectionDivider label="Food & Kitchen" count={foodItems.length} />
-            {renderCategoryGroups(foodItems)}
-          </div>
+          {beverageItems.length > 0 && (
+            <div className="space-y-3">
+              <SectionDivider label="Beverages" count={beverageItems.length} />
+              {renderCategoryGroups(beverageItems)}
+            </div>
+          )}
+          {foodItems.length > 0 && (
+            <div className="space-y-3">
+              <SectionDivider label="Food & Kitchen" count={foodItems.length} />
+              {renderCategoryGroups(foodItems)}
+            </div>
+          )}
+          {paperItems.length > 0 && (
+            <div className="space-y-3">
+              <SectionDivider label="Paper & Supplies" count={paperItems.length} />
+              {renderCategoryGroups(paperItems)}
+            </div>
+          )}
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="text-center py-12 text-slate-700 border border-slate-800 border-dashed rounded-2xl">

@@ -11,7 +11,7 @@ export interface AiCategorizeSuggestion {
   name: string
   unit: string
   suggested_category: string
-  item_type: 'beverage' | 'food'
+  item_type: 'beverage' | 'food' | 'paper'
 }
 
 const PRESET_CATEGORIES = [
@@ -21,6 +21,9 @@ const PRESET_CATEGORIES = [
   // Food
   'food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods',
   'sauces', 'condiments', 'dessert', 'supply',
+  // Paper / supplies
+  'cups & lids', 'napkins', 'plates & bowls', 'to-go containers',
+  'paper towels', 'straws & utensils', 'cleaning supplies', 'packaging',
   // Other
   'other',
 ]
@@ -45,6 +48,7 @@ export async function GET() {
 Available categories:
 Beverage: spirits, beer, wine, keg, mixer, non-alcoholic, rum, tequila, vodka, whiskey, gin, brandy, cognac, liqueur
 Food: food, kitchen, produce, protein, dairy, dry goods, sauces, condiments, dessert, supply
+Paper/Supplies: cups & lids, napkins, plates & bowls, to-go containers, paper towels, straws & utensils, cleaning supplies, packaging
 Other: other
 
 Rules:
@@ -53,10 +57,11 @@ Rules:
 - Wine bottles/cases → "wine". Beer bottles/cans/cases → "beer". Kegs → "keg".
 - Mixers (tonic, club soda, juice, syrups) → "mixer"
 - Food items → best matching food category. Supplies → "supply".
+- Paper goods, cups, napkins, plates, to-go boxes, paper towels, straws, cleaning products → appropriate paper/supplies category, item_type="paper"
 - If nothing fits → "other"
 
 Return ONLY a JSON array, no markdown:
-[{"id":"<exact id>","category":"<category>","item_type":"beverage|food"}]`
+[{"id":"<exact id>","category":"<category>","item_type":"beverage|food|paper"}]`
 
     const BATCH_SIZE = 50
     const batches: typeof items[] = []
@@ -101,7 +106,7 @@ Return ONLY a JSON array, no markdown:
           name: item.name,
           unit: item.unit,
           suggested_category: category,
-          item_type: s.item_type === 'food' ? 'food' : 'beverage',
+          item_type: s.item_type === 'food' ? 'food' : s.item_type === 'paper' ? 'paper' : 'beverage',
         }
       })
 
