@@ -169,7 +169,7 @@ export default function BarInventorySoftwarePage() {
 
         {/* INTERNAL LINKS */}
         <section style={{ marginBottom: 80 }}>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: '#64748b', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: 12 }}>Related Resources</h3>
+          <h3 style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Related Resources</h3>
           <div className="seo-grid-2">
             {[
               { href: '/liquor-inventory-management', label: 'Liquor Inventory Management', desc: 'Track every ounce of your spirits, wine, and beer with oz-level precision.' },
