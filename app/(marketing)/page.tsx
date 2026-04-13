@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: 'https://barguard.app',
     type: 'website',
     siteName: 'BarGuard',
-    images: [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+    images: [{ url: 'https://barguard.app/Barguard_web_banner.webp', width: 1200, height: 630, alt: 'BarGuard — AI Bar Inventory Loss Detection Software' }],
   },
 }
 

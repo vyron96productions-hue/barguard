@@ -19,7 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog/over-pouring-bar-losses`, lastModified: new Date('2026-03-05'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/bartender-theft-signs-prevention`, lastModified: new Date('2026-03-31'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/how-to-reduce-liquor-cost-percentage`, lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${base}/blog/stop-bartender-theft`, lastModified: new Date('2026-04-13'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/privacy`, lastModified: new Date('2026-03-18'), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/terms`, lastModified: new Date('2026-04-01'), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/refund`, lastModified: new Date('2026-03-18'), changeFrequency: 'yearly', priority: 0.3 },

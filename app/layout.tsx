@@ -14,13 +14,13 @@ export const metadata: Metadata = {
     siteName: 'BarGuard',
     title: 'BarGuard — Stop Losing Money at Your Bar',
     description: 'AI-powered inventory loss detection for bars. Catch shrinkage, over-pouring, and stock discrepancies before they cost you thousands.',
-    images: [{ url: '/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+    images: [{ url: '/Barguard_web_banner.webp', width: 1200, height: 630, alt: 'BarGuard — AI Bar Inventory Loss Detection Software' }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'BarGuard — Stop Losing Money at Your Bar',
     description: 'AI-powered inventory loss detection for bars. Catch shrinkage, over-pouring, and stock discrepancies before they cost you thousands.',
-    images: ['/barguard_icon.png'],
+    images: ['/Barguard_web_banner.webp'],
   },
   icons: {
     icon: '/icon.png',

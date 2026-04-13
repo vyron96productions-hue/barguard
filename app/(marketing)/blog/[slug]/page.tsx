@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       siteName: 'BarGuard',
       images: post.image
         ? [{ url: `https://barguard.app${post.image}`, width: 1200, height: 630, alt: post.imageAlt ?? post.title }]
-        : [{ url: 'https://barguard.app/barguard_icon.png', width: 512, height: 512, alt: 'BarGuard' }],
+        : [{ url: 'https://barguard.app/Barguard_web_banner.webp', width: 1200, height: 630, alt: 'BarGuard — AI Bar Inventory Loss Detection Software' }],
     },
   }
 }
@@ -43,6 +43,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     description: post.excerpt,
     url: `https://barguard.app/blog/${slug}`,
     datePublished: isoDate,
+    dateModified: isoDate,
+    author: {
+      '@type': 'Organization',
+      name: 'BarGuard',
+      url: 'https://barguard.app',
+    },
     ...(post.image ? { image: { '@type': 'ImageObject', url: `https://barguard.app${post.image}`, width: 1200, height: 630 } } : {}),
     publisher: {
       '@type': 'Organization',

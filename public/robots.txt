@@ -9,5 +9,9 @@ Disallow: /partner/
 Disallow: /admin/
 Disallow: /api/
 Disallow: /welcome
+Disallow: /expenses
+Disallow: /email-imports
+Disallow: /purchase-scan
+Disallow: /pos-settings
 
 Sitemap: https://barguard.app/sitemap.xml
