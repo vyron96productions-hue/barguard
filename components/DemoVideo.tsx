@@ -50,7 +50,6 @@ export default function DemoVideo() {
             fill
             sizes="(max-width: 768px) 100vw, 880px"
             style={{ objectFit: 'cover' }}
-            priority
           />
           {/* Dark overlay */}
           <div style={{

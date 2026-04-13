@@ -115,6 +115,7 @@ export default function HomePage() {
           height={800}
           priority
           fetchPriority="high"
+          sizes="100vw"
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
 
