@@ -3,10 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { cookies } from 'next/headers'
 import { Montserrat } from 'next/font/google'
-import dynamic from 'next/dynamic'
 import MarketingNav from '@/components/MarketingNav'
-
-const ChatWidget = dynamic(() => import('@/components/ChatWidget'), { ssr: false })
+import ChatWidgetLazy from '@/components/ChatWidgetLazy'
 
 const montserrat = Montserrat({ subsets: ['latin'], weight: ['800'], variable: '--font-montserrat' })
 
@@ -144,7 +142,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
           </div>
         </div>
       </footer>
-      <ChatWidget />
+      <ChatWidgetLazy />
     </>
   )
 }
