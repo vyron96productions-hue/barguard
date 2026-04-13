@@ -663,17 +663,12 @@ AS $$
   FROM sales_transactions
   WHERE business_id = p_business_id
     AND menu_item_id IS NOT NULL
-    AND (
-      -- Precise path: POS or time-stamped CSV rows
-      (sale_timestamp IS NOT NULL
-       AND sale_timestamp >= p_shift_start
-       AND sale_timestamp <  p_shift_end)
-      OR
-      -- Fallback path: date-only CSV rows (includes entire day for shift days)
-      (sale_timestamp IS NULL
-       AND sale_date >= p_date_start
-       AND sale_date <= p_date_end)
-    );
+    -- Only rows with a precise timestamp can be attributed to a shift.
+    -- Date-only rows (CSV imports) must be excluded — including them via a
+    -- date fallback causes every shift to return identical full-day totals.
+    AND sale_timestamp IS NOT NULL
+    AND sale_timestamp >= p_shift_start
+    AND sale_timestamp <  p_shift_end;
 $$;
 
 

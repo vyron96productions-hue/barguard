@@ -34,10 +34,13 @@ export async function GET(req: NextRequest) {
       .not('menu_item_id', 'is', null)
 
     if (isShiftMode) {
-      query = query.or(
-        `and(sale_timestamp.gte.${shiftStart},sale_timestamp.lte.${shiftEnd}),` +
-        `and(sale_timestamp.is.null,sale_date.gte.${periodStart},sale_date.lte.${periodEnd})`
-      )
+      // Shift mode: only count rows that have a precise timestamp — date-only rows
+      // (CSV imports without sale_timestamp) cannot be attributed to a specific shift
+      // and must be excluded to avoid all shifts showing identical full-day totals.
+      query = query
+        .not('sale_timestamp', 'is', null)
+        .gte('sale_timestamp', shiftStart)
+        .lte('sale_timestamp', shiftEnd)
     } else {
       query = query.gte('sale_date', periodStart).lte('sale_date', periodEnd)
     }
