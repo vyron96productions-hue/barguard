@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import KpiCard from '@/components/dashboard/KpiCard'
 import RiskTable from '@/components/dashboard/RiskTable'
 import AiSummaryCard from '@/components/dashboard/AiSummaryCard'
@@ -167,6 +167,21 @@ export default function DashboardPage() {
 
   const isShift = calcMode !== 'daterange'
 
+  // ── Auto-run when shift window changes ─────────────────────────────────────
+  // Keep a ref to the latest runCalculation so the effect always calls the
+  // up-to-date version without it being listed as a dependency.
+  const runCalcRef = useRef<() => void>(() => {})
+  // Track which shift window we last auto-ran for to avoid double-firing.
+  const autoRanKeyRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!resolvedWindow) { autoRanKeyRef.current = null; return }
+    const key = `${resolvedWindow.shiftStart}|${resolvedWindow.shiftEnd}`
+    if (autoRanKeyRef.current === key) return
+    autoRanKeyRef.current = key
+    runCalcRef.current()
+  }, [resolvedWindow]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   function effectivePeriod() {
     if (resolvedWindow)   return { start: resolvedWindow.periodStart,   end: resolvedWindow.periodEnd }
@@ -287,6 +302,9 @@ export default function DashboardPage() {
     else setCmdError(data.error ?? 'Failed to generate summary')
     setGenerating(false)
   }
+
+  // Always keep the ref pointing at the latest runCalculation closure.
+  runCalcRef.current = runCalculation
 
   const { critical, warning, normal, totalVarianceOz, estimatedLoss, healthScore, highestRisk } = computeMetrics(summaries)
   const hasData = summaries.length > 0
@@ -546,7 +564,7 @@ export default function DashboardPage() {
             {loading ? 'Loading…' : 'No data for this period'}
           </p>
           <p className="text-slate-600 text-xs mt-1 text-center px-4">
-            {!loading && (isShift ? 'Pick a shift and service date, then run calculations' : 'Set a date range and run calculations')}
+            {!loading && (isShift ? 'Pick a shift and service date to load data' : 'Set a date range and run calculations')}
           </p>
         </div>
       )}
