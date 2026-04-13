@@ -850,6 +850,8 @@ function DesktopLineRow({ line, inventoryItems, unitOptions, categoryOptions, on
           {showAdd && (
             <AddToInventoryForm
               rawName={line.raw_item_name}
+              unitOptions={unitOptions}
+              categoryOptions={categoryOptions}
               onSave={(item) => { onNewInventoryItem(item); setShowAdd(false) }}
               onCancel={() => setShowAdd(false)}
             />
