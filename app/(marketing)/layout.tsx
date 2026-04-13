@@ -90,6 +90,19 @@ export default async function MarketingLayout({ children }: { children: React.Re
                 </div>
               </div>
               <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Solutions</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Link href="/bar-inventory-software" data-gtm-event="footer_click" data-gtm-label="footer_bar_inventory_software" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Bar Inventory Software</Link>
+                  <Link href="/restaurant-inventory-software" data-gtm-event="footer_click" data-gtm-label="footer_restaurant_inventory_software" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Restaurant Inventory</Link>
+                  <Link href="/liquor-inventory-management" data-gtm-event="footer_click" data-gtm-label="footer_liquor_inventory" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Liquor Tracking</Link>
+                  <Link href="/bar-inventory-app" data-gtm-event="footer_click" data-gtm-label="footer_bar_inventory_app" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Bar Inventory App</Link>
+                  <Link href="/reduce-liquor-cost" data-gtm-event="footer_click" data-gtm-label="footer_reduce_liquor_cost" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Reduce Liquor Cost</Link>
+                  <Link href="/stop-bartender-theft" data-gtm-event="footer_click" data-gtm-label="footer_stop_theft" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Stop Bartender Theft</Link>
+                  <Link href="/bar-profit-tracking" data-gtm-event="footer_click" data-gtm-label="footer_profit_tracking" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Bar Profit Tracking</Link>
+                  <Link href="/automated-inventory-system" data-gtm-event="footer_click" data-gtm-label="footer_automated_inventory" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Automated Inventory</Link>
+                </div>
+              </div>
+              <div>
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Partners</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <Link href="/partners" data-gtm-event="footer_click" data-gtm-label="footer_partners" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Partner Program</Link>
