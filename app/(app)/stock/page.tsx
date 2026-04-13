@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
 import { UNIT_LABELS, formatQty, INVENTORY_BEVERAGE_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
-import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
+import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PAPER_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
 
@@ -55,7 +55,7 @@ interface AnalysisResult {
 }
 
 type FilterCategory = 'all' | string
-type TypeFilter = 'all' | 'beverage' | 'food'
+type TypeFilter = 'all' | 'beverage' | 'food' | 'paper'
 
 function daysAgo(dateStr: string): number {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -70,7 +70,14 @@ function staleness(item: StockItem): 'fresh' | 'aging' | 'stale' | 'never' {
   return 'stale'
 }
 
+function isPaper(item: StockItem) {
+  if (item.item_type === 'paper') return true
+  const cat = item.category?.toLowerCase() ?? ''
+  return PAPER_CATEGORIES.some((pc) => cat === pc.toLowerCase())
+}
+
 function isFood(item: StockItem) {
+  if (isPaper(item)) return false
   if (item.item_type === 'food') return true
   // Category always wins — setting category to a food category overrides item_type
   const cat = item.category?.toLowerCase() ?? ''
@@ -270,8 +277,9 @@ export default function StockPage() {
 
   const countFiltered = items
     .filter((i) => {
-      if (countTypeFilter === 'beverage' && isFood(i)) return false
+      if (countTypeFilter === 'beverage' && (isFood(i) || isPaper(i))) return false
       if (countTypeFilter === 'food' && !isFood(i)) return false
+      if (countTypeFilter === 'paper' && !isPaper(i)) return false
       if (countSearch && !i.name.toLowerCase().includes(countSearch.toLowerCase())) return false
       return true
     })
@@ -285,13 +293,16 @@ export default function StockPage() {
 
   const countEntered = Object.values(countValues).filter((v) => v !== '').length
 
-  const beverageCount = items.filter((i) => !isFood(i)).length
+  const beverageCount = items.filter((i) => !isFood(i) && !isPaper(i)).length
   const foodCount = items.filter(isFood).length
-  const hasBoth = beverageCount > 0 && foodCount > 0
+  const paperCount = items.filter(isPaper).length
+  const typeCount = [beverageCount > 0, foodCount > 0, paperCount > 0].filter(Boolean).length
+  const hasBoth = typeCount > 1
 
   const typeFiltered = items.filter((i) => {
-    if (typeFilter === 'beverage') return !isFood(i)
+    if (typeFilter === 'beverage') return !isFood(i) && !isPaper(i)
     if (typeFilter === 'food') return isFood(i)
+    if (typeFilter === 'paper') return isPaper(i)
     return true
   })
 
@@ -427,6 +438,7 @@ export default function StockPage() {
             { key: 'all',      label: `All Items${hasBoth ? ` (${items.length})` : ''}` },
             { key: 'beverage', label: `Beverages${hasBoth ? ` (${beverageCount})` : ''}` },
             { key: 'food',     label: `Food${hasBoth ? ` (${foodCount})` : ''}` },
+            { key: 'paper',    label: `Paper${hasBoth ? ` (${paperCount})` : ''}` },
           ] as const).map(({ key, label }) => (
             <button
               key={key}
@@ -480,10 +492,11 @@ export default function StockPage() {
           <p className="text-slate-500 text-sm">No items match your search.</p>
         </div>
       ) : typeFilter === 'all' && hasBoth && filter === 'all' && !search ? (
-        // Sectioned view: Beverages then Food
+        // Sectioned view: Beverages, Food & Kitchen, Paper & Supplies
         <div className="space-y-5">
-          {renderSection(visible.filter((i) => !isFood(i)), 'Beverages')}
-          {renderSection(visible.filter(isFood), 'Food & Kitchen')}
+          {visible.filter((i) => !isFood(i) && !isPaper(i)).length > 0 && renderSection(visible.filter((i) => !isFood(i) && !isPaper(i)), 'Beverages')}
+          {visible.filter(isFood).length > 0 && renderSection(visible.filter(isFood), 'Food & Kitchen')}
+          {visible.filter(isPaper).length > 0 && renderSection(visible.filter(isPaper), 'Paper & Supplies')}
         </div>
       ) : (
         <div className="space-y-5">
@@ -657,7 +670,7 @@ export default function StockPage() {
             className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
           />
           <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5 w-fit">
-            {(['all', 'beverage', 'food'] as const).map((t) => (
+            {(['all', 'beverage', 'food', 'paper'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setCountTypeFilter(t)}
@@ -665,7 +678,7 @@ export default function StockPage() {
                   countTypeFilter === t ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                {t === 'all' ? 'All' : t === 'beverage' ? 'Beverages' : 'Food'}
+                {t === 'all' ? 'All' : t === 'beverage' ? 'Beverages' : t === 'food' ? 'Food' : 'Paper'}
               </button>
             ))}
           </div>
