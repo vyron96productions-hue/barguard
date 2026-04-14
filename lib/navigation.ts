@@ -44,6 +44,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     label: 'Setup',
     items: [
+      { href: '/onboarding',      label: 'Price Setup',      icon: '◬', minRole: 'manager' },
       { href: '/inventory-items', label: 'Inventory Items',  icon: '◈', minRole: 'manager' },
       { href: '/menu-items',      label: 'Recipe Mapping',   icon: '◉', minRole: 'manager' },
       { href: '/modifier-rules',  label: 'Modifier Rules',   icon: '◧', minRole: 'manager' },
