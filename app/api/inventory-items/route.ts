@@ -155,6 +155,18 @@ export async function PATCH(req: NextRequest) {
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // If the unit changed, propagate to inventory_counts so expected on-hand
+    // calculations use the correct unit. Without this, old count rows keep the
+    // wrong unit_type and the expected badge shows garbage values.
+    if (body.unit !== undefined && body.unit) {
+      await supabase
+        .from('inventory_counts')
+        .update({ unit_type: body.unit })
+        .eq('inventory_item_id', id)
+        .eq('business_id', businessId)
+    }
+
     return NextResponse.json(data)
   } catch (e) { return authErrorResponse(e) }
 }
