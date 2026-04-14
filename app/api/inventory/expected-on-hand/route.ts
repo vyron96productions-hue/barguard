@@ -36,6 +36,10 @@ export async function GET() {
     if (itemsErr) return NextResponse.json({ error: itemsErr.message }, { status: 500 })
     if (!items?.length) return NextResponse.json([])
 
+    // Item unit lookup — authoritative source of truth for unit type
+    const itemUnit: Record<string, string> = {}
+    for (const item of items ?? []) itemUnit[item.id] = item.unit
+
     // 2. All physical counts — ordered desc so we can find the latest per item
     const { data: counts } = await supabase
       .from('inventory_counts')
@@ -44,13 +48,16 @@ export async function GET() {
       .not('inventory_item_id', 'is', null)
       .order('count_date', { ascending: false })
 
-    // Latest count per item
+    // Latest count per item.
+    // unit priority: count.unit_type (if set) → item.unit → 'oz'
+    // This ensures that if a count was saved with a wrong/missing unit_type,
+    // we still interpret the quantity correctly using the item's actual unit.
     const latestCount: Record<string, { qty: number; unit: string; date: string }> = {}
     for (const c of counts ?? []) {
       if (!latestCount[c.inventory_item_id]) {
         latestCount[c.inventory_item_id] = {
           qty:  c.quantity_on_hand,
-          unit: c.unit_type ?? 'oz',
+          unit: c.unit_type ?? itemUnit[c.inventory_item_id] ?? 'oz',
           date: c.count_date,
         }
       }
@@ -74,7 +81,7 @@ export async function GET() {
     for (const p of purchases ?? []) {
       const lc = latestCount[p.inventory_item_id]
       if (!lc || p.purchase_date < lc.date) continue
-      const oz = convertToOz(p.quantity_purchased, p.unit_type ?? 'oz')
+      const oz = convertToOz(p.quantity_purchased, p.unit_type ?? itemUnit[p.inventory_item_id] ?? 'oz')
       purchasesOz[p.inventory_item_id] = (purchasesOz[p.inventory_item_id] ?? 0) + oz
     }
 
