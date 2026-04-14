@@ -432,7 +432,7 @@ export default function InventoryItemsPage() {
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                        Cost per {UNIT_LABELS[editUnit] ?? editUnit} <span className="text-slate-700">(optional)</span>
+                        Cost per {editUnit} <span className="text-slate-700">(optional)</span>
                       </label>
                       <div className="relative mt-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
@@ -446,6 +446,11 @@ export default function InventoryItemsPage() {
                           className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                         />
                       </div>
+                      {editItemType === 'food' && editUnit === 'lb' && editPackSize && parseFloat(editPackSize) > 0 && editCost && parseFloat(editCost) > 0 && (
+                        <p className="text-[10px] text-emerald-400/50 mt-1">
+                          = ${(parseFloat(editCost) * parseFloat(editPackSize)).toFixed(2)}/case ({editPackSize} lb)
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">

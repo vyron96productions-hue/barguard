@@ -192,13 +192,19 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
             const upp = parseInt(l.units_per_package, 10) || null
             // If packaging info present, save individual unit count (qty × units_per_package)
             const effectiveQty = qty !== null && upp !== null && upp > 1 ? qty * upp : qty
+            const rawCost = parseFloat(l.unit_cost) || null
+            // Food + lbs_per_case: user entered cost-per-case → convert to cost-per-lb for storage
+            // e.g. $17.49/case ÷ 25 lb/case = $0.70/lb
+            const effectiveCost = scanType === 'food' && rawCost !== null && upp !== null && upp > 1
+              ? rawCost / upp
+              : rawCost
             return {
               id: l.id,
               raw_item_name: l.raw_item_name,
               inventory_item_id: l.inventory_item_id,
               quantity: effectiveQty,
               unit_type: l.unit_type || null,
-              unit_cost: parseFloat(l.unit_cost) || null,
+              unit_cost: effectiveCost,
               is_approved: l.is_approved,
               save_alias: l.save_alias,
             }
@@ -787,7 +793,11 @@ function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, sc
               className={`mt-1 w-full bg-slate-800/60 border rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
           </div>
           <div>
-            <label className="text-[10px] text-slate-500 uppercase tracking-wider">Cost ($)</label>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider">
+              {scanType === 'food' && line.units_per_package && parseInt(line.units_per_package) > 1
+                ? 'Cost per case ($)'
+                : 'Cost ($)'}
+            </label>
             <input type="number" step="0.01" value={line.unit_cost} onChange={(e) => onChange({ unit_cost: e.target.value })}
               placeholder="0.00"
               className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60" />
@@ -806,17 +816,17 @@ function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, sc
       {/* Total pill — food: "Total: X lb"; liquor: "saves X individual units" */}
       {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 ? (
         scanType === 'food' ? (
-          <div className="flex items-center gap-2.5 rounded-lg bg-emerald-500/8 border border-emerald-500/20 px-3 py-2">
+          <div className="flex items-center gap-2.5 rounded-lg bg-emerald-500/8 border border-emerald-500/20 px-3 py-2 flex-wrap">
             <span className="text-emerald-400/70 text-xs shrink-0">Total</span>
             <span className="text-emerald-300 font-bold text-base tabular-nums leading-none">
-              {(parseFloat(line.quantity) * parseInt(line.units_per_package)).toFixed(1).replace(/\.0$/, '')}
+              {(parseFloat(line.quantity) * parseInt(line.units_per_package)).toFixed(1).replace(/\.0$/, '')} lb
             </span>
-            <span className="text-emerald-400/70 text-xs">
-              lb
-              <span className="text-emerald-400/40 ml-1.5">
-                ({line.quantity} × {line.units_per_package} lb)
+            <span className="text-emerald-400/40 text-xs">({line.quantity} × {line.units_per_package} lb)</span>
+            {line.unit_cost && parseFloat(line.unit_cost) > 0 && (
+              <span className="text-emerald-400/50 text-xs ml-auto">
+                = ${(parseFloat(line.unit_cost) / parseInt(line.units_per_package)).toFixed(2)}/lb
               </span>
-            </span>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2.5 rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2">
@@ -966,11 +976,20 @@ function DesktopLineRow({ line, inventoryItems, unitOptions, categoryOptions, sc
         </select>
       </td>
       <td className="px-2 py-2">
-        <div className="flex items-center bg-slate-800/60 border border-slate-700/60 rounded overflow-hidden">
-          <span className="px-1.5 text-slate-500">$</span>
-          <input type="number" step="0.01" value={line.unit_cost} onChange={(e) => onChange({ unit_cost: e.target.value })}
-            placeholder="0.00"
-            className="flex-1 bg-transparent py-1 pr-2 text-xs text-slate-200 focus:outline-none" />
+        <div className="space-y-1">
+          <div className="flex items-center bg-slate-800/60 border border-slate-700/60 rounded overflow-hidden">
+            <span className="px-1.5 text-slate-500 text-[10px]">
+              {scanType === 'food' && line.units_per_package && parseInt(line.units_per_package) > 1 ? '$/cs' : '$'}
+            </span>
+            <input type="number" step="0.01" value={line.unit_cost} onChange={(e) => onChange({ unit_cost: e.target.value })}
+              placeholder="0.00"
+              className="flex-1 bg-transparent py-1 pr-2 text-xs text-slate-200 focus:outline-none" />
+          </div>
+          {scanType === 'food' && line.unit_cost && parseFloat(line.unit_cost) > 0 && line.units_per_package && parseInt(line.units_per_package) > 1 && (
+            <p className="text-[10px] text-emerald-400/50 text-right">
+              ${(parseFloat(line.unit_cost) / parseInt(line.units_per_package)).toFixed(2)}/lb
+            </p>
+          )}
         </div>
       </td>
       <td className="px-2 py-2">
