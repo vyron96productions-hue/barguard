@@ -131,7 +131,12 @@ export default function InventoryItemsPage() {
         item_type: itemType,
         package_type: packageType || null,
         pack_size: packSize ? parseFloat(packSize) : null,
-        cost_per_unit: costPerUnit ? parseFloat(costPerUnit) : null,
+        // Food/lb with lbs_per_case: user enters cost-per-case → convert to cost-per-lb
+        cost_per_unit: costPerUnit
+          ? (itemType === 'food' && unit === 'lb' && packSize && parseFloat(packSize) > 0
+              ? parseFloat(costPerUnit) / parseFloat(packSize)
+              : parseFloat(costPerUnit))
+          : null,
         reorder_level: reorderLevel ? parseFloat(reorderLevel) : null,
         vendor_id: vendorId || null,
       }),
@@ -194,7 +199,12 @@ export default function InventoryItemsPage() {
     setEditName(item.name)
     setEditUnit(item.unit)
     setEditCat(item.category ?? '')
-    setEditCost(item.cost_per_unit != null ? String(item.cost_per_unit) : '')
+    // Food/lb with pack_size: cost_per_unit is stored as per-lb → display as per-case
+    const packSz = item.pack_size
+    const isFoodLb = (item.item_type === 'food') && item.unit === 'lb' && packSz != null && packSz > 0
+    setEditCost(item.cost_per_unit != null
+      ? String(isFoodLb ? parseFloat((item.cost_per_unit * packSz!).toFixed(4)) : item.cost_per_unit)
+      : '')
     setEditReorderLevel(item.reorder_level != null ? String(item.reorder_level) : '')
     setEditVendorId(item.vendor_id ?? '')
     setEditItemType((item.item_type as ItemType) ?? 'beverage')
@@ -216,7 +226,12 @@ export default function InventoryItemsPage() {
         unit: editUnit,
         category: editCat || null,
         item_type: editItemType,
-        cost_per_unit: editCost !== '' ? parseFloat(editCost) : null,
+        // Food/lb with lbs_per_case: user enters cost-per-case → convert to cost-per-lb
+        cost_per_unit: editCost !== ''
+          ? (editItemType === 'food' && editUnit === 'lb' && editPackSize !== '' && parseFloat(editPackSize) > 0
+              ? parseFloat(editCost) / parseFloat(editPackSize)
+              : parseFloat(editCost))
+          : null,
         reorder_level: editReorderLevel !== '' ? parseFloat(editReorderLevel) : null,
         vendor_id: editVendorId || null,
         package_type: editPackageType || null,
@@ -432,7 +447,10 @@ export default function InventoryItemsPage() {
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                        Cost per {editUnit} <span className="text-slate-700">(optional)</span>
+                        {editItemType === 'food' && editUnit === 'lb' && editPackSize && parseFloat(editPackSize) > 0
+                          ? <>Cost per case / bag <span className="text-slate-700">(optional)</span></>
+                          : <>Cost per {editUnit} <span className="text-slate-700">(optional)</span></>
+                        }
                       </label>
                       <div className="relative mt-1">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
@@ -442,13 +460,13 @@ export default function InventoryItemsPage() {
                           step="0.01"
                           value={editCost}
                           onChange={(e) => setEditCost(e.target.value)}
-                          placeholder="e.g. 24.99"
+                          placeholder="e.g. 17.49"
                           className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                         />
                       </div>
                       {editItemType === 'food' && editUnit === 'lb' && editPackSize && parseFloat(editPackSize) > 0 && editCost && parseFloat(editCost) > 0 && (
                         <p className="text-[10px] text-emerald-400/50 mt-1">
-                          = ${(parseFloat(editCost) * parseFloat(editPackSize)).toFixed(2)}/case ({editPackSize} lb)
+                          = ${(parseFloat(editCost) / parseFloat(editPackSize)).toFixed(2)}/lb stored internally
                         </p>
                       )}
                     </div>
@@ -570,11 +588,18 @@ export default function InventoryItemsPage() {
                           : `${item.pack_size}/pack`}
                       </span>
                     )}
-                    {item.cost_per_unit != null && (
-                      <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                        ${item.cost_per_unit.toFixed(2)}/{item.unit}
-                      </span>
-                    )}
+                    {item.cost_per_unit != null && (() => {
+                      const isFoodCase = item.item_type === 'food' && item.unit === 'lb' && item.pack_size && item.pack_size > 0
+                      const displayCost = isFoodCase
+                        ? (item.cost_per_unit * item.pack_size!).toFixed(2)
+                        : item.cost_per_unit.toFixed(2)
+                      const displayUnit = isFoodCase ? 'case' : item.unit
+                      return (
+                        <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                          ${displayCost}/{displayUnit}
+                        </span>
+                      )
+                    })()}
                     {item.reorder_level != null && (
                       <span className="text-xs text-amber-500/60 shrink-0 bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded">
                         reorder @ {item.reorder_level} {item.unit}
@@ -784,7 +809,10 @@ export default function InventoryItemsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">
-                Cost per {unit || 'unit'} <span className="text-slate-700">(optional)</span>
+                {itemType === 'food' && unit === 'lb' && packSize && parseFloat(packSize) > 0
+                  ? <>Cost per case / bag <span className="text-slate-700">(optional)</span></>
+                  : <>Cost per {unit || 'unit'} <span className="text-slate-700">(optional)</span></>
+                }
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
@@ -794,10 +822,15 @@ export default function InventoryItemsPage() {
                   step="0.01"
                   value={costPerUnit}
                   onChange={(e) => setCostPerUnit(e.target.value)}
-                  placeholder="e.g. 24.99"
+                  placeholder="e.g. 17.49"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                 />
               </div>
+              {itemType === 'food' && unit === 'lb' && packSize && parseFloat(packSize) > 0 && costPerUnit && parseFloat(costPerUnit) > 0 && (
+                <p className="text-[10px] text-emerald-400/50 mt-1">
+                  = ${(parseFloat(costPerUnit) / parseFloat(packSize)).toFixed(2)}/lb stored internally
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">
