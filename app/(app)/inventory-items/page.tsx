@@ -69,6 +69,11 @@ export default function InventoryItemsPage() {
   // Expected on hand (auto-calculated from sales + recipes since last count)
   const [expectedMap,    setExpectedMap]    = useState<Record<string, ExpectedOnHandItem>>({})
 
+  // Set stock inline correction
+  const [setStockItemId,  setSetStockItemId]  = useState<string | null>(null)
+  const [setStockValue,   setSetStockValue]   = useState('')
+  const [setStockSaving,  setSetStockSaving]  = useState(false)
+
   async function fetchExpected() {
     const res = await fetch('/api/inventory/expected-on-hand')
     if (!res.ok) return
@@ -76,6 +81,24 @@ export default function InventoryItemsPage() {
     const map: Record<string, ExpectedOnHandItem> = {}
     for (const e of data) map[e.id] = e
     setExpectedMap(map)
+  }
+
+  async function handleSetStock(itemId: string) {
+    const qty = parseFloat(setStockValue)
+    if (isNaN(qty) || qty < 0) return
+    setSetStockSaving(true)
+    try {
+      await fetch('/api/inventory-counts/set-stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inventory_item_id: itemId, quantity_on_hand: qty }),
+      })
+      setSetStockItemId(null)
+      setSetStockValue('')
+      fetchExpected()
+    } finally {
+      setSetStockSaving(false)
+    }
   }
 
   const [editingId,      setEditingId]      = useState<string | null>(null)
@@ -618,24 +641,38 @@ export default function InventoryItemsPage() {
                     )}
                     {expectedMap[item.id] && (() => {
                       const exp = expectedMap[item.id]
-                      // Always use item.unit (live, just re-fetched) not exp.unit (may be stale
-                      // if expectedMap hasn't refreshed since a unit edit was saved).
                       const u = item.unit
                       const UNIT_TO_OZ_SIMPLE: Record<string, number> = { oz: 1, lb: 16, kg: 35.274, g: 0.035274, bottle: 25.36, wine_bottle: 25.36, '1L': 33.814, '1.75L': 59.1745, keg: 1984, quarterkeg: 992, sixthkeg: 661, pint: 16, can: 12, beer_bottle: 12, beer_bottle_16oz: 16, case: 288 }
                       const factor = UNIT_TO_OZ_SIMPLE[u] ?? 1
-                      // Re-derive qty in item's current unit from the oz total the API gave us
                       const expectedNative = exp.expected_qty_oz / factor
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
-                      // Use raw unit key in the badge (short), full label only in tooltip
                       const uLabel = UNIT_LABELS[u] ?? u
-                      return (
-                        <span
-                          title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${uLabel} on ${exp.last_count_date}\n+ ${purchasedNative} ${uLabel} purchased\n− ${deductedNative} ${uLabel} used`}
-                          className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded cursor-default"
+                      return setStockItemId === item.id ? (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <input
+                            type="number" min="0" step="any" autoFocus
+                            value={setStockValue}
+                            onChange={(e) => setSetStockValue(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleSetStock(item.id); if (e.key === 'Escape') { setSetStockItemId(null); setSetStockValue('') } }}
+                            placeholder={`qty in ${u}`}
+                            className="w-28 bg-slate-800 border border-amber-500/40 rounded px-2 py-0.5 text-xs text-slate-100 focus:outline-none"
+                          />
+                          <button onClick={() => handleSetStock(item.id)} disabled={setStockSaving}
+                            className="text-xs bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold px-2 py-0.5 rounded disabled:opacity-40"
+                          >{setStockSaving ? '…' : 'Set'}</button>
+                          <button onClick={() => { setSetStockItemId(null); setSetStockValue('') }}
+                            className="text-xs text-slate-500 hover:text-slate-300 px-1"
+                          >✕</button>
+                        </div>
+                      ) : (
+                        <button
+                          title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${uLabel} on ${exp.last_count_date}\n+ ${purchasedNative} ${uLabel} purchased\n− ${deductedNative} ${uLabel} used\n\nClick to correct this value`}
+                          onClick={() => { setSetStockItemId(item.id); setSetStockValue(String(Math.max(0, parseFloat(expectedNative.toFixed(2))))) }}
+                          className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 hover:border-sky-400/50 px-2 py-0.5 rounded cursor-pointer transition-colors"
                         >
                           ~{formatQty(Math.max(0, expectedNative), u)} {u} expected
-                        </span>
+                        </button>
                       )
                     })()}
                   </div>
