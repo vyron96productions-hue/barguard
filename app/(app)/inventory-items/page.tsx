@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
-import { UNIT_LABELS, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS, INVENTORY_PAPER_UNITS } from '@/lib/conversions'
+import { UNIT_LABELS, UNIT_TO_OZ, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS, INVENTORY_PAPER_UNITS, formatQty } from '@/lib/conversions'
 import { PRESET_CATEGORIES } from '@/lib/categories'
-import { formatQty } from '@/lib/conversions'
 import type { InventoryItem, Vendor } from '@/types'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
@@ -660,8 +659,7 @@ export default function InventoryItemsPage() {
                     {expectedMap[item.id] && (() => {
                       const exp = expectedMap[item.id]
                       const u = item.unit
-                      const UNIT_TO_OZ_SIMPLE: Record<string, number> = { oz: 1, lb: 16, kg: 35.274, g: 0.035274, bottle: 25.36, wine_bottle: 25.36, '1L': 33.814, '1.75L': 59.1745, keg: 1984, quarterkeg: 992, sixthkeg: 661, pint: 16, can: 12, beer_bottle: 12, beer_bottle_16oz: 16, case: 288 }
-                      const factor = UNIT_TO_OZ_SIMPLE[u] ?? 1
+                      const factor = UNIT_TO_OZ[u] ?? 1
                       const expectedNative = exp.expected_qty_oz / factor
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
