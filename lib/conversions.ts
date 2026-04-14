@@ -27,6 +27,9 @@ export const UNIT_TO_OZ: Record<string, number> = {
   '1l': 33.814,
   '1.75L': 59.1745,
   '1.75l': 59.1745,
+  gallon: 128,      // 1 US gallon = 128 oz
+  quart:  32,       // 1 US quart  = 32 oz
+  cup:    8,        // 1 US cup    = 8 oz
   keg: 1984,        // 15.5 gal half-barrel = 1984oz total
   quarterkeg: 992,  // 7.75 gal quarter-barrel = 992oz total
   sixthkeg: 661,    // 5.17 gal sixth-barrel = 661oz total
@@ -43,10 +46,11 @@ export const FOOD_UNITS = new Set([
   'each', 'piece', 'portion', 'serving', 'slice',
   'lb', 'lbs', 'pound', 'kg', 'g', 'gram',
   'bag', 'tray', 'box', 'flat',
-  'cup', 'tbsp', 'tsp',
+  'tbsp', 'tsp',
   'jar', 'packet',
   // Paper / supply units
   'pack', 'sleeve', 'roll',
+  // Note: gallon, quart, cup, oz are in UNIT_TO_OZ — they convert to oz automatically
 ])
 
 export function isLiquidUnit(unit: string): boolean {
@@ -81,7 +85,7 @@ export const INVENTORY_BEVERAGE_UNITS = [
 export const INVENTORY_FOOD_UNITS = [
   'each', 'portion', 'serving', 'slice', 'piece',
   'lb', 'kg', 'g', 'oz',
-  'cup', 'tbsp', 'tsp',
+  'gallon', 'quart', 'cup', 'tbsp', 'tsp',
   'bag', 'box', 'tray', 'flat', 'jar', 'packet',
 ]
 
@@ -112,11 +116,13 @@ export const UNIT_LABELS: Record<string, string> = {
   serving:     'Serving',
   slice:       'Slice',
   piece:       'Piece',
-  lb:          'lb (pound)',
+  lb:          'lb',
   kg:          'kg',
-  g:           'g (gram)',
-  oz:          'oz (weight)',
-  cup:         'Cup',
+  g:           'g',
+  oz:          'oz',
+  gallon:      'Gallon (128 oz)',
+  quart:       'Quart (32 oz)',
+  cup:         'Cup (8 oz)',
   tbsp:        'Tablespoon',
   tsp:         'Teaspoon',
   bag:         'Bag',
@@ -199,7 +205,8 @@ export const ALL_UNITS = [
   'oz', 'ml', 'cl', 'l',
   // Food / kitchen
   'each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g',
-  'bag', 'tray', 'box', 'flat', 'cup', 'tbsp', 'tsp', 'jar', 'packet',
+  'gallon', 'quart', 'cup',
+  'bag', 'tray', 'box', 'flat', 'tbsp', 'tsp', 'jar', 'packet',
   // Paper / supply
   'pack', 'sleeve', 'roll',
 ]

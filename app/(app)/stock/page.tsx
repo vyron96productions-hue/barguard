@@ -1223,7 +1223,7 @@ function StockCard({ item, allCategories, onUpdate }: {
   const itemIsFood = item.item_type === 'food'
   const unitOptions = itemIsFood ? FOOD_UNITS_LIST : BEVERAGE_UNITS
   const isFoodCase = item.item_type === 'food' &&
-    (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each') &&
+    (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart') &&
     (item.pack_size ?? 0) > 1
 
   function openEdit() {
@@ -1446,7 +1446,14 @@ function StockCard({ item, allCategories, onUpdate }: {
         </div>
         {isFoodCase && item.pack_size && effectiveQty !== null ? (
           <div className="space-y-1">
-            <p className="text-xs text-slate-500">cases ({item.pack_size}{item.unit === 'each' ? ' ct/case' : ` ${item.unit} each`})</p>
+            <p className="text-xs text-slate-500">
+              cases ({item.pack_size}{
+                item.unit === 'each' ? ' ct/case'
+                : item.unit === 'gallon' ? ' gal each'
+                : item.unit === 'quart' ? ' qt each'
+                : ` ${item.unit} each`
+              })
+            </p>
             {(() => {
               const loose = Math.round((effectiveQty % item.pack_size) * 100) / 100
               const looseLabel = item.unit === 'each' ? 'loose' : `${item.unit} loose`

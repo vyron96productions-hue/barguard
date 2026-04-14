@@ -87,7 +87,7 @@ export default function InventoryItemsPage() {
   async function handleSetStock(itemId: string) {
     const item = items.find((i) => i.id === itemId)
     const isFCP = item?.item_type === 'food' &&
-      (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each') &&
+      (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart') &&
       (item.pack_size ?? 0) > 1
     let qty: number
     if (isFCP && item?.pack_size) {
@@ -169,7 +169,7 @@ export default function InventoryItemsPage() {
         pack_size: packSize ? parseFloat(packSize) : null,
         // Food weight units with pack_size: user enters cost-per-case → convert to cost-per-unit
         cost_per_unit: costPerUnit
-          ? (itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each') && packSize && parseFloat(packSize) > 0
+          ? (itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each' || unit === 'gallon' || unit === 'quart') && packSize && parseFloat(packSize) > 0
               ? parseFloat(costPerUnit) / parseFloat(packSize)
               : parseFloat(costPerUnit))
           : null,
@@ -237,7 +237,7 @@ export default function InventoryItemsPage() {
     setEditCat(item.category ?? '')
     // Food weight units (lb, oz) with pack_size: cost stored as per-unit → display as per-case
     const packSz = item.pack_size
-    const isFoodWeightCase = (item.item_type === 'food') && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each') && packSz != null && packSz > 0
+    const isFoodWeightCase = (item.item_type === 'food') && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart') && packSz != null && packSz > 0
     setEditCost(item.cost_per_unit != null
       ? String(isFoodWeightCase ? parseFloat((item.cost_per_unit * packSz!).toFixed(4)) : item.cost_per_unit)
       : '')
@@ -264,7 +264,7 @@ export default function InventoryItemsPage() {
         item_type: editItemType,
         // Food/lb with lbs_per_case: user enters cost-per-case → convert to cost-per-lb
         cost_per_unit: editCost !== ''
-          ? (editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each') && editPackSize !== '' && parseFloat(editPackSize) > 0
+          ? (editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each' || editUnit === 'gallon' || editUnit === 'quart') && editPackSize !== '' && parseFloat(editPackSize) > 0
               ? parseFloat(editCost) / parseFloat(editPackSize)
               : parseFloat(editCost))
           : null,
@@ -484,7 +484,7 @@ export default function InventoryItemsPage() {
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                        {editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each') && editPackSize && parseFloat(editPackSize) > 0
+                        {editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each' || editUnit === 'gallon' || editUnit === 'quart') && editPackSize && parseFloat(editPackSize) > 0
                           ? <>Cost per case / bag <span className="text-slate-700">(optional)</span></>
                           : <>Cost per {editUnit} <span className="text-slate-700">(optional)</span></>
                         }
@@ -501,7 +501,7 @@ export default function InventoryItemsPage() {
                           className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                         />
                       </div>
-                      {editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each') && editPackSize && parseFloat(editPackSize) > 0 && editCost && parseFloat(editCost) > 0 && (
+                      {editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each' || editUnit === 'gallon' || editUnit === 'quart') && editPackSize && parseFloat(editPackSize) > 0 && editCost && parseFloat(editCost) > 0 && (
                         <p className="text-[10px] text-emerald-400/50 mt-1">
                           = ${(parseFloat(editCost) / parseFloat(editPackSize)).toFixed(2)}/{editUnit} stored internally
                         </p>
@@ -522,10 +522,14 @@ export default function InventoryItemsPage() {
                       />
                     </div>
                     {/* Weight/case field — food lb or oz; package type — beverage only */}
-                    {editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each') ? (
+                    {editItemType === 'food' && (editUnit === 'lb' || editUnit === 'oz' || editUnit === 'each' || editUnit === 'gallon' || editUnit === 'quart') ? (
                       <div className="col-span-2">
                         <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                          {editUnit === 'oz' ? 'Oz per case / bag' : editUnit === 'each' ? 'Count per case / pack' : 'Lbs per case / bag'}{' '}
+                          {editUnit === 'oz' ? 'Oz per case / bag'
+                            : editUnit === 'each' ? 'Count per case / pack'
+                            : editUnit === 'gallon' ? 'Gallons per case'
+                            : editUnit === 'quart' ? 'Quarts per case'
+                            : 'Lbs per case / bag'}{' '}
                           <span className="text-slate-700">(optional)</span>
                         </label>
                         <input
@@ -533,7 +537,7 @@ export default function InventoryItemsPage() {
                           min="1"
                           value={editPackSize}
                           onChange={(e) => setEditPackSize(e.target.value)}
-                          placeholder={editUnit === 'oz' ? 'e.g. 80' : editUnit === 'each' ? 'e.g. 48' : 'e.g. 25'}
+                          placeholder={editUnit === 'oz' ? 'e.g. 80' : editUnit === 'each' ? 'e.g. 48' : editUnit === 'gallon' ? 'e.g. 4' : editUnit === 'quart' ? 'e.g. 4' : 'e.g. 25'}
                           className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                         />
                       </div>
@@ -623,17 +627,16 @@ export default function InventoryItemsPage() {
                     )}
                     {item.pack_size && !item.package_type && (
                       <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                        {item.item_type === 'food' && item.unit === 'lb'
-                          ? `${item.pack_size} lb/case`
-                          : item.item_type === 'food' && item.unit === 'oz'
-                          ? `${item.pack_size} oz/case`
-                          : item.item_type === 'food' && item.unit === 'each'
-                          ? `${item.pack_size} ct/case`
+                        {item.item_type === 'food' && item.unit === 'lb'     ? `${item.pack_size} lb/case`
+                          : item.item_type === 'food' && item.unit === 'oz'     ? `${item.pack_size} oz/case`
+                          : item.item_type === 'food' && item.unit === 'each'   ? `${item.pack_size} ct/case`
+                          : item.item_type === 'food' && item.unit === 'gallon' ? `${item.pack_size} gal/case`
+                          : item.item_type === 'food' && item.unit === 'quart'  ? `${item.pack_size} qt/case`
                           : `${item.pack_size}/pack`}
                       </span>
                     )}
                     {item.cost_per_unit != null && (() => {
-                      const isFoodCase = item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each') && item.pack_size && item.pack_size > 0
+                      const isFoodCase = item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart') && item.pack_size && item.pack_size > 0
                       const displayCost = isFoodCase
                         ? (item.cost_per_unit * item.pack_size!).toFixed(2)
                         : item.cost_per_unit.toFixed(2)
@@ -663,7 +666,7 @@ export default function InventoryItemsPage() {
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const isFCP = item.item_type === 'food' &&
-                        (u === 'lb' || u === 'oz' || u === 'each') &&
+                        (u === 'lb' || u === 'oz' || u === 'each' || u === 'gallon' || u === 'quart') &&
                         (item.pack_size ?? 0) > 1
                       const expRaw = Math.max(0, expectedNative)
                       const expCases = isFCP && item.pack_size ? Math.floor(expRaw / item.pack_size) : null
@@ -896,7 +899,7 @@ export default function InventoryItemsPage() {
           )}
 
           {/* Weight/case — food items with lb or oz unit */}
-          {itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each') && (
+          {itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each' || unit === 'gallon' || unit === 'quart') && (
             <div>
               <label className="block text-xs text-slate-500 mb-1">
                 {unit === 'oz' ? 'Oz per case / bag' : unit === 'each' ? 'Count per case / pack' : 'Lbs per case / bag'}{' '}
@@ -921,7 +924,7 @@ export default function InventoryItemsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">
-                {itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each') && packSize && parseFloat(packSize) > 0
+                {itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each' || unit === 'gallon' || unit === 'quart') && packSize && parseFloat(packSize) > 0
                   ? <>Cost per case / bag <span className="text-slate-700">(optional)</span></>
                   : <>Cost per {unit || 'unit'} <span className="text-slate-700">(optional)</span></>
                 }
@@ -938,7 +941,7 @@ export default function InventoryItemsPage() {
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                 />
               </div>
-              {itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each') && packSize && parseFloat(packSize) > 0 && costPerUnit && parseFloat(costPerUnit) > 0 && (
+              {itemType === 'food' && (unit === 'lb' || unit === 'oz' || unit === 'each' || unit === 'gallon' || unit === 'quart') && packSize && parseFloat(packSize) > 0 && costPerUnit && parseFloat(costPerUnit) > 0 && (
                 <p className="text-[10px] text-emerald-400/50 mt-1">
                   = ${(parseFloat(costPerUnit) / parseFloat(packSize)).toFixed(2)}/{unit} stored internally
                 </p>
