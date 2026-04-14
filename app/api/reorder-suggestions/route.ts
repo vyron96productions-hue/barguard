@@ -17,6 +17,7 @@ export interface ReorderSuggestion {
   days_remaining: number | null  // null if no usage data
   last_order_qty: number | null
   reorder_level: number | null
+  pack_size: number | null  // e.g. lbs per case for food, units per pack for beverage
   priority: 'urgent' | 'soon' | 'watch' | 'ok'
   should_reorder: boolean
   suggested_qty: number
@@ -191,6 +192,7 @@ export async function GET() {
         vendor_id: vendor?.id ?? null,
         vendor_name: vendor?.name ?? null,
         reorder_level: item.reorder_level,
+        pack_size: item.pack_size ?? null,
         current_stock: currentStock != null ? Math.round(currentStock * 10) / 10 : null,
         avg_daily_usage: Math.round(avgDailyUsage * 100) / 100,
         days_remaining: daysRemaining != null ? Math.round(daysRemaining * 10) / 10 : null,
@@ -373,6 +375,7 @@ Respond with ONLY a valid JSON object in this exact format (no markdown, no expl
         days_remaining: item.days_remaining,
         last_order_qty: item.last_order_qty,
         reorder_level: item.reorder_level,
+        pack_size: item.pack_size,
         priority: suggestion?.priority ?? 'ok',
         should_reorder: suggestion?.should_reorder ?? false,
         suggested_qty: suggestion?.suggested_qty ?? 12,

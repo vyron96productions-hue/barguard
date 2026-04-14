@@ -384,6 +384,7 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
               inventoryItems={inventoryItems}
               unitOptions={unitOptions}
               categoryOptions={categoryOptions}
+              scanType={scanType}
               onChange={(patch) => updateLine(idx, patch)}
               onRemove={() => removeLine(idx)}
               onNewInventoryItem={(item) => {
@@ -402,9 +403,15 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
                 <th className="text-left px-4 py-2.5 font-medium w-6">✓</th>
                 <th className="text-left px-4 py-2.5 font-medium min-w-[140px]">Item Name (from doc)</th>
                 <th className="text-left px-4 py-2.5 font-medium min-w-[140px]">Inventory Item</th>
-                <th className="text-left px-4 py-2.5 font-medium w-24">Pkg Type</th>
-                <th className="text-left px-4 py-2.5 font-medium w-20">Units/Pk</th>
-                <th className="text-left px-4 py-2.5 font-medium w-20">Qty</th>
+                {scanType === 'food' ? (
+                  <th className="text-left px-4 py-2.5 font-medium w-24">lb/case</th>
+                ) : (
+                  <>
+                    <th className="text-left px-4 py-2.5 font-medium w-24">Pkg Type</th>
+                    <th className="text-left px-4 py-2.5 font-medium w-20">Units/Pk</th>
+                  </>
+                )}
+                <th className="text-left px-4 py-2.5 font-medium w-20">{scanType === 'food' ? 'Cases/Bags' : 'Qty'}</th>
                 <th className="text-left px-4 py-2.5 font-medium w-24">Unit</th>
                 <th className="text-left px-4 py-2.5 font-medium w-24">Unit Cost</th>
                 <th className="text-left px-4 py-2.5 font-medium w-20">Status</th>
@@ -419,6 +426,7 @@ export default function PurchaseScanReviewPage({ params }: { params: Promise<{ i
                   inventoryItems={inventoryItems}
                   unitOptions={unitOptions}
                   categoryOptions={categoryOptions}
+                  scanType={scanType}
                   onChange={(patch) => updateLine(idx, patch)}
                   onRemove={() => removeLine(idx)}
                   onNewInventoryItem={(item) => {
@@ -530,10 +538,11 @@ function MatchBadge({ status, confidence }: { status: EditableLine['match_status
 
 // ── Add to inventory inline form ──────────────────────────────────────────────
 
-function AddToInventoryForm({ rawName, unitOptions, categoryOptions, onSave, onCancel }: {
+function AddToInventoryForm({ rawName, unitOptions, categoryOptions, scanType, onSave, onCancel }: {
   rawName: string
   unitOptions: string[]
   categoryOptions: string[]
+  scanType: ScanType
   onSave: (item: InventoryItem) => void
   onCancel: () => void
 }) {
@@ -615,16 +624,22 @@ function AddToInventoryForm({ rawName, unitOptions, categoryOptions, onSave, onC
             className="text-xs"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <select value={packageType} onChange={(e) => handlePackageTypeChange(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
-            <option value="">package type…</option>
-            {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
-          </select>
+        {scanType === 'food' ? (
           <input type="number" min="1" value={packSize} onChange={(e) => setPackSize(e.target.value)}
-            placeholder="units/pack"
+            placeholder="Lbs per case / bag (optional)"
             className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60" />
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            <select value={packageType} onChange={(e) => handlePackageTypeChange(e.target.value)}
+              className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+              <option value="">package type…</option>
+              {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+            </select>
+            <input type="number" min="1" value={packSize} onChange={(e) => setPackSize(e.target.value)}
+              placeholder="units/pack"
+              className="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60" />
+          </div>
+        )}
       </div>
       {err && <p className="text-red-400 text-[10px]">{err}</p>}
       <div className="flex gap-2">
@@ -648,11 +663,12 @@ function AddToInventoryForm({ rawName, unitOptions, categoryOptions, onSave, onC
 
 // ── Mobile card per line ──────────────────────────────────────────────────────
 
-function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, onChange, onRemove, onNewInventoryItem }: {
+function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, scanType, onChange, onRemove, onNewInventoryItem }: {
   line: EditableLine
   inventoryItems: InventoryItem[]
   unitOptions: string[]
   categoryOptions: string[]
+  scanType: ScanType
   onChange: (patch: Partial<EditableLine>) => void
   onRemove: () => void
   onNewInventoryItem: (item: InventoryItem) => void
@@ -720,37 +736,51 @@ function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, on
             rawName={line.raw_item_name}
             unitOptions={unitOptions}
             categoryOptions={categoryOptions}
+            scanType={scanType}
             onSave={(item) => { onNewInventoryItem(item); setShowAdd(false) }}
             onCancel={() => setShowAdd(false)}
           />
         )}
       </div>
 
-      {/* Packaging row — formula: type × per-pack */}
-      <div>
-        <label className="text-[10px] text-slate-500 uppercase tracking-wider">Packaging</label>
-        <div className="mt-1 flex items-center gap-1.5">
-          <select value={line.package_type} onChange={(e) => {
-            const pt = e.target.value as PackageType
-            onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
-          }}
-            className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
-            <option value="">no package type</option>
-            {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
-          </select>
-          <span className="text-slate-600 text-sm font-medium shrink-0">×</span>
+      {/* Packaging row — food: lb/case input; liquor/supplies: package type dropdown */}
+      {scanType === 'food' ? (
+        <div>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Lbs per case / bag <span className="normal-case text-slate-600">(optional)</span></label>
           <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
-            placeholder="per pack"
-            className="w-24 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 placeholder-slate-600" />
+            placeholder="e.g. 25"
+            className="mt-1 w-full bg-slate-800/60 border border-slate-700/60 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60" />
         </div>
-      </div>
+      ) : (
+        <div>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Packaging</label>
+          <div className="mt-1 flex items-center gap-1.5">
+            <select value={line.package_type} onChange={(e) => {
+              const pt = e.target.value as PackageType
+              onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
+            }}
+              className="flex-1 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
+              <option value="">no package type</option>
+              {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+            </select>
+            <span className="text-slate-600 text-sm font-medium shrink-0">×</span>
+            <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
+              placeholder="per pack"
+              className="w-24 bg-slate-800/60 border border-slate-700/60 rounded-lg px-2 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 placeholder-slate-600" />
+          </div>
+        </div>
+      )}
 
       {/* Qty / unit / cost */}
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-              {line.units_per_package && parseInt(line.units_per_package) > 1 ? 'Packs' : 'Qty'}
+              {scanType === 'food' && line.units_per_package && parseInt(line.units_per_package) > 1
+                ? 'Cases / Bags'
+                : line.units_per_package && parseInt(line.units_per_package) > 1
+                ? 'Packs'
+                : 'Qty'}
             </label>
             <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
               placeholder="0"
@@ -773,20 +803,35 @@ function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, on
         </div>
       </div>
 
-      {/* Total units pill — shown when packing data is complete */}
+      {/* Total pill — food: "Total: X lb"; liquor: "saves X individual units" */}
       {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 ? (
-        <div className="flex items-center gap-2.5 rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2">
-          <span className="text-amber-400/70 text-xs shrink-0">saves</span>
-          <span className="text-amber-300 font-bold text-base tabular-nums leading-none">
-            {parseFloat(line.quantity) * parseInt(line.units_per_package)}
-          </span>
-          <span className="text-amber-400/70 text-xs">
-            individual {line.unit_type || 'units'}
-            <span className="text-amber-400/40 ml-1.5">
-              ({line.quantity} × {line.package_type || `${line.units_per_package}-pack`})
+        scanType === 'food' ? (
+          <div className="flex items-center gap-2.5 rounded-lg bg-emerald-500/8 border border-emerald-500/20 px-3 py-2">
+            <span className="text-emerald-400/70 text-xs shrink-0">Total</span>
+            <span className="text-emerald-300 font-bold text-base tabular-nums leading-none">
+              {(parseFloat(line.quantity) * parseInt(line.units_per_package)).toFixed(1).replace(/\.0$/, '')}
             </span>
-          </span>
-        </div>
+            <span className="text-emerald-400/70 text-xs">
+              lb
+              <span className="text-emerald-400/40 ml-1.5">
+                ({line.quantity} × {line.units_per_package} lb)
+              </span>
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2">
+            <span className="text-amber-400/70 text-xs shrink-0">saves</span>
+            <span className="text-amber-300 font-bold text-base tabular-nums leading-none">
+              {parseFloat(line.quantity) * parseInt(line.units_per_package)}
+            </span>
+            <span className="text-amber-400/70 text-xs">
+              individual {line.unit_type || 'units'}
+              <span className="text-amber-400/40 ml-1.5">
+                ({line.quantity} × {line.package_type || `${line.units_per_package}-pack`})
+              </span>
+            </span>
+          </div>
+        )
       ) : !line.quantity && line.is_approved ? (
         <div className="flex items-center gap-2 rounded-lg bg-amber-500/8 border border-amber-500/20 px-3 py-2">
           <span className="text-amber-400 text-xs">⚠</span>
@@ -799,11 +844,12 @@ function MobileLineCard({ line, inventoryItems, unitOptions, categoryOptions, on
 
 // ── Desktop table row ─────────────────────────────────────────────────────────
 
-function DesktopLineRow({ line, inventoryItems, unitOptions, categoryOptions, onChange, onRemove, onNewInventoryItem }: {
+function DesktopLineRow({ line, inventoryItems, unitOptions, categoryOptions, scanType, onChange, onRemove, onNewInventoryItem }: {
   line: EditableLine
   inventoryItems: InventoryItem[]
   unitOptions: string[]
   categoryOptions: string[]
+  scanType: ScanType
   onChange: (patch: Partial<EditableLine>) => void
   onRemove: () => void
   onNewInventoryItem: (item: InventoryItem) => void
@@ -852,39 +898,61 @@ function DesktopLineRow({ line, inventoryItems, unitOptions, categoryOptions, on
               rawName={line.raw_item_name}
               unitOptions={unitOptions}
               categoryOptions={categoryOptions}
+              scanType={scanType}
               onSave={(item) => { onNewInventoryItem(item); setShowAdd(false) }}
               onCancel={() => setShowAdd(false)}
             />
           )}
         </div>
       </td>
-      <td className="px-2 py-2">
-        <select value={line.package_type} onChange={(e) => {
-          const pt = e.target.value as PackageType
-          onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
-        }}
-          className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
-          <option value="">—</option>
-          {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
-        </select>
-      </td>
-      <td className="px-2 py-2">
-        <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
-          placeholder="—"
-          className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60" />
-      </td>
+      {/* Pkg Type / lb-per-case cell */}
+      {scanType === 'food' ? (
+        <td className="px-2 py-2">
+          <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
+            placeholder="lb/case"
+            className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60" />
+        </td>
+      ) : (
+        <>
+          <td className="px-2 py-2">
+            <select value={line.package_type} onChange={(e) => {
+              const pt = e.target.value as PackageType
+              onChange({ package_type: pt, units_per_package: pt && pt in PACKAGE_TYPE_SIZES ? String(PACKAGE_TYPE_SIZES[pt]) : line.units_per_package })
+            }}
+              className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60">
+              <option value="">—</option>
+              {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+            </select>
+          </td>
+          <td className="px-2 py-2">
+            <input type="number" min="1" value={line.units_per_package} onChange={(e) => onChange({ units_per_package: e.target.value })}
+              placeholder="—"
+              className="w-full bg-slate-800/60 border border-slate-700/60 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60" />
+          </td>
+        </>
+      )}
+      {/* Qty cell */}
       <td className="px-2 py-2">
         <div className="space-y-1">
           <input type="number" value={line.quantity} onChange={(e) => onChange({ quantity: e.target.value })}
             placeholder="0"
             className={`w-full bg-slate-800/60 border rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60 ${!line.quantity && line.is_approved ? 'border-amber-500/50' : 'border-slate-700/60'}`} />
           {line.quantity && line.units_per_package && parseInt(line.units_per_package) > 1 ? (
-            <div className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">
-              <span className="text-amber-300 font-bold text-[11px] tabular-nums leading-none">
-                {parseFloat(line.quantity) * parseInt(line.units_per_package)}
-              </span>
-              <span className="text-amber-400/60 text-[10px]">units</span>
-            </div>
+            scanType === 'food' ? (
+              <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 rounded px-1.5 py-0.5">
+                <span className="text-emerald-300 font-bold text-[11px] tabular-nums leading-none">
+                  {(parseFloat(line.quantity) * parseInt(line.units_per_package)).toFixed(1).replace(/\.0$/, '')}
+                </span>
+                <span className="text-emerald-400/60 text-[10px]">lb total</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">
+                <span className="text-amber-300 font-bold text-[11px] tabular-nums leading-none">
+                  {parseFloat(line.quantity) * parseInt(line.units_per_package)}
+                </span>
+                <span className="text-amber-400/60 text-[10px]">units</span>
+              </div>
+            )
           ) : !line.quantity && line.is_approved ? (
             <p className="text-[10px] text-amber-500/80 whitespace-nowrap">⚠ enter qty</p>
           ) : null}

@@ -16,6 +16,10 @@ export const UNIT_TO_OZ: Record<string, number> = {
   l: 33.814,
   liter: 33.814,
   litre: 33.814,
+  // Weight units — needed so oz recipe deductions correctly convert against lb/kg inventory stock
+  lb:  16,        // 1 lb = 16 oz
+  kg:  35.274,    // 1 kg = 35.274 oz
+  g:   0.035274,  // 1 g  = 0.035274 oz
   bottle:      25.36,  // 750ml standard spirit bottle
   wine_bottle: 25.36,  // 750ml wine bottle (same volume, different pour size — 5oz glass vs 1.5oz shot)
   '750ml':     25.36,

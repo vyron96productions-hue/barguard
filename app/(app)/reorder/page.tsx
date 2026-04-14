@@ -113,11 +113,20 @@ export default function ReorderPage() {
     })
   }
 
+  function formatReorderQty(s: ReorderSuggestion, qty: number): string {
+    // For food items in lb with a known pack_size, show both cases and lbs
+    if (s.unit === 'lb' && s.pack_size && s.pack_size > 0) {
+      const cases = Math.ceil(qty / s.pack_size)
+      return `${cases} case${cases !== 1 ? 's' : ''} (${qty} lb @ ${s.pack_size} lb/case)`
+    }
+    return `${qty} (${s.unit})`
+  }
+
   function buildOrderText(vendorKey: string, group: { vendorName: string; vendorEmail: string | null; items: ReorderSuggestion[] }) {
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     const aiLines = group.items
       .filter((s) => (quantities[s.item_id] ?? s.suggested_qty) > 0)
-      .map((s) => `- ${s.item_name} x ${quantities[s.item_id] ?? s.suggested_qty} (${s.unit})`)
+      .map((s) => `- ${s.item_name} x ${formatReorderQty(s, quantities[s.item_id] ?? s.suggested_qty)}`)
     const extraLines = (extraItems[vendorKey] ?? [])
       .filter((i) => i.qty > 0)
       .map((i) => `- ${i.name} x ${i.qty} (${i.unit})`)
@@ -302,12 +311,15 @@ ${businessName || 'My Bar'}`
                           <div className="flex items-center gap-3 mt-1 flex-wrap">
                             {s.current_stock != null && (
                               <span className="text-xs text-slate-500">
-                                {formatQty(s.current_stock, s.unit)} {s.unit} in stock
+                                {s.unit === 'lb' && s.pack_size && s.pack_size > 0
+                                  ? `${formatQty(s.current_stock, s.unit)} lb in stock (~${Math.floor(s.current_stock / s.pack_size)} cases)`
+                                  : `${formatQty(s.current_stock, s.unit)} ${s.unit} in stock`
+                                }
                               </span>
                             )}
                             {s.avg_daily_usage > 0 && (
                               <span className="text-xs text-slate-600">
-                                ~{s.avg_daily_usage.toFixed(1)}/{s.unit.includes('bottle') || s.unit === 'can' || s.unit === 'keg' ? 'day' : 'day'}
+                                ~{s.avg_daily_usage.toFixed(1)} {s.unit}/day
                               </span>
                             )}
                             {s.days_remaining != null && (
