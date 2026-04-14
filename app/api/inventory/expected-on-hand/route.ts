@@ -49,15 +49,19 @@ export async function GET() {
       .order('count_date', { ascending: false })
 
     // Latest count per item.
-    // unit priority: count.unit_type (if set) → item.unit → 'oz'
-    // This ensures that if a count was saved with a wrong/missing unit_type,
-    // we still interpret the quantity correctly using the item's actual unit.
+    // ALWAYS use item.unit — never trust count.unit_type.
+    // Physical counts are done in the item's native unit. The unit_type column
+    // on inventory_counts is unreliable: imports (onboarding scan, CSV, purchase
+    // upload) frequently store the wrong unit (e.g. 'each', 'box') because the
+    // AI or CSV mapped it incorrectly. Using item.unit as the single source of
+    // truth means changing the item's unit immediately fixes the calculation
+    // without any manual DB cleanup.
     const latestCount: Record<string, { qty: number; unit: string; date: string }> = {}
     for (const c of counts ?? []) {
       if (!latestCount[c.inventory_item_id]) {
         latestCount[c.inventory_item_id] = {
           qty:  c.quantity_on_hand,
-          unit: c.unit_type ?? itemUnit[c.inventory_item_id] ?? 'oz',
+          unit: itemUnit[c.inventory_item_id] ?? 'oz',
           date: c.count_date,
         }
       }
