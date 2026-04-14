@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { extractFromImage, extractFromPdf } from '@/lib/document-extraction'
+import { resolveInventoryItemId } from '@/lib/aliases'
 import { logError } from '@/lib/logger'
 import type { ScanType } from '@/lib/document-extraction'
 
@@ -8,7 +9,7 @@ const ROUTE = 'onboarding/scan-prices'
 
 export async function POST(req: NextRequest) {
   try {
-    await getAuthContext() // auth check only — no DB writes
+    const { supabase, businessId } = await getAuthContext()
 
     const formData = await req.formData()
     const file = formData.get('file') as File | null
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'file is required' }, { status: 400 })
     }
 
-    const MAX_FILE_BYTES = 20_000_000 // 20 MB
+    const MAX_FILE_BYTES = 20_000_000
     if (file.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: 'File too large. Maximum size is 20 MB.' }, { status: 400 })
     }
@@ -38,21 +39,29 @@ export async function POST(req: NextRequest) {
       ? await extractFromPdf(buffer, scanType)
       : await extractFromImage(buffer, mimeType, scanType)
 
-    // Return only what we need for price-setting (no quantities, no dates)
-    const items = result.line_items
-      .filter((l) => l.raw_item_name && l.unit_cost != null && l.unit_cost > 0)
-      .map((l) => ({
-        raw_item_name: l.raw_item_name,
-        unit_cost: l.unit_cost,
-        unit_type: l.unit_type,
-        units_per_package: l.units_per_package,
-        confidence: l.confidence,
-      }))
+    // Check which names already exist in inventory
+    const filtered = result.line_items.filter((l) => l.raw_item_name)
+
+    const items = await Promise.all(
+      filtered.map(async (l) => {
+        const existingId = await resolveInventoryItemId(l.raw_item_name, supabase, businessId)
+        return {
+          raw_item_name:    l.raw_item_name,
+          unit_cost:        l.unit_cost,
+          unit_type:        l.unit_type,
+          units_per_package: l.units_per_package,
+          quantity:         l.quantity,
+          confidence:       l.confidence,
+          is_new:           !existingId,
+        }
+      })
+    )
 
     return NextResponse.json({
       items,
-      vendor_name: result.vendor_name,
+      vendor_name:     result.vendor_name,
       warning_message: result.warning_message,
+      scan_type:       scanType,
     })
   } catch (e) {
     logError(ROUTE, e)
