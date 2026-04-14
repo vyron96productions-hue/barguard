@@ -71,7 +71,8 @@ export default function InventoryItemsPage() {
 
   // Set stock inline correction
   const [setStockItemId,  setSetStockItemId]  = useState<string | null>(null)
-  const [setStockValue,   setSetStockValue]   = useState('')
+  const [setStockValue,   setSetStockValue]   = useState('')   // cases (for food+pack_size) or raw qty
+  const [setStockLoose,   setSetStockLoose]   = useState('')   // loose units (food+pack_size only)
   const [setStockSaving,  setSetStockSaving]  = useState(false)
 
   async function fetchExpected() {
@@ -84,7 +85,18 @@ export default function InventoryItemsPage() {
   }
 
   async function handleSetStock(itemId: string) {
-    const qty = parseFloat(setStockValue)
+    const item = items.find((i) => i.id === itemId)
+    const isFCP = item?.item_type === 'food' &&
+      (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each') &&
+      (item.pack_size ?? 0) > 1
+    let qty: number
+    if (isFCP && item?.pack_size) {
+      const c = parseInt(setStockValue || '0') || 0
+      const l = parseFloat(setStockLoose || '0') || 0
+      qty = c * item.pack_size + l
+    } else {
+      qty = parseFloat(setStockValue)
+    }
     if (isNaN(qty) || qty < 0) return
     setSetStockSaving(true)
     try {
@@ -95,6 +107,7 @@ export default function InventoryItemsPage() {
       })
       setSetStockItemId(null)
       setSetStockValue('')
+      setSetStockLoose('')
       fetchExpected()
     } finally {
       setSetStockSaving(false)
@@ -520,7 +533,7 @@ export default function InventoryItemsPage() {
                           min="1"
                           value={editPackSize}
                           onChange={(e) => setEditPackSize(e.target.value)}
-                          placeholder={editUnit === 'oz' ? 'e.g. 80' : 'e.g. 25'}
+                          placeholder={editUnit === 'oz' ? 'e.g. 80' : editUnit === 'each' ? 'e.g. 48' : 'e.g. 25'}
                           className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                         />
                       </div>
@@ -602,7 +615,7 @@ export default function InventoryItemsPage() {
                   )}
                   <div className="flex items-center gap-2 min-w-0 flex-wrap flex-1">
                     <p className="font-medium text-sm text-slate-200 truncate">{item.name}</p>
-                    <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{UNIT_LABELS[item.unit] ?? item.unit}</span>
+                    <span className="text-xs text-slate-500 shrink-0 bg-slate-800 px-2 py-0.5 rounded">{item.unit}</span>
                     {item.package_type && (
                       <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
                         {item.package_type}
@@ -649,31 +662,77 @@ export default function InventoryItemsPage() {
                       const expectedNative = exp.expected_qty_oz / factor
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
-                      const uLabel = UNIT_LABELS[u] ?? u
+                      const isFCP = item.item_type === 'food' &&
+                        (u === 'lb' || u === 'oz' || u === 'each') &&
+                        (item.pack_size ?? 0) > 1
+                      const expRaw = Math.max(0, expectedNative)
+                      const expCases = isFCP && item.pack_size ? Math.floor(expRaw / item.pack_size) : null
+                      const expLoose = isFCP && item.pack_size ? Math.round((expRaw % item.pack_size) * 100) / 100 : null
+                      const looseLabel = u === 'each' ? 'loose' : `${u} loose`
+
+                      // Badge text: "~2 cases + 5 lb loose" or "~0 cases + 1 lb loose" etc.
+                      const badgeText = isFCP
+                        ? expCases === 0
+                          ? `~${expLoose} ${looseLabel}`
+                          : expLoose === 0
+                            ? `~${expCases} case${expCases !== 1 ? 's' : ''}`
+                            : `~${expCases} case${expCases !== 1 ? 's' : ''} + ${expLoose} ${looseLabel}`
+                        : `~${formatQty(expRaw, u)} ${u} expected`
+
                       return setStockItemId === item.id ? (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <input
-                            type="number" min="0" step="any" autoFocus
-                            value={setStockValue}
-                            onChange={(e) => setSetStockValue(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleSetStock(item.id); if (e.key === 'Escape') { setSetStockItemId(null); setSetStockValue('') } }}
-                            placeholder={`qty in ${u}`}
-                            className="w-28 bg-slate-800 border border-amber-500/40 rounded px-2 py-0.5 text-xs text-slate-100 focus:outline-none"
-                          />
+                        <div className="flex items-center gap-1 shrink-0 flex-wrap">
+                          {isFCP ? (
+                            <>
+                              <input
+                                type="number" min="0" step="1" autoFocus
+                                value={setStockValue}
+                                onChange={(e) => setSetStockValue(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleSetStock(item.id); if (e.key === 'Escape') { setSetStockItemId(null); setSetStockValue(''); setSetStockLoose('') } }}
+                                placeholder="cases"
+                                className="w-16 bg-slate-800 border border-amber-500/40 rounded px-2 py-0.5 text-xs text-slate-100 focus:outline-none"
+                              />
+                              <span className="text-[10px] text-slate-500">c +</span>
+                              <input
+                                type="number" min="0" step="any"
+                                value={setStockLoose}
+                                onChange={(e) => setSetStockLoose(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') handleSetStock(item.id); if (e.key === 'Escape') { setSetStockItemId(null); setSetStockValue(''); setSetStockLoose('') } }}
+                                placeholder={looseLabel}
+                                className="w-20 bg-slate-800 border border-amber-500/40 rounded px-2 py-0.5 text-xs text-slate-100 focus:outline-none"
+                              />
+                            </>
+                          ) : (
+                            <input
+                              type="number" min="0" step="any" autoFocus
+                              value={setStockValue}
+                              onChange={(e) => setSetStockValue(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleSetStock(item.id); if (e.key === 'Escape') { setSetStockItemId(null); setSetStockValue('') } }}
+                              placeholder={`qty in ${u}`}
+                              className="w-28 bg-slate-800 border border-amber-500/40 rounded px-2 py-0.5 text-xs text-slate-100 focus:outline-none"
+                            />
+                          )}
                           <button onClick={() => handleSetStock(item.id)} disabled={setStockSaving}
                             className="text-xs bg-amber-500 hover:bg-amber-400 text-gray-900 font-semibold px-2 py-0.5 rounded disabled:opacity-40"
                           >{setStockSaving ? '…' : 'Set'}</button>
-                          <button onClick={() => { setSetStockItemId(null); setSetStockValue('') }}
+                          <button onClick={() => { setSetStockItemId(null); setSetStockValue(''); setSetStockLoose('') }}
                             className="text-xs text-slate-500 hover:text-slate-300 px-1"
                           >✕</button>
                         </div>
                       ) : (
                         <button
-                          title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${uLabel} on ${exp.last_count_date}\n+ ${purchasedNative} ${uLabel} purchased\n− ${deductedNative} ${uLabel} used\n\nClick to correct this value`}
-                          onClick={() => { setSetStockItemId(item.id); setSetStockValue(String(Math.max(0, parseFloat(expectedNative.toFixed(2))))) }}
+                          title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${u} on ${exp.last_count_date}\n+ ${purchasedNative} ${u} purchased\n− ${deductedNative} ${u} used\n\nClick to correct this value`}
+                          onClick={() => {
+                            setSetStockItemId(item.id)
+                            if (isFCP && item.pack_size) {
+                              setSetStockValue(String(expCases ?? 0))
+                              setSetStockLoose(String(expLoose ?? 0))
+                            } else {
+                              setSetStockValue(String(Math.max(0, parseFloat(expRaw.toFixed(2)))))
+                            }
+                          }}
                           className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 hover:border-sky-400/50 px-2 py-0.5 rounded cursor-pointer transition-colors"
                         >
-                          ~{formatQty(Math.max(0, expectedNative), u)} {u} expected
+                          {badgeText}
                         </button>
                       )
                     })()}

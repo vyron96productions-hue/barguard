@@ -1214,18 +1214,32 @@ function StockCard({ item, allCategories, onUpdate }: {
   const [category, setCategory] = useState(item.category ?? '')
   const [unit, setUnit] = useState(item.unit)
   const [quantity, setQuantity] = useState(item.quantity_on_hand?.toString() ?? '')
+  const [cases, setCases] = useState('')
+  const [loosePcs, setLoosePcs] = useState('')
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
 
   const itemIsFood = item.item_type === 'food'
   const unitOptions = itemIsFood ? FOOD_UNITS_LIST : BEVERAGE_UNITS
+  const isFoodCase = item.item_type === 'food' &&
+    (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each') &&
+    (item.pack_size ?? 0) > 1
 
   function openEdit() {
     setName(item.name)
     setCategory(item.category ?? '')
     setUnit(item.unit)
-    setQuantity(item.quantity_on_hand?.toString() ?? '')
+    const raw = item.quantity_on_hand
+    if (isFoodCase && raw !== null && item.pack_size) {
+      setCases(String(Math.floor(raw / item.pack_size)))
+      setLoosePcs(String(Math.round((raw % item.pack_size) * 100) / 100))
+      setQuantity('')
+    } else {
+      setQuantity(raw?.toString() ?? '')
+      setCases('')
+      setLoosePcs('')
+    }
     setErr(null)
     setEditing(true)
     setTimeout(() => nameRef.current?.focus(), 50)
@@ -1236,6 +1250,15 @@ function StockCard({ item, allCategories, onUpdate }: {
     if (!unit) { setErr('Unit required'); return }
     setSaving(true)
     setErr(null)
+    let qtyToSend: number | null = null
+    if (isFoodCase && item.pack_size) {
+      const c = parseInt(cases || '0') || 0
+      const l = parseFloat(loosePcs || '0') || 0
+      const total = c * item.pack_size + l
+      qtyToSend = total > 0 ? total : null
+    } else {
+      qtyToSend = quantity !== '' ? parseFloat(quantity) : null
+    }
     const res = await fetch('/api/stock-levels', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -1244,7 +1267,7 @@ function StockCard({ item, allCategories, onUpdate }: {
         name: name.trim(),
         category: category || null,
         unit,
-        quantity_on_hand: quantity !== '' ? parseFloat(quantity) : null,
+        quantity_on_hand: qtyToSend,
         package_type: item.package_type ?? null,
         pack_size: item.pack_size ?? null,
       }),
@@ -1257,8 +1280,8 @@ function StockCard({ item, allCategories, onUpdate }: {
       name: name.trim(),
       category: category || null,
       unit,
-      quantity_on_hand: quantity !== '' ? parseFloat(quantity) : item.quantity_on_hand,
-      count_date: quantity !== '' ? new Date().toISOString().slice(0, 10) : item.count_date,
+      quantity_on_hand: qtyToSend ?? item.quantity_on_hand,
+      count_date: qtyToSend !== null ? new Date().toISOString().slice(0, 10) : item.count_date,
     })
     setEditing(false)
   }
@@ -1318,18 +1341,51 @@ function StockCard({ item, allCategories, onUpdate }: {
                 )}
               </select>
             </div>
+            {isFoodCase ? (
+              <div className="col-span-1">
+                <label className="text-[10px] text-slate-500 uppercase tracking-wider">Cases</label>
+                <input
+                  type="number" min="0" step="1"
+                  value={cases}
+                  onChange={(e) => setCases(e.target.value)}
+                  placeholder="0"
+                  className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="text-[10px] text-slate-500 uppercase tracking-wider">Qty on Hand</label>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder={item.quantity_on_hand?.toString() ?? '—'}
+                  className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
+                />
+              </div>
+            )}
+          </div>
+          {isFoodCase && (
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-wider">Qty on Hand</label>
+              <label className="text-[10px] text-slate-500 uppercase tracking-wider">
+                Loose {item.unit === 'each' ? 'units' : item.unit}
+                {item.pack_size ? <span className="text-slate-700 ml-1">({item.pack_size} {item.unit}/case)</span> : null}
+              </label>
               <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder={item.quantity_on_hand?.toString() ?? '—'}
+                type="number" min="0" step="any"
+                value={loosePcs}
+                onChange={(e) => setLoosePcs(e.target.value)}
+                placeholder="0"
                 className="mt-1 w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
               />
+              {(cases !== '' || loosePcs !== '') && item.pack_size && (
+                <p className="text-[10px] text-slate-500 mt-1">
+                  = {(parseInt(cases || '0') || 0) * item.pack_size + (parseFloat(loosePcs || '0') || 0)} {item.unit} total
+                </p>
+              )}
             </div>
-          </div>
-          {quantity !== '' && (
+          )}
+          {!isFoodCase && quantity !== '' && (
             <p className="text-[10px] text-slate-500">Saving a quantity records a manual stock adjustment for today.</p>
           )}
         </div>
@@ -1378,28 +1434,35 @@ function StockCard({ item, allCategories, onUpdate }: {
       <div className="space-y-1.5">
         <div className="flex items-baseline gap-1.5">
           <p className={`text-3xl font-bold tabular-nums leading-none ${qtyColor}`}>
-            {effectiveQty !== null ? formatQty(effectiveQty, item.unit) : '—'}
+            {isFoodCase && effectiveQty !== null && item.pack_size
+              ? Math.floor(effectiveQty / item.pack_size)
+              : effectiveQty !== null ? formatQty(effectiveQty, item.unit) : '—'}
           </p>
           {item.has_estimate && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 font-semibold leading-tight">Est.</span>
           )}
         </div>
-        {item.pack_size && item.pack_size > 1 && effectiveQty !== null && effectiveQty > 0 ? (
+        {isFoodCase && item.pack_size && effectiveQty !== null ? (
           <div className="space-y-1">
-            <p className="text-xs text-slate-500">{UNIT_LABELS[item.unit] ?? item.unit}</p>
-            {item.item_type === 'food' && item.unit === 'lb' ? (
-              <p className="text-xs font-medium text-emerald-400/80 leading-snug">
-                ~{Math.floor(effectiveQty / item.pack_size)} cases ({item.pack_size} lb each)
-              </p>
-            ) : (
-              <p className="text-xs font-medium text-amber-400/80 leading-snug">
-                {formatPackBreakdown(effectiveQty, item.pack_size, item.package_type).split(' · ')[1]}
-              </p>
-            )}
+            <p className="text-xs text-slate-500">cases ({item.pack_size} {item.unit} each)</p>
+            {(() => {
+              const loose = Math.round((effectiveQty % item.pack_size) * 100) / 100
+              const looseLabel = item.unit === 'each' ? 'loose' : `${item.unit} loose`
+              return loose > 0 ? (
+                <p className="text-xs font-medium text-amber-400/80 leading-snug">+ {loose} {looseLabel}</p>
+              ) : null
+            })()}
+          </div>
+        ) : item.pack_size && item.pack_size > 1 && effectiveQty !== null && effectiveQty > 0 ? (
+          <div className="space-y-1">
+            <p className="text-xs text-slate-500">{item.unit}</p>
+            <p className="text-xs font-medium text-amber-400/80 leading-snug">
+              {formatPackBreakdown(effectiveQty, item.pack_size, item.package_type).split(' · ')[1]}
+            </p>
           </div>
         ) : (
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-xs text-slate-500">{UNIT_LABELS[item.unit] ?? item.unit}</p>
+            <p className="text-xs text-slate-500">{item.unit}</p>
             {item.package_type && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-500/60 font-medium leading-tight">
                 {item.package_type}
@@ -1407,7 +1470,10 @@ function StockCard({ item, allCategories, onUpdate }: {
             )}
           </div>
         )}
-        {item.has_estimate && item.quantity_on_hand !== null && (
+        {item.has_estimate && item.quantity_on_hand !== null && item.pack_size && (
+          <p className="text-[10px] text-slate-700">Count: {Math.floor(item.quantity_on_hand / item.pack_size)} cases · {daysAgo(item.count_date!)}d ago</p>
+        )}
+        {item.has_estimate && item.quantity_on_hand !== null && !item.pack_size && (
           <p className="text-[10px] text-slate-700">Count: {item.quantity_on_hand} · {daysAgo(item.count_date!)}d ago</p>
         )}
 
