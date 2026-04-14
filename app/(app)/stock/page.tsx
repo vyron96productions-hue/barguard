@@ -3,13 +3,14 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
-import { UNIT_LABELS, formatQty, INVENTORY_BEVERAGE_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
+import { UNIT_LABELS, formatQty, INVENTORY_BEVERAGE_UNITS, INVENTORY_PAPER_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
 import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PAPER_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
 
 const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
 const FOOD_UNITS_LIST = Array.from(FOOD_UNITS_SET)
+const PAPER_UNITS_LIST = INVENTORY_PAPER_UNITS
 
 // Bottle-type units and their oz size — used for partial bottle display
 const BOTTLE_SIZE_OZ: Record<string, number> = {
@@ -1221,10 +1222,12 @@ function StockCard({ item, allCategories, onUpdate }: {
   const nameRef = useRef<HTMLInputElement>(null)
 
   const itemIsFood = item.item_type === 'food'
-  const unitOptions = itemIsFood ? FOOD_UNITS_LIST : BEVERAGE_UNITS
-  const isFoodCase = item.item_type === 'food' &&
-    (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart') &&
-    (item.pack_size ?? 0) > 1
+  const itemIsPaper = item.item_type === 'paper'
+  const unitOptions = itemIsFood ? FOOD_UNITS_LIST : itemIsPaper ? PAPER_UNITS_LIST : BEVERAGE_UNITS
+  const isFoodCase = (
+    (item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart')) ||
+    item.item_type === 'paper'
+  ) && (item.pack_size ?? 0) > 1
 
   function openEdit() {
     setName(item.name)
@@ -1371,7 +1374,7 @@ function StockCard({ item, allCategories, onUpdate }: {
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider">
                 Loose {item.unit === 'each' ? 'units' : item.unit}
-                {item.pack_size ? <span className="text-slate-700 ml-1">({item.pack_size} {item.unit}/case)</span> : null}
+                {item.pack_size ? <span className="text-slate-700 ml-1">({item.pack_size} {item.unit === 'each' ? 'ct' : item.unit}/case)</span> : null}
               </label>
               <input
                 type="number" min="0" step="any"
@@ -1451,12 +1454,17 @@ function StockCard({ item, allCategories, onUpdate }: {
                 item.unit === 'each' ? ' ct/case'
                 : item.unit === 'gallon' ? ' gal each'
                 : item.unit === 'quart' ? ' qt each'
+                : item.unit === 'pack' ? ' packs each'
+                : item.unit === 'sleeve' ? ' sleeves each'
+                : item.unit === 'roll' ? ' rolls each'
+                : item.unit === 'box' ? ' boxes each'
+                : item.unit === 'bag' ? ' bags each'
                 : ` ${item.unit} each`
               })
             </p>
             {(() => {
               const loose = Math.round((effectiveQty % item.pack_size) * 100) / 100
-              const looseLabel = item.unit === 'each' ? 'loose' : `${item.unit} loose`
+              const looseLabel = (item.unit === 'each' || item.item_type === 'paper') ? `${item.unit} loose` : `${item.unit} loose`
               return loose > 0 ? (
                 <p className="text-xs font-medium text-amber-400/80 leading-snug">+ {loose} {looseLabel}</p>
               ) : null
