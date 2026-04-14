@@ -90,7 +90,7 @@ export const INVENTORY_FOOD_UNITS = [
 
 /** Units used for counting paper goods / supplies inventory (shown in UI dropdowns) */
 export const INVENTORY_PAPER_UNITS = [
-  'pack', 'sleeve', 'roll', 'box', 'bag',
+  'each', 'pack', 'sleeve', 'roll', 'box', 'bag',
 ]
 
 /** Human-friendly labels for inventory unit values */
