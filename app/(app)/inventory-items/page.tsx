@@ -172,7 +172,11 @@ export default function InventoryItemsPage() {
               ? parseFloat(costPerUnit) / parseFloat(packSize)
               : parseFloat(costPerUnit))
           : null,
-        reorder_level: reorderLevel ? parseFloat(reorderLevel) : null,
+        reorder_level: reorderLevel ? (() => {
+          const raw = parseFloat(reorderLevel)
+          const isVol = unit === 'gallon' || unit === 'quart'
+          return isVol ? raw / (UNIT_TO_OZ[unit] ?? 1) : raw
+        })() : null,
         vendor_id: vendorId || null,
       }),
     })
@@ -240,7 +244,10 @@ export default function InventoryItemsPage() {
     setEditCost(item.cost_per_unit != null
       ? String(isFoodWeightCase ? parseFloat((item.cost_per_unit * packSz!).toFixed(4)) : item.cost_per_unit)
       : '')
-    setEditReorderLevel(item.reorder_level != null ? String(item.reorder_level) : '')
+    const isVolUnit = item.unit === 'gallon' || item.unit === 'quart'
+    setEditReorderLevel(item.reorder_level != null
+      ? String(isVolUnit ? Math.round(item.reorder_level * (UNIT_TO_OZ[item.unit] ?? 1)) : item.reorder_level)
+      : '')
     setEditVendorId(item.vendor_id ?? '')
     setEditItemType((item.item_type as ItemType) ?? 'beverage')
     setEditPackageType(item.package_type ?? '')
@@ -267,7 +274,11 @@ export default function InventoryItemsPage() {
               ? parseFloat(editCost) / parseFloat(editPackSize)
               : parseFloat(editCost))
           : null,
-        reorder_level: editReorderLevel !== '' ? parseFloat(editReorderLevel) : null,
+        reorder_level: editReorderLevel !== '' ? (() => {
+          const raw = parseFloat(editReorderLevel)
+          const isVol = editUnit === 'gallon' || editUnit === 'quart'
+          return isVol ? raw / (UNIT_TO_OZ[editUnit] ?? 1) : raw
+        })() : null,
         vendor_id: editVendorId || null,
         package_type: editPackageType || null,
         pack_size: editPackSize !== '' ? parseFloat(editPackSize) : null,
@@ -508,7 +519,10 @@ export default function InventoryItemsPage() {
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                        Reorder at <span className="text-slate-700">({editUnit})</span>
+                        Reorder at{' '}
+                        <span className="text-slate-700">
+                          ({(editUnit === 'gallon' || editUnit === 'quart') ? 'oz' : editUnit})
+                        </span>
                       </label>
                       <input
                         type="number"
@@ -646,11 +660,18 @@ export default function InventoryItemsPage() {
                         </span>
                       )
                     })()}
-                    {item.reorder_level != null && (
-                      <span className="text-xs text-amber-500/60 shrink-0 bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded">
-                        reorder @ {item.reorder_level} {item.unit}
-                      </span>
-                    )}
+                    {item.reorder_level != null && (() => {
+                      const isVol = item.unit === 'gallon' || item.unit === 'quart'
+                      const dispVal = isVol
+                        ? Math.round(item.reorder_level * (UNIT_TO_OZ[item.unit] ?? 1))
+                        : item.reorder_level
+                      const dispUnit = isVol ? 'oz' : item.unit
+                      return (
+                        <span className="text-xs text-amber-500/60 shrink-0 bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded">
+                          reorder @ {dispVal} {dispUnit}
+                        </span>
+                      )
+                    })()}
                     {item.vendor_id && vendors.find((v) => v.id === item.vendor_id) && (
                       <span className="text-xs text-indigo-400/70 shrink-0 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
                         {vendors.find((v) => v.id === item.vendor_id)!.name}
