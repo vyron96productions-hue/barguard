@@ -1387,9 +1387,15 @@ function StockCard({ item, allCategories, onUpdate }: {
         {item.pack_size && item.pack_size > 1 && effectiveQty !== null && effectiveQty > 0 ? (
           <div className="space-y-1">
             <p className="text-xs text-slate-500">{UNIT_LABELS[item.unit] ?? item.unit}</p>
-            <p className="text-xs font-medium text-amber-400/80 leading-snug">
-              {formatPackBreakdown(effectiveQty, item.pack_size, item.package_type).split(' · ')[1]}
-            </p>
+            {item.item_type === 'food' && item.unit === 'lb' ? (
+              <p className="text-xs font-medium text-emerald-400/80 leading-snug">
+                ~{Math.floor(effectiveQty / item.pack_size)} cases ({item.pack_size} lb each)
+              </p>
+            ) : (
+              <p className="text-xs font-medium text-amber-400/80 leading-snug">
+                {formatPackBreakdown(effectiveQty, item.pack_size, item.package_type).split(' · ')[1]}
+              </p>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2 flex-wrap">

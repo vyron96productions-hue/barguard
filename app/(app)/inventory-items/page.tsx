@@ -86,6 +86,8 @@ export default function InventoryItemsPage() {
   const [editReorderLevel, setEditReorderLevel] = useState('')
   const [editVendorId,   setEditVendorId]   = useState('')
   const [editItemType,   setEditItemType]   = useState<ItemType>('beverage')
+  const [editPackageType, setEditPackageType] = useState('')
+  const [editPackSize,   setEditPackSize]   = useState('')
   const [editSaving,     setEditSaving]     = useState(false)
   const [editError,      setEditError]      = useState<string | null>(null)
 
@@ -196,6 +198,8 @@ export default function InventoryItemsPage() {
     setEditReorderLevel(item.reorder_level != null ? String(item.reorder_level) : '')
     setEditVendorId(item.vendor_id ?? '')
     setEditItemType((item.item_type as ItemType) ?? 'beverage')
+    setEditPackageType(item.package_type ?? '')
+    setEditPackSize(item.pack_size != null ? String(item.pack_size) : '')
     setEditError(null)
   }
 
@@ -215,6 +219,8 @@ export default function InventoryItemsPage() {
         cost_per_unit: editCost !== '' ? parseFloat(editCost) : null,
         reorder_level: editReorderLevel !== '' ? parseFloat(editReorderLevel) : null,
         vendor_id: editVendorId || null,
+        package_type: editPackageType || null,
+        pack_size: editPackSize !== '' ? parseFloat(editPackSize) : null,
       }),
     })
     const data = await res.json()
@@ -385,7 +391,8 @@ export default function InventoryItemsPage() {
                             type="button"
                             onClick={() => {
                               setEditItemType(t)
-                              setEditUnit(t === 'beverage' ? 'bottle' : 'each')
+                              setEditUnit(t === 'beverage' ? 'bottle' : t === 'food' ? 'lb' : 'each')
+                              setEditPackageType(''); setEditPackSize('')
                             }}
                             className={`flex-1 py-2 transition-colors ${editItemType === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}
                           >
@@ -442,7 +449,7 @@ export default function InventoryItemsPage() {
                     </div>
                     <div>
                       <label className="text-[10px] text-slate-500 uppercase tracking-wider">
-                        Reorder at <span className="text-slate-700">({UNIT_LABELS[editUnit] ?? editUnit}s)</span>
+                        Reorder at <span className="text-slate-700">({editUnit})</span>
                       </label>
                       <input
                         type="number"
@@ -454,6 +461,42 @@ export default function InventoryItemsPage() {
                         className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
                       />
                     </div>
+                    {/* Lb/case field — food only; package type — beverage only */}
+                    {editItemType === 'food' && editUnit === 'lb' ? (
+                      <div className="col-span-2">
+                        <label className="text-[10px] text-slate-500 uppercase tracking-wider">Lbs per case / bag <span className="text-slate-700">(optional)</span></label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={editPackSize}
+                          onChange={(e) => setEditPackSize(e.target.value)}
+                          placeholder="e.g. 25"
+                          className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+                        />
+                      </div>
+                    ) : editItemType === 'beverage' ? (
+                      <>
+                        <div>
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Package type</label>
+                          <select value={editPackageType} onChange={(e) => {
+                            setEditPackageType(e.target.value)
+                            if (e.target.value && e.target.value in PACKAGE_TYPE_SIZES) {
+                              setEditPackSize(String(PACKAGE_TYPE_SIZES[e.target.value as PackageType]))
+                            }
+                          }}
+                            className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60">
+                            <option value="">None</option>
+                            {PACKAGE_TYPE_OPTIONS.map((pt) => <option key={pt} value={pt}>{pt}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 uppercase tracking-wider">Units/pack</label>
+                          <input type="number" min="1" value={editPackSize} onChange={(e) => setEditPackSize(e.target.value)}
+                            placeholder="e.g. 6"
+                            className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60" />
+                        </div>
+                      </>
+                    ) : null}
                     {vendors.length > 0 && (
                       <div className="col-span-2">
                         <label className="text-[10px] text-slate-500 uppercase tracking-wider">Vendor <span className="text-slate-700">(optional)</span></label>
@@ -517,17 +560,19 @@ export default function InventoryItemsPage() {
                     )}
                     {item.pack_size && !item.package_type && (
                       <span className="text-xs text-amber-500/70 shrink-0 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                        {item.pack_size}/pack
+                        {item.item_type === 'food' && item.unit === 'lb'
+                          ? `${item.pack_size} lb/case`
+                          : `${item.pack_size}/pack`}
                       </span>
                     )}
                     {item.cost_per_unit != null && (
                       <span className="text-xs text-emerald-500/70 shrink-0 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
-                        ${item.cost_per_unit.toFixed(2)}/{UNIT_LABELS[item.unit] ?? item.unit}
+                        ${item.cost_per_unit.toFixed(2)}/{item.unit}
                       </span>
                     )}
                     {item.reorder_level != null && (
                       <span className="text-xs text-amber-500/60 shrink-0 bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded">
-                        reorder @ {item.reorder_level}
+                        reorder @ {item.reorder_level} {item.unit}
                       </span>
                     )}
                     {item.vendor_id && vendors.find((v) => v.id === item.vendor_id) && (
@@ -535,14 +580,23 @@ export default function InventoryItemsPage() {
                         {vendors.find((v) => v.id === item.vendor_id)!.name}
                       </span>
                     )}
-                    {expectedMap[item.id] && (
-                      <span
-                        title={`Expected on hand as of today.\nLast count: ${expectedMap[item.id].last_count_qty} on ${expectedMap[item.id].last_count_date}\n+ ${formatQty(expectedMap[item.id].purchases_since_oz, 'oz')} oz purchased\n− ${formatQty(expectedMap[item.id].deductions_since_oz, 'oz')} oz sold`}
-                        className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded cursor-default"
-                      >
-                        ~{formatQty(expectedMap[item.id].expected_qty, expectedMap[item.id].unit)} expected
-                      </span>
-                    )}
+                    {expectedMap[item.id] && (() => {
+                      const exp = expectedMap[item.id]
+                      const u = exp.unit
+                      // Convert oz amounts back to the item's native unit for display
+                      const UNIT_TO_OZ_SIMPLE: Record<string, number> = { oz: 1, lb: 16, kg: 35.274, g: 0.035274, bottle: 25.36, wine_bottle: 25.36, '1L': 33.814, '1.75L': 59.1745, keg: 1984, quarterkeg: 992, sixthkeg: 661, pint: 16, can: 12, beer_bottle: 12, beer_bottle_16oz: 16, case: 288 }
+                      const factor = UNIT_TO_OZ_SIMPLE[u] ?? 1
+                      const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
+                      const deductedNative = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
+                      return (
+                        <span
+                          title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${u} on ${exp.last_count_date}\n+ ${purchasedNative} ${u} purchased\n− ${deductedNative} ${u} used`}
+                          className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded cursor-default"
+                        >
+                          ~{formatQty(exp.expected_qty, u)} {u} expected
+                        </span>
+                      )
+                    })()}
                   </div>
                   {!selectMode && (
                     <div className="flex items-center gap-1 ml-3 shrink-0">
@@ -622,7 +676,7 @@ export default function InventoryItemsPage() {
                 type="button"
                 onClick={() => {
                   setItemType(t)
-                  setUnit(t === 'beverage' ? 'bottle' : 'each')
+                  setUnit(t === 'beverage' ? 'bottle' : t === 'food' ? 'lb' : 'each')
                   setPackageType(''); setPackSize('')
                 }}
                 className={`px-3 py-1 rounded text-xs font-medium transition-colors capitalize ${
@@ -702,6 +756,26 @@ export default function InventoryItemsPage() {
             </>
           )}
 
+          {/* Lb/case — food items with weight unit */}
+          {itemType === 'food' && unit === 'lb' && (
+            <div>
+              <label className="block text-xs text-slate-500 mb-1">Lbs per case / bag <span className="text-slate-700">(optional)</span></label>
+              <input
+                type="number"
+                min="1"
+                value={packSize}
+                onChange={(e) => setPackSize(e.target.value)}
+                placeholder="e.g. 25"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500/60"
+              />
+              {packSize && (
+                <p className="text-[10px] text-slate-600 mt-1">
+                  Purchase scans will auto-convert cases × {packSize} lb = total lbs
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-500 mb-1">
@@ -722,7 +796,7 @@ export default function InventoryItemsPage() {
             </div>
             <div>
               <label className="block text-xs text-slate-500 mb-1">
-                Reorder at <span className="text-slate-700">({UNIT_LABELS[unit] ?? unit}s, optional)</span>
+                Reorder at <span className="text-slate-700">({unit}, optional)</span>
               </label>
               <input
                 type="number"
