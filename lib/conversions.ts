@@ -78,20 +78,19 @@ export function isSupportedUnit(unit: string): boolean {
 
 /** Units used for counting inventory (shown in UI dropdowns) */
 export const INVENTORY_BEVERAGE_UNITS = [
-  'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
+  'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'case', 'keg', 'quarterkeg', 'sixthkeg',
 ]
 
 /** Units used for counting food/kitchen inventory (shown in UI dropdowns) */
 export const INVENTORY_FOOD_UNITS = [
-  'each', 'portion', 'serving', 'slice', 'piece',
-  'lb', 'kg', 'g', 'oz',
-  'gallon', 'quart', 'cup', 'tbsp', 'tsp',
+  'each', 'lb', 'kg', 'oz',
+  'gallon', 'quart',
   'bag', 'box', 'tray', 'flat', 'jar', 'packet',
 ]
 
 /** Units used for counting paper goods / supplies inventory (shown in UI dropdowns) */
 export const INVENTORY_PAPER_UNITS = [
-  'each', 'pack', 'sleeve', 'roll', 'box', 'bag',
+  'pack', 'sleeve', 'roll', 'box', 'bag',
 ]
 
 /** Human-friendly labels for inventory unit values */
@@ -179,7 +178,7 @@ export function itemCostPerOz(costPerUnit: number | null | undefined, unit: stri
 // Units that are always whole items — never display as decimals
 const WHOLE_UNITS = new Set([
   'bottle', 'wine_bottle', 'beer_bottle', 'beer_bottle_16oz', 'can', 'can_16oz', 'case', '1L', '1.75L',
-  'each', 'piece', 'portion', 'serving', 'slice', 'bag', 'tray', 'box', 'flat', 'jar', 'packet',
+  'each', 'bag', 'tray', 'box', 'flat', 'jar', 'packet',
   'pack', 'sleeve', 'roll',
 ])
 // Kegs intentionally excluded — partial keg counts (e.g. 0.75) are meaningful and must not be rounded.
@@ -200,13 +199,13 @@ export function formatQty(qty: number, unit: string): string {
 /** All units (inventory + recipe pour units) */
 export const ALL_UNITS = [
   // Beverage — counting units
-  'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'case', 'keg', 'quarterkeg', 'sixthkeg',
+  'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'case', 'keg', 'quarterkeg', 'sixthkeg',
   // Beverage — pour / recipe units (not used for inventory counting)
   'oz', 'ml', 'cl', 'l',
   // Food / kitchen
-  'each', 'piece', 'portion', 'serving', 'slice', 'lb', 'kg', 'g',
-  'gallon', 'quart', 'cup',
-  'bag', 'tray', 'box', 'flat', 'tbsp', 'tsp', 'jar', 'packet',
+  'each', 'lb', 'kg', 'g',
+  'gallon', 'quart',
+  'bag', 'tray', 'box', 'flat', 'jar', 'packet',
   // Paper / supply
   'pack', 'sleeve', 'roll',
 ]

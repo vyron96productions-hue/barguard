@@ -454,7 +454,7 @@ export default function InventoryItemsPage() {
                             type="button"
                             onClick={() => {
                               setEditItemType(t)
-                              setEditUnit(t === 'beverage' ? 'bottle' : t === 'food' ? 'lb' : 'each')
+                              setEditUnit(t === 'beverage' ? 'bottle' : t === 'food' ? 'lb' : 'pack')
                               setEditPackageType(''); setEditPackSize('')
                             }}
                             className={`flex-1 py-2 transition-colors ${editItemType === t ? 'bg-amber-500 text-slate-900' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'}`}
@@ -852,7 +852,7 @@ export default function InventoryItemsPage() {
                 type="button"
                 onClick={() => {
                   setItemType(t)
-                  setUnit(t === 'beverage' ? 'bottle' : t === 'food' ? 'lb' : 'each')
+                  setUnit(t === 'beverage' ? 'bottle' : t === 'food' ? 'lb' : 'pack')
                   setPackageType(''); setPackSize('')
                 }}
                 className={`px-3 py-1 rounded text-xs font-medium transition-colors capitalize ${
