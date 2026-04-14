@@ -108,6 +108,98 @@ export async function POST(req: NextRequest) {
     const { error: purchaseError } = await supabase.from('purchases').insert(purchases)
     if (purchaseError) return NextResponse.json({ error: purchaseError.message }, { status: 500 })
 
+    // ── Update inventory_counts: add received quantities to current on-hand ────
+    // Same logic as purchase-scan confirm — without this the stock page never reflects the delivery
+    const matchedPurchases = purchases.filter((p) => p.inventory_item_id)
+    if (matchedPurchases.length > 0) {
+      const itemIds = [...new Set(matchedPurchases.map((p) => p.inventory_item_id!))]
+
+      // Latest count per item
+      const { data: latestCounts } = await supabase
+        .from('inventory_counts')
+        .select('inventory_item_id, quantity_on_hand, unit_type')
+        .eq('business_id', businessId)
+        .in('inventory_item_id', itemIds)
+        .order('count_date', { ascending: false })
+
+      const latestByItem = new Map<string, { qty: number; unit: string | null }>()
+      for (const c of latestCounts ?? []) {
+        if (!latestByItem.has(c.inventory_item_id)) {
+          latestByItem.set(c.inventory_item_id, { qty: c.quantity_on_hand, unit: c.unit_type })
+        }
+      }
+
+      // Item unit metadata for new count records
+      const { data: invItems } = await supabase
+        .from('inventory_items')
+        .select('id, unit')
+        .eq('business_id', businessId)
+        .in('id', itemIds)
+
+      const itemUnit = new Map<string, string>()
+      for (const item of invItems ?? []) itemUnit.set(item.id, item.unit)
+
+      // Create a count-upload record so the delivery appears in count history
+      const allDates2 = matchedPurchases.map((p) => p.purchase_date).sort()
+      const { data: countUpload } = await supabase
+        .from('inventory_count_uploads')
+        .insert({
+          business_id: businessId,
+          filename: `delivery-${upload.id.slice(0, 8)}`,
+          count_date: allDates2[allDates2.length - 1], // use latest purchase date
+          row_count: matchedPurchases.length,
+        })
+        .select('id')
+        .single()
+
+      if (countUpload) {
+        // Aggregate by item (multiple purchase rows may hit same item)
+        const qtyByItem = new Map<string, { qty: number; unit: string | null; name: string }>()
+        for (const p of matchedPurchases) {
+          const id = p.inventory_item_id!
+          const existing = qtyByItem.get(id)
+          qtyByItem.set(id, {
+            qty: (existing?.qty ?? 0) + p.quantity_purchased,
+            unit: p.unit_type ?? existing?.unit ?? null,
+            name: p.raw_item_name,
+          })
+        }
+
+        const countRecords = Array.from(qtyByItem.entries()).map(([itemId, info]) => {
+          const prev = latestByItem.get(itemId)?.qty ?? 0
+          const unit = info.unit ?? itemUnit.get(itemId) ?? null
+          return {
+            upload_id: countUpload.id,
+            business_id: businessId,
+            count_date: allDates2[allDates2.length - 1],
+            raw_item_name: info.name,
+            inventory_item_id: itemId,
+            quantity_on_hand: prev + info.qty,
+            unit_type: unit,
+          }
+        })
+
+        await supabase
+          .from('inventory_counts')
+          .upsert(countRecords, { onConflict: 'business_id,inventory_item_id,count_date' })
+      }
+
+      // Update cost_per_unit on inventory items when the CSV has a price column
+      const priceByItem = new Map<string, number>()
+      for (const p of matchedPurchases) {
+        if (p.inventory_item_id && p.unit_cost != null && p.unit_cost > 0) {
+          priceByItem.set(p.inventory_item_id, p.unit_cost)
+        }
+      }
+      for (const [itemId, cost] of priceByItem.entries()) {
+        await supabase
+          .from('inventory_items')
+          .update({ cost_per_unit: cost })
+          .eq('id', itemId)
+          .eq('business_id', businessId)
+      }
+    }
+
     const unresolved = [...new Set(purchases.filter((p) => !p.inventory_item_id).map((p) => p.raw_item_name))]
 
     logger.info(ROUTE, 'Import complete', { businessId, rows_imported: validRows.length, unresolved: unresolved.length })
