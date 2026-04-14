@@ -243,6 +243,7 @@ export default function InventoryItemsPage() {
     if (!res.ok) { setEditError(data.error ?? 'Save failed'); return }
     setEditingId(null)
     fetchItems()
+    fetchExpected()
   }
 
   function openBulkPriceMode() {
@@ -612,19 +613,22 @@ export default function InventoryItemsPage() {
                     )}
                     {expectedMap[item.id] && (() => {
                       const exp = expectedMap[item.id]
-                      const u = exp.unit
-                      // Convert oz amounts back to the item's native unit for display
+                      // Always use item.unit (live, just re-fetched) not exp.unit (may be stale
+                      // if expectedMap hasn't refreshed since a unit edit was saved).
+                      const u = item.unit
                       const UNIT_TO_OZ_SIMPLE: Record<string, number> = { oz: 1, lb: 16, kg: 35.274, g: 0.035274, bottle: 25.36, wine_bottle: 25.36, '1L': 33.814, '1.75L': 59.1745, keg: 1984, quarterkeg: 992, sixthkeg: 661, pint: 16, can: 12, beer_bottle: 12, beer_bottle_16oz: 16, case: 288 }
                       const factor = UNIT_TO_OZ_SIMPLE[u] ?? 1
+                      // Re-derive qty in item's current unit from the oz total the API gave us
+                      const expectedNative = exp.expected_qty_oz / factor
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
-                      const deductedNative = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
+                      const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const uLabel = UNIT_LABELS[u] ?? u
                       return (
                         <span
                           title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${uLabel} on ${exp.last_count_date}\n+ ${purchasedNative} ${uLabel} purchased\n− ${deductedNative} ${uLabel} used`}
                           className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded cursor-default"
                         >
-                          ~{formatQty(exp.expected_qty, u)} {uLabel} expected
+                          ~{formatQty(Math.max(0, expectedNative), u)} {uLabel} expected
                         </span>
                       )
                     })()}
