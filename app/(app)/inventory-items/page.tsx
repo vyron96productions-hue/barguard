@@ -627,13 +627,14 @@ export default function InventoryItemsPage() {
                       const expectedNative = exp.expected_qty_oz / factor
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
+                      // Use raw unit key in the badge (short), full label only in tooltip
                       const uLabel = UNIT_LABELS[u] ?? u
                       return (
                         <span
                           title={`Expected on hand as of today.\nLast count: ${exp.last_count_qty} ${uLabel} on ${exp.last_count_date}\n+ ${purchasedNative} ${uLabel} purchased\n− ${deductedNative} ${uLabel} used`}
                           className="text-xs text-sky-400/80 shrink-0 bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded cursor-default"
                         >
-                          ~{formatQty(Math.max(0, expectedNative), u)} {uLabel} expected
+                          ~{formatQty(Math.max(0, expectedNative), u)} {u} expected
                         </span>
                       )
                     })()}
