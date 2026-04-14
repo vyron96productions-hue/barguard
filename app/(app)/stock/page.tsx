@@ -1282,6 +1282,8 @@ function StockCard({ item, allCategories, onUpdate }: {
       unit,
       quantity_on_hand: qtyToSend ?? item.quantity_on_hand,
       count_date: qtyToSend !== null ? new Date().toISOString().slice(0, 10) : item.count_date,
+      // Clear stale estimate so card immediately shows the new physical count
+      ...(qtyToSend !== null ? { has_estimate: false, estimated_qty: null } : {}),
     })
     setEditing(false)
   }
@@ -1417,7 +1419,7 @@ function StockCard({ item, allCategories, onUpdate }: {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={openEdit}
-            className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-slate-500 hover:text-amber-400 active:text-amber-300 transition-all text-sm leading-none p-1"
+            className="text-slate-500 hover:text-amber-400 active:text-amber-300 transition-all text-sm leading-none p-1"
             title="Edit"
           >
             ✎
@@ -1444,7 +1446,7 @@ function StockCard({ item, allCategories, onUpdate }: {
         </div>
         {isFoodCase && item.pack_size && effectiveQty !== null ? (
           <div className="space-y-1">
-            <p className="text-xs text-slate-500">cases ({item.pack_size} {item.unit} each)</p>
+            <p className="text-xs text-slate-500">cases ({item.pack_size}{item.unit === 'each' ? ' ct/case' : ` ${item.unit} each`})</p>
             {(() => {
               const loose = Math.round((effectiveQty % item.pack_size) * 100) / 100
               const looseLabel = item.unit === 'each' ? 'loose' : `${item.unit} loose`
