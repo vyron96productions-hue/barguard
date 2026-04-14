@@ -31,7 +31,7 @@ interface AiGenRow extends AiGenerateSuggestion {
 
 const DRINK_CATEGORIES = ['cocktail', 'shot', 'beer', 'wine', 'non-alcoholic', 'spirits']
 const FOOD_CATEGORIES  = ['entree', 'appetizer', 'side', 'dessert', 'salad', 'soup', 'sandwich', 'pizza', 'breakfast', 'kids']
-const RECIPE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'pint', 'each', 'piece', 'portion', 'slice', 'lb', 'g', 'cup', 'tbsp', 'tsp']
+const RECIPE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'pint', 'each', 'piece', 'portion', 'slice', 'lb', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'sleeve', 'roll', 'box', 'bag']
 
 // Treat 'drink', 'beer', 'other', and undefined as drinks; only 'food' is food
 function isFood(item_type: string | undefined | null) { return item_type === 'food' }
@@ -496,7 +496,7 @@ export default function RecipeMappingPage() {
     return (
       <div
         key={item.id}
-        className={`bg-slate-900/60 border rounded-2xl overflow-hidden transition-colors ${
+        className={`bg-slate-900/60 border rounded-2xl transition-colors ${
           isOpen ? 'border-slate-700' : 'border-slate-800'
         }`}
       >
