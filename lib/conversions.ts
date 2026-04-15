@@ -79,6 +79,8 @@ export function isSupportedUnit(unit: string): boolean {
 /** Units used for counting inventory (shown in UI dropdowns) */
 export const INVENTORY_BEVERAGE_UNITS = [
   'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'case', 'keg', 'quarterkeg', 'sixthkeg',
+  // Bulk mixer/soda units — support cases+loose same as food
+  'gallon', 'quart', 'liter',
 ]
 
 /** Units used for counting food/kitchen inventory (shown in UI dropdowns) */
@@ -121,6 +123,7 @@ export const UNIT_LABELS: Record<string, string> = {
   oz:          'oz',
   gallon:      'Gallon (128 oz)',
   quart:       'Quart (32 oz)',
+  liter:       'Liter — Mixer/Soda (cases+loose)',
   cup:         'Cup (8 oz)',
   tbsp:        'Tablespoon',
   tsp:         'Teaspoon',
@@ -156,6 +159,9 @@ export const SHORT_UNIT_LABELS: Record<string, string> = {
   keg:         'keg',
   quarterkeg:  '¼ keg',
   sixthkeg:    '⅙ keg',
+  gallon:      'gal',
+  quart:       'qt',
+  liter:       'L',
 }
 
 export function shortUnitLabel(unit: string): string {

@@ -1226,6 +1226,7 @@ function StockCard({ item, allCategories, onUpdate }: {
   const unitOptions = itemIsFood ? FOOD_UNITS_LIST : itemIsPaper ? PAPER_UNITS_LIST : BEVERAGE_UNITS
   const isFoodCase = (
     (item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart')) ||
+    (item.item_type === 'beverage' && (item.unit === 'gallon' || item.unit === 'quart' || item.unit === 'liter')) ||
     item.item_type === 'paper'
   ) && (item.pack_size ?? 0) > 1
 
@@ -1454,6 +1455,7 @@ function StockCard({ item, allCategories, onUpdate }: {
                 item.unit === 'each' ? ' ct/case'
                 : item.unit === 'gallon' ? ' gal each'
                 : item.unit === 'quart' ? ' qt each'
+                : item.unit === 'liter' ? ' L each'
                 : item.unit === 'pack' ? ' packs each'
                 : item.unit === 'sleeve' ? ' sleeves each'
                 : item.unit === 'roll' ? ' rolls each'
