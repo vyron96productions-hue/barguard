@@ -115,12 +115,16 @@ export async function fetchToastSales(
       for (const check of order.checks ?? []) {
         for (const sel of check.selections ?? []) {
           if (!sel.displayName) continue
+          const modifiers = Array.isArray(sel.modifiers) && sel.modifiers.length > 0
+            ? (sel.modifiers as any[]).map((m) => m.displayName).filter(Boolean) as string[]
+            : null
           items.push({
             sale_date: saleDate,
             sale_timestamp: saleTimestamp,
             raw_item_name: sel.displayName as string,
             quantity_sold: typeof sel.quantity === 'number' ? sel.quantity : 1,
             gross_sales: typeof sel.preDiscountPrice === 'number' ? sel.preDiscountPrice : null,
+            modifiers,
           })
         }
       }
