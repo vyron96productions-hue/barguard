@@ -33,11 +33,12 @@ export async function GET() {
     // --- Estimated stock calculation ---
     const inventoryItemIds = (items ?? []).map((i) => i.id)
 
-    // Get all recipes that use our inventory items
+    // Get all recipes for this business — RLS scopes to business via menu_item_id.
+    // Do NOT filter by inventory_item_id here: with 700+ items the IN() list
+    // exceeds PostgREST's URL length limit and the query silently returns nothing.
     const { data: recipes } = await supabase
       .from('menu_item_recipes')
       .select('menu_item_id, inventory_item_id, quantity, unit')
-      .in('inventory_item_id', inventoryItemIds.length > 0 ? inventoryItemIds : ['none'])
 
     // Build: inventory_item_id → [{ menu_item_id, oz_per_sale }]
     const recipesByInvItem: Record<string, Array<{ menu_item_id: string; oz_per_sale: number }>> = {}
