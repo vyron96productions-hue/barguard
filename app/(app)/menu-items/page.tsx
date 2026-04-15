@@ -31,7 +31,7 @@ interface AiGenRow extends AiGenerateSuggestion {
 
 const DRINK_CATEGORIES = ['cocktail', 'shot', 'beer', 'wine', 'non-alcoholic', 'spirits']
 const FOOD_CATEGORIES  = ['entree', 'appetizer', 'side', 'dessert', 'salad', 'soup', 'sandwich', 'pizza', 'breakfast', 'kids']
-const RECIPE_UNITS = ['oz', 'ml', 'cl', 'l', 'bottle', 'can', 'pint', 'each', 'piece', 'portion', 'slice', 'lb', 'g', 'cup', 'tbsp', 'tsp', 'pack', 'sleeve', 'roll', 'box', 'bag']
+const RECIPE_UNITS = ['oz', 'ml', 'l', 'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'each', 'slice', 'portion', 'lb', 'g', 'tbsp', 'tsp', 'box', 'bag']
 
 // Treat 'drink', 'beer', 'other', and undefined as drinks; only 'food' is food
 function isFood(item_type: string | undefined | null) { return item_type === 'food' }
