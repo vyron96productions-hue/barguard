@@ -1,0 +1,3 @@
+Client ID: tFCk54FofhY0HQnvV83LKxRA4uBoVnty
+Location GUID: 5e6f578e-dd55-406f-8039-5d5b6c26f532
+Client Secret: CVvfhgS3aTrOOjskHCLlHHICPYpWYnlIr-wK6z3fmSvlUj73KTgmgKY4sSkBfIED

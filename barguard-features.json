@@ -1,0 +1,1043 @@
+{
+  "product": "BarGuard",
+  "description": "Bar inventory loss detection and profitability platform for bar owners",
+  "version_audited": "2026-03-30",
+  "sections": [
+    {
+      "id": "auth",
+      "name": "Authentication & Account Management",
+      "features": [
+        {
+          "id": "auth.login",
+          "name": "Login",
+          "description": "Sign in to your BarGuard account",
+          "how_to_use": [
+            "Enter your username (or email)",
+            "Enter your password",
+            "Click Sign In — OR click Sign in with Google for OAuth"
+          ],
+          "notes": "Usernames are internally mapped to username@barguard.app. Google OAuth is supported as an alternative."
+        },
+        {
+          "id": "auth.signup",
+          "name": "Sign Up",
+          "description": "Create a new BarGuard bar owner account",
+          "how_to_use": [
+            "Enter your bar name",
+            "Choose a username (letters, numbers, underscore, hyphen only)",
+            "Enter your email (for recovery)",
+            "Set a password (6+ characters)",
+            "Click Create Account — OR use Sign up with Google"
+          ],
+          "notes": "After signup you are routed to a check-email page. Email must be verified before full access."
+        },
+        {
+          "id": "auth.forgot_password",
+          "name": "Forgot Password",
+          "description": "Request a password reset link via email",
+          "how_to_use": [
+            "Click 'Forgot password' on the login page",
+            "Enter your username",
+            "Click Send Reset Link",
+            "Check your email for the link (expires in 1 hour)",
+            "Click the link and set a new password"
+          ]
+        },
+        {
+          "id": "auth.email_verification",
+          "name": "Email Verification",
+          "description": "Verify your email address after signup",
+          "how_to_use": [
+            "After signup, check your email for a verification link",
+            "Click the link — system confirms your address automatically",
+            "If expired, return to the check-email page and click Resend"
+          ]
+        },
+        {
+          "id": "auth.onboarding",
+          "name": "Welcome / Onboarding",
+          "description": "First-time setup flow guiding new users from account creation to profile and plan selection",
+          "how_to_use": [
+            "After email verification, you land on the Welcome page",
+            "Read the 14-day free trial notice",
+            "Click 'Set Up My Bar Profile' to continue to profile setup",
+            "After profile setup you are directed to choose a pricing plan"
+          ],
+          "notes": "Three-step progress shown: Account → Profile → Plan"
+        },
+        {
+          "id": "auth.partner_login",
+          "name": "Partner Login",
+          "description": "Separate login portal for partner/vendor accounts (not bar owners)",
+          "how_to_use": [
+            "Navigate to /partner-login",
+            "Enter partner email and password",
+            "System validates that the account has a 'partner' role",
+            "Redirect to partner dashboard on success"
+          ],
+          "notes": "Partner accounts are separate from bar owner accounts and only have access to their partner dashboard."
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "name": "User Profile & Settings",
+      "features": [
+        {
+          "id": "profile.bar_info",
+          "name": "Bar Information",
+          "description": "Edit your bar's business details",
+          "how_to_use": [
+            "Go to Profile (sidebar or menu)",
+            "Edit: bar name, address, phone number, bar type, contact email",
+            "Click Save Changes"
+          ],
+          "fields": {
+            "bar_type_options": [
+              "Bar / Pub",
+              "Sports Bar",
+              "Nightclub",
+              "Restaurant & Bar",
+              "Hotel Bar",
+              "Brewery / Taproom",
+              "Lounge / Cocktail Bar",
+              "Other"
+            ]
+          },
+          "notes": "Contact email is used for reorder emails, reports, and account recovery."
+        },
+        {
+          "id": "profile.change_username",
+          "name": "Change Username",
+          "description": "Update your login username",
+          "how_to_use": [
+            "Go to Profile",
+            "Enter new username in the username field",
+            "Click Update Username"
+          ],
+          "notes": "Must be alphanumeric plus underscore or hyphen."
+        },
+        {
+          "id": "profile.change_password",
+          "name": "Change Password",
+          "description": "Update your account password",
+          "how_to_use": [
+            "Go to Profile",
+            "Enter new password (6+ characters)",
+            "Confirm the new password",
+            "Click Update Password"
+          ]
+        },
+        {
+          "id": "profile.billing",
+          "name": "Billing & Plan Management",
+          "description": "View your current plan and upgrade or manage your subscription",
+          "how_to_use": [
+            "Go to Profile → scroll to Billing section",
+            "Your current plan is displayed",
+            "To upgrade: click Upgrade next to Pro or Enterprise",
+            "You are redirected to Stripe checkout to complete payment",
+            "To manage or cancel: click 'Manage subscription' — redirects to Stripe billing portal"
+          ],
+          "plans": [
+            {
+              "name": "Basic",
+              "price_per_month": 99,
+              "description": "Inventory tracking, scanning, alerts"
+            },
+            {
+              "name": "Pro",
+              "price_per_month": 199,
+              "description": "Everything in Basic + reorder management & POS integrations"
+            },
+            {
+              "name": "Enterprise",
+              "price_per_month": 399,
+              "description": "Everything in Pro + up to 5 locations"
+            },
+            {
+              "name": "Legacy",
+              "price_per_month": 0,
+              "description": "Free grandfathered plan, limited features"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dashboard",
+      "name": "Dashboard & Variance Monitoring",
+      "description": "The core loss detection engine — run shift or date-range calculations to detect inventory shrinkage",
+      "features": [
+        {
+          "id": "dashboard.variance_calc",
+          "name": "Shift-Based Variance Calculation",
+          "description": "Calculate how much inventory was used vs how much should have been used based on sales — surfacing over-pours, spillage, and theft",
+          "how_to_use": [
+            "Select a calculation mode:",
+            "  OPTION A — Preset Shift: Choose a shift (Morning, Lunch, Happy Hour, Dinner, Late Night, Full Day), pick a service date, click Run Calculations",
+            "  OPTION B — Live Shift: Toggle 'Use Current Time' to analyze an ongoing shift in real-time",
+            "  OPTION C — Custom Date Range: Set From date, To date, optional start/end times, click Run Calculations",
+            "Results appear as KPI cards, a risk table, and an AI summary option"
+          ],
+          "shift_presets": [
+            "Morning",
+            "Lunch",
+            "Happy Hour",
+            "Dinner",
+            "Late Night (spans midnight — ends next day)",
+            "Full Day"
+          ],
+          "notes": "Late Night shift handles overnight spanning automatically. Custom times require both start and end to be set."
+        },
+        {
+          "id": "dashboard.ai_summary",
+          "name": "AI Summary",
+          "description": "Generate an AI-written natural-language summary of the variance results",
+          "how_to_use": [
+            "Run a variance calculation first",
+            "Click the 'AI Summary' button in the results area",
+            "Wait a moment — the system analyzes the variance data",
+            "Read the markdown-formatted breakdown including critical items, warnings, trends, and revenue context"
+          ],
+          "notes": "Includes revenue and covers-per-shift context when POS data is available."
+        },
+        {
+          "id": "dashboard.kpi_cards",
+          "name": "Variance KPI Cards",
+          "description": "At-a-glance summary metrics from the last calculation",
+          "metrics": [
+            {
+              "name": "Critical Items",
+              "description": "Count of items with severe variance — immediate attention required"
+            },
+            {
+              "name": "Warning Items",
+              "description": "Count of items with moderate variance — monitor closely"
+            },
+            {
+              "name": "Healthy Items",
+              "description": "Count of items within acceptable range"
+            },
+            {
+              "name": "Est. Loss",
+              "description": "Dollar estimate of loss based on item cost prices + variance oz"
+            },
+            {
+              "name": "Health Score",
+              "description": "0–100 score. Red < 40, Amber < 70, Green >= 70. Shows highest-risk item name on hover."
+            }
+          ]
+        },
+        {
+          "id": "dashboard.risk_table",
+          "name": "Risk Table",
+          "description": "Itemized variance results for every inventory item tracked in the shift",
+          "columns": [
+            "Item name",
+            "Expected usage (oz)",
+            "Actual usage (oz)",
+            "Variance (oz + %)",
+            "Status badge (Critical / Warning / Normal)",
+            "Estimated loss ($)"
+          ]
+        },
+        {
+          "id": "dashboard.next_actions",
+          "name": "Next Actions Panel",
+          "description": "Recommended actions for items that need attention, based on status",
+          "how_to_use": [
+            "Panel appears in results after calculation",
+            "Review recommended actions for critical and warning items",
+            "Actions may include: check pour counts, review recipe, inspect storage"
+          ]
+        },
+        {
+          "id": "dashboard.performance_summary",
+          "name": "Performance Summary",
+          "description": "Business performance metrics for the calculated period (requires POS connection)",
+          "metrics": [
+            "Total items sold",
+            "Transaction count",
+            "Revenue (when available from POS)"
+          ]
+        },
+        {
+          "id": "dashboard.reorder_alerts",
+          "name": "Reorder Alerts Widget",
+          "description": "Shows items currently below their minimum stock threshold directly on the dashboard",
+          "how_to_use": [
+            "Set reorder levels on inventory items",
+            "Widget updates automatically when counts fall below the threshold",
+            "Click through to the full Reorder page for details"
+          ]
+        },
+        {
+          "id": "dashboard.viewing_context",
+          "name": "Viewing Context Banner",
+          "description": "Displays what period/shift you are currently viewing — e.g., 'Dinner · Mon Mar 9 · 5:00 PM – 9:00 PM'",
+          "notes": "Shows a pulsing live indicator if you are viewing a currently-running shift."
+        },
+        {
+          "id": "dashboard.clear_results",
+          "name": "Clear Results",
+          "description": "Reset all displayed calculation data",
+          "how_to_use": [
+            "Click the trash icon in the results area",
+            "Confirm the dialog",
+            "All KPIs, risk table, AI summary, and performance data are cleared"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "name": "Inventory Management",
+      "features": [
+        {
+          "id": "inventory.items",
+          "name": "Inventory Items (Master List)",
+          "description": "Manage the master list of every bottle, keg, food item, or supply you track",
+          "how_to_use": [
+            "Go to Inventory Items in the sidebar",
+            "View all items in a searchable, filterable table",
+            "To add: click New Item, fill in name/category/unit/cost, save",
+            "To edit: click an item row, update fields, save",
+            "To delete: click delete icon on the item row"
+          ],
+          "item_fields": [
+            "Name (required)",
+            "Category (dropdown or custom text)",
+            "Unit (oz, bottle, keg, case, etc.)",
+            "Cost per unit (used in loss dollar calculations)",
+            "Item type (beverage or food)",
+            "Default vendor (optional — links to Vendors)"
+          ],
+          "sub_features": [
+            {
+              "name": "CSV Bulk Import",
+              "description": "Upload a CSV with item names, units, and costs to create many items at once",
+              "how_to_use": "Click Import → upload CSV file with columns: name, unit, cost_per_unit"
+            },
+            {
+              "name": "Bulk Category Update",
+              "description": "Select multiple items and assign them to a category in one action",
+              "how_to_use": "Check items → click Bulk Update Categories → select/type category → Apply"
+            },
+            {
+              "name": "Bulk Price Update",
+              "description": "Update cost_per_unit for multiple items simultaneously",
+              "how_to_use": "Check items → click Bulk Update Prices → enter new cost → Apply"
+            },
+            {
+              "name": "AI Auto-Categorize",
+              "description": "Let Claude AI read your item names and assign categories automatically",
+              "how_to_use": "Click AI Categorize → review suggested categories → confirm or adjust → save"
+            }
+          ]
+        },
+        {
+          "id": "inventory.stock",
+          "name": "Stock Levels / Inventory Counts",
+          "description": "Record physical on-hand quantities for each inventory item",
+          "how_to_use": [
+            "Go to Stock in the sidebar",
+            "View current quantity on hand for each item",
+            "Update counts manually by entering a number in the count field",
+            "Or scan barcodes using the barcode scan feature",
+            "Or bulk import counts via CSV",
+            "Counts are timestamped — each count record has a counted_at date"
+          ],
+          "sub_features": [
+            {
+              "name": "Barcode Scanning",
+              "description": "Use a device camera or barcode scanner to scan bottle barcodes and auto-increment counts",
+              "how_to_use": "Click Scan Bottles → point camera at barcode → item is identified and count is updated"
+            },
+            {
+              "name": "CSV Count Import",
+              "description": "Upload a CSV of your physical count (item, qty) instead of entering manually",
+              "how_to_use": "Go to Uploads → Inventory Count tab → upload CSV"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sales_recipes",
+      "name": "Sales & Recipes",
+      "features": [
+        {
+          "id": "sales_recipes.menu_items",
+          "name": "Menu Items",
+          "description": "Define every item you sell — drinks and food — so sales data can be matched to recipes",
+          "how_to_use": [
+            "Go to Menu Items in the sidebar",
+            "View all menu items in a categorized list",
+            "Click New Item: enter name, category, item type (beverage/food)",
+            "Edit: click a row → update → save",
+            "Delete: click delete icon"
+          ],
+          "sub_features": [
+            {
+              "name": "Bulk Import",
+              "description": "Import many menu items at once from a CSV or from your POS catalog",
+              "how_to_use": "Click Import → upload CSV — OR — use POS connection to import catalog"
+            }
+          ]
+        },
+        {
+          "id": "sales_recipes.recipes",
+          "name": "Recipe Management",
+          "description": "Define what inventory items and quantities go into each menu item — this is the basis for expected usage calculations",
+          "how_to_use": [
+            "From a menu item, click Edit Recipes",
+            "Add ingredient rows: select inventory item, enter quantity (oz), optional notes",
+            "Save the recipe",
+            "Recipes are used by the variance engine to calculate expected usage from sales data"
+          ],
+          "sub_features": [
+            {
+              "name": "AI Recipe Generate",
+              "description": "Describe a drink and Claude AI will generate an ingredient list with standard quantities",
+              "how_to_use": "On the recipe form, click AI Generate → type drink name or description → review and confirm ingredients"
+            },
+            {
+              "name": "AI Recipe Match",
+              "description": "Upload a list of drink names and AI will automatically match them to your existing inventory items",
+              "how_to_use": "Go to Recipes → AI Match → paste or upload drink names → review matches → confirm"
+            },
+            {
+              "name": "Recipe Suggestions",
+              "description": "System suggests ingredient combinations based on drink name patterns",
+              "how_to_use": "Suggestions appear automatically when you type a menu item name — click to accept"
+            }
+          ]
+        },
+        {
+          "id": "sales_recipes.sales_log",
+          "name": "Sales Log",
+          "description": "View detailed itemized sales history — what was sold, when, how much revenue, matched or unmatched to menu items",
+          "how_to_use": [
+            "Go to Sales in the sidebar",
+            "Choose view mode:",
+            "  SINGLE NIGHT: pick a date with the date picker, use Prev/Next to navigate days, or click Today",
+            "  DATE RANGE: switch to range mode, set From and To dates, click View",
+            "Filter by type: All / Drinks / Food",
+            "Filter by station: All Stations / specific station / Unassigned",
+            "View summary KPIs: Revenue, Items Sold, Unique Items",
+            "View itemized table with qty, unit price, gross sales, and match status per item"
+          ],
+          "columns": [
+            "Item name",
+            "Category",
+            "Qty sold",
+            "Unit price",
+            "Gross sales ($)",
+            "Matched status (linked to menu or unlinked)",
+            "Item type (Drink / Food)"
+          ],
+          "notes": "Revenue is only shown if price data is available from POS. Unmatched items show a badge indicating they have no recipe linked."
+        },
+        {
+          "id": "sales_recipes.modifier_rules",
+          "name": "POS Modifier Rules",
+          "description": "Define how POS modifiers (like 'Extra Shot', 'No Bacon', 'Double') affect recipe ingredient quantities",
+          "how_to_use": [
+            "Go to Modifier Rules in the sidebar",
+            "View list of modifiers seen in your POS sales history",
+            "For each modifier, choose an action:",
+            "  IGNORE — no change to recipe",
+            "  REMOVE ingredient — subtract an inventory item (enter qty + unit)",
+            "  ADD ingredient — add an inventory item (enter qty + unit)",
+            "  MULTIPLY recipe — scale entire recipe by a factor (e.g., 2x for a double)",
+            "Click Save for each row",
+            "Rules apply automatically during variance calculations"
+          ],
+          "action_types": ["ignore", "remove", "add", "multiply"],
+          "notes": "Modifiers are auto-populated from your POS history. Rules persist and apply going forward."
+        },
+        {
+          "id": "sales_recipes.drink_library",
+          "name": "Drink Library",
+          "description": "A reference library of drink recipes — separate from your menu items — useful for standardizing recipes across staff",
+          "how_to_use": [
+            "Go to Drink Library in the sidebar",
+            "Search drinks by name or filter by category",
+            "Click a drink to see full recipe: ingredients, instructions, glassware, garnish",
+            "To add a new drink:",
+            "  Click Add Drink",
+            "  Enter name, category, glassware, garnish, instructions, notes",
+            "  Add ingredient rows (ingredient name, qty in oz, optional notes)",
+            "  Click Save",
+            "To populate a starter library: click 'Import Popular Drinks'"
+          ],
+          "categories": ["cocktail", "shot", "beer", "wine", "spirit", "mocktail", "other"],
+          "sub_features": [
+            {
+              "name": "Import Popular Drinks",
+              "description": "Seed your library with a set of standard popular cocktail recipes in one click",
+              "how_to_use": "Click Import Popular Drinks button — confirms, then populates the library"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imports",
+      "name": "Data Imports & Document Scanning",
+      "features": [
+        {
+          "id": "imports.sales_csv",
+          "name": "Sales CSV Upload",
+          "description": "Import a POS sales export CSV into BarGuard",
+          "how_to_use": [
+            "Go to Uploads → Sales tab",
+            "Upload your CSV file (columns: date, item name, quantity, price — optional)",
+            "System parses rows and imports them",
+            "If any item names are unrecognized, an alias resolver appears",
+            "For each unmatched name: select the matching menu item from the dropdown or click Create to add a new one",
+            "Confirm — import is complete"
+          ],
+          "notes": "Alias mappings are saved permanently — the same raw name will auto-match next time."
+        },
+        {
+          "id": "imports.inventory_csv",
+          "name": "Inventory Count CSV Upload",
+          "description": "Import physical inventory counts from a spreadsheet",
+          "how_to_use": [
+            "Go to Uploads → Inventory Count tab",
+            "Upload CSV with columns: count date, item name, qty on hand",
+            "System imports counts with timestamps",
+            "Unmatched item names go through alias resolution"
+          ]
+        },
+        {
+          "id": "imports.purchases_csv",
+          "name": "Purchases CSV Upload",
+          "description": "Import historical purchase/receiving logs from a spreadsheet",
+          "how_to_use": [
+            "Go to Uploads → Purchases tab",
+            "Upload CSV with columns: purchase date, item name, qty purchased (+ optional unit cost)",
+            "System creates purchase records for each row"
+          ]
+        },
+        {
+          "id": "imports.purchase_scan",
+          "name": "Invoice / Receipt Scanning",
+          "description": "Photograph or upload an invoice PDF and AI extracts all line items automatically",
+          "how_to_use": [
+            "Go to Purchase Scan Import in the sidebar",
+            "Click Upload New Receipt",
+            "Select an image or PDF of an invoice",
+            "System runs OCR and AI extraction — creates a draft import",
+            "Go to the draft review page",
+            "Review extracted line items: item name, qty, unit, confidence score",
+            "Toggle 'View Raw Text' to see the raw OCR output if needed",
+            "Edit any incorrectly extracted fields",
+            "Match each line to an existing inventory item — or click Create to add a new one",
+            "Click Confirm Import — inventory purchase records are saved"
+          ],
+          "draft_statuses": ["pending", "confirmed", "error"],
+          "notes": "Drafts are saved and can be revisited before confirming. Confidence scores show how certain the AI is about each extracted line."
+        },
+        {
+          "id": "imports.draft_management",
+          "name": "Purchase Import Draft Management",
+          "description": "View and manage all uploaded invoice drafts awaiting review",
+          "how_to_use": [
+            "Go to Purchase Scan Import — the list view shows all drafts",
+            "Drafts are grouped by upload month",
+            "Click a draft to open the review page",
+            "Delete a draft if it was uploaded in error"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "matching",
+      "name": "Data Matching & Alias Resolution",
+      "features": [
+        {
+          "id": "matching.aliases",
+          "name": "Item Name Alias Resolution",
+          "description": "Map raw POS or invoice names to your normalized inventory and menu items — solves the problem of 'Bud Lt' vs 'Budweiser Light'",
+          "how_to_use": [
+            "Go to Alias Resolution in the sidebar",
+            "View two sections: unmatched Menu Names and unmatched Inventory Names",
+            "For each unmatched raw name, select the correct item from the dropdown",
+            "Click Save for each row",
+            "Progress shows 'X resolved, Y pending'",
+            "Once all resolved, you see a success state"
+          ],
+          "notes": "Aliases are permanent — once saved, the same raw name will auto-match on every future upload. Alias resolution can also be triggered inline after a CSV upload."
+        },
+        {
+          "id": "matching.inline_sales_alias",
+          "name": "Inline Sales Alias Resolver",
+          "description": "Resolve unmatched sales item names directly after a CSV upload without leaving the upload flow",
+          "how_to_use": [
+            "Upload a sales CSV",
+            "If unresolved names exist, the resolver appears on the same page",
+            "Match names or click Create to create a new menu item",
+            "Click Skip to leave unmatched items for later"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pos_integrations",
+      "name": "POS Integrations",
+      "features": [
+        {
+          "id": "pos_integrations.connections",
+          "name": "POS Connections Manager",
+          "description": "Connect BarGuard to your POS system to automatically sync sales data",
+          "how_to_use": [
+            "Go to Connections in the sidebar",
+            "View all supported POS providers and their connection status",
+            "Click Connect for your provider",
+            "For OAuth providers (Square, Clover, Lightspeed): you are redirected to the provider's auth screen — grant access — redirected back as connected",
+            "For credential providers (Toast, Heartland, Focus): enter your API key or username/password in the form",
+            "Once connected, click Sync to pull the latest sales data",
+            "View sync logs showing last sync time and status"
+          ],
+          "supported_providers": [
+            {
+              "name": "Square",
+              "auth_type": "OAuth",
+              "status": "active"
+            },
+            {
+              "name": "Clover",
+              "auth_type": "OAuth",
+              "status": "active"
+            },
+            {
+              "name": "Toast",
+              "auth_type": "Credentials (API key)",
+              "status": "active"
+            },
+            {
+              "name": "Lightspeed K-Series",
+              "auth_type": "OAuth",
+              "status": "coming_soon"
+            },
+            {
+              "name": "Heartland",
+              "auth_type": "Credentials",
+              "status": "coming_soon"
+            },
+            {
+              "name": "Focus POS",
+              "auth_type": "Credentials",
+              "status": "coming_soon"
+            }
+          ],
+          "sub_features": [
+            {
+              "name": "Import POS Catalog",
+              "description": "Pull your menu items directly from your POS into BarGuard — saves manual entry",
+              "how_to_use": "After connecting a provider, click 'Import Items' — a modal shows your POS catalog with checkboxes — select items, set units, click Import"
+            },
+            {
+              "name": "Sync Logs",
+              "description": "View timestamped history of all sync jobs with status",
+              "how_to_use": "On the Connections page, scroll to Sync Logs for the connected provider"
+            },
+            {
+              "name": "Webhooks",
+              "description": "Receive real-time events from POS providers (Square, Clover) when sales occur",
+              "notes": "Configured internally — no user action needed once connected"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reorder",
+      "name": "Reorder & Vendor Management",
+      "features": [
+        {
+          "id": "reorder.suggestions",
+          "name": "Automated Reorder Suggestions",
+          "description": "AI-powered analysis of current stock and usage rates to tell you what to order and how much",
+          "how_to_use": [
+            "Go to Reorder in the sidebar",
+            "Click Analyze Reorder Needs",
+            "System calculates based on current counts, usage rate, and par levels",
+            "Items appear in priority order: Urgent → Soon → Watch → OK",
+            "Toggle 'Show All' to also see items that are currently healthy"
+          ],
+          "priority_levels": [
+            {
+              "level": "Urgent",
+              "color": "red",
+              "meaning": "Days or less until out of stock — order immediately"
+            },
+            {
+              "level": "Soon",
+              "color": "amber",
+              "meaning": "Will run out this week — order soon"
+            },
+            {
+              "level": "Watch",
+              "color": "gray",
+              "meaning": "Not critical yet but worth monitoring"
+            },
+            {
+              "level": "OK",
+              "color": "dark gray",
+              "meaning": "Stock is healthy — no action needed"
+            }
+          ]
+        },
+        {
+          "id": "reorder.order_building",
+          "name": "Order Building & Sending",
+          "description": "Build purchase orders from the suggestions and send them to vendors",
+          "how_to_use": [
+            "On the Reorder page, items are pre-checked for Urgent and Soon",
+            "Adjust quantities in the qty fields if needed",
+            "Items are automatically grouped by vendor",
+            "For each vendor group:",
+            "  Click 'Copy Order' to copy a formatted order to your clipboard",
+            "  OR click 'Send Email' if the vendor has an email on file — sends automatically",
+            "  OR copy/note items manually",
+            "To add items not in the system: type an item name + qty + unit in the 'Add extra item' field under a vendor group → click Add"
+          ],
+          "order_email_format": "TO: [Vendor] | RE: Purchase Order - [Your Bar Name] | DATE: [Today] | Itemized list of items + quantities"
+        },
+        {
+          "id": "reorder.vendors",
+          "name": "Vendor Management",
+          "description": "Maintain a database of your distributors and suppliers with contact info",
+          "how_to_use": [
+            "Go to Vendors in the sidebar",
+            "View all vendors in a list",
+            "Click New Vendor: enter name, email, phone, and optional fields",
+            "Edit: click a vendor row → update → save",
+            "Delete: click delete icon",
+            "Link a vendor to inventory items by setting 'Default Vendor' on each item"
+          ],
+          "vendor_fields": [
+            "Name (required)",
+            "Email (used for auto-sending orders)",
+            "Phone",
+            "Address",
+            "Website",
+            "Account number",
+            "Rep name",
+            "Payment terms"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "name": "Reporting & Analysis",
+      "features": [
+        {
+          "id": "reporting.variance_reports",
+          "name": "Historical Variance Reports",
+          "description": "Browse all past variance calculation results with filtering and cost impact",
+          "how_to_use": [
+            "Go to Variance Reports in the sidebar",
+            "Set optional filters:",
+            "  Period Start / End dates",
+            "  Status: All / Critical / Warning / Normal",
+            "  Type: All Items / Beverages / Kitchen (Food)",
+            "Click Apply Filters",
+            "View summary KPIs: Est. Loss ($), Critical count, Warning count",
+            "View detailed table per item: expected vs actual, variance oz + %, cost impact, status badge"
+          ]
+        },
+        {
+          "id": "reporting.profit_intelligence",
+          "name": "Profit Intelligence",
+          "description": "Analyze which menu items are most (and least) profitable using sales data + recipe costs",
+          "how_to_use": [
+            "Go to Profit Intelligence in the sidebar",
+            "Select a period preset (7d, 30d, this month) or set custom From/To dates",
+            "Click Run Analysis",
+            "View summary KPIs: Total Revenue, Total Cost, Total Profit, Avg Margin %",
+            "Filter by type: All / Drinks / Food",
+            "Sort table by: Profit, Margin %, Revenue, or Qty Sold",
+            "Click AI Insights for a natural-language breakdown of profitability trends"
+          ],
+          "columns": [
+            "Item name",
+            "Qty sold",
+            "Revenue ($)",
+            "Estimated cost ($)",
+            "Profit ($)",
+            "Margin (%)",
+            "Cost completeness indicator (full or partial recipe costs)"
+          ],
+          "calculation": {
+            "gross_revenue": "qty_sold × unit_price",
+            "estimated_cost": "sum of recipe ingredient costs",
+            "profit": "gross_revenue − estimated_cost",
+            "margin_percent": "(profit / gross_revenue) × 100"
+          },
+          "sub_features": [
+            {
+              "name": "AI Profit Insights",
+              "description": "Claude AI generates a markdown-formatted analysis of your profit data — top performers, margin opportunities, and trends",
+              "how_to_use": "Click AI Insights after running an analysis"
+            },
+            {
+              "name": "Category Split",
+              "description": "When both drinks and food are present, shows a breakdown section separating the two",
+              "notes": "Useful for restaurants with a bar — see if drinks or food drives more profit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "administration",
+      "name": "Administration (Internal Staff Only)",
+      "notes": "These features are only accessible to BarGuard internal admin accounts — not accessible to bar owners",
+      "features": [
+        {
+          "id": "administration.account_management",
+          "name": "Customer Account Management",
+          "description": "View, edit, and manage all BarGuard customer accounts",
+          "how_to_use": [
+            "Navigate to Admin panel (admin role required)",
+            "View all accounts with business name, plan, email, created date, partner affiliation",
+            "Search by name or email",
+            "Filter by partner",
+            "Click an account to expand:",
+            "  Edit bar name or contact email",
+            "  Change plan (manual override — any plan)",
+            "  Send password reset email",
+            "  Delete account (with confirmation)"
+          ],
+          "stats_shown": ["Total accounts", "Count by plan tier"]
+        },
+        {
+          "id": "administration.partner_management",
+          "name": "Partner Account Management",
+          "description": "Create and manage partner/vendor accounts that can view their linked bar accounts",
+          "how_to_use": [
+            "Navigate to Admin → Partners",
+            "View all partners with name, code, status",
+            "Click a partner to see their linked bar accounts",
+            "Create new partner: enter name, partner code, contact info",
+            "Create partner login: generates login credentials for the partner",
+            "Delete partner if needed"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "partner_portal",
+      "name": "Partner Portal",
+      "notes": "For partners/vendors who manage multiple bar accounts — accessed via the partner login",
+      "features": [
+        {
+          "id": "partner_portal.dashboard",
+          "name": "Partner Dashboard",
+          "description": "Overview of all bar accounts linked to the partner",
+          "how_to_use": [
+            "Log in at /partner-login with partner credentials",
+            "View list of all assigned bars",
+            "See each bar's plan status and metrics"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "name": "Marketing & Public Pages",
+      "notes": "Public-facing pages — no login required",
+      "features": [
+        {
+          "id": "marketing.homepage",
+          "name": "Homepage",
+          "description": "Landing page with product overview, hero section, features, and CTA to sign up"
+        },
+        {
+          "id": "marketing.how_it_works",
+          "name": "How It Works",
+          "description": "Step-by-step walkthrough of the BarGuard workflow with visuals"
+        },
+        {
+          "id": "marketing.pricing",
+          "name": "Pricing Page",
+          "description": "Plan comparison and pricing — Basic $99, Pro $199, Enterprise $399 — with signup CTAs"
+        },
+        {
+          "id": "marketing.faq",
+          "name": "FAQ",
+          "description": "Common questions about getting started, features, integrations, and billing"
+        },
+        {
+          "id": "marketing.blog",
+          "name": "Blog",
+          "description": "Articles about bar management, loss prevention, and operations. Index at /blog, individual posts at /blog/[slug]"
+        },
+        {
+          "id": "marketing.partners_page",
+          "name": "Partner Program Page",
+          "description": "Information about the BarGuard partner/reseller program with a link to apply",
+          "how_to_use": [
+            "Visit /partners",
+            "Read partner program details",
+            "Click Apply to submit an inquiry",
+            "Existing partners use the Partner Login link"
+          ]
+        },
+        {
+          "id": "marketing.contact",
+          "name": "Contact Page",
+          "description": "Contact form for inquiries — submitted form is processed via /api/contact"
+        },
+        {
+          "id": "marketing.legal",
+          "name": "Legal Pages",
+          "description": "Privacy Policy (/privacy), Terms of Service (/terms), Refund Policy (/refund)"
+        },
+        {
+          "id": "marketing.status",
+          "name": "Status Page",
+          "description": "Service uptime and status monitoring page at /status"
+        }
+      ]
+    },
+    {
+      "id": "integrations",
+      "name": "Third-Party Integrations",
+      "features": [
+        {
+          "id": "integrations.stripe",
+          "name": "Stripe Billing",
+          "description": "Handles all subscription payments, upgrades, and billing management",
+          "capabilities": [
+            "Checkout session creation for plan upgrades",
+            "Billing portal for managing/canceling subscriptions",
+            "Webhook handler syncing subscription status back to user account"
+          ]
+        },
+        {
+          "id": "integrations.claude_ai",
+          "name": "Claude AI (Anthropic)",
+          "description": "Powers all AI-driven features throughout the app",
+          "capabilities": [
+            "Variance summary generation (natural language analysis of shift results)",
+            "Profit insights (trends and recommendations from profitability data)",
+            "Recipe generation (create ingredient lists from drink names)",
+            "Recipe matching (map uploaded recipes to inventory items)",
+            "Inventory item auto-categorization",
+            "Chat widget (conversational assistant)"
+          ]
+        },
+        {
+          "id": "integrations.ocr",
+          "name": "Document OCR / Extraction",
+          "description": "Extracts text and line items from uploaded invoice images and PDFs",
+          "capabilities": [
+            "Parse item names and quantities from invoice photos",
+            "Extract vendor information",
+            "Confidence scoring per extracted line"
+          ]
+        },
+        {
+          "id": "integrations.resend",
+          "name": "Email (Resend)",
+          "description": "Transactional email delivery",
+          "capabilities": [
+            "Password reset emails",
+            "Email verification links",
+            "Verification resend",
+            "Reorder purchase order emails to vendors"
+          ]
+        },
+        {
+          "id": "integrations.supabase",
+          "name": "Supabase (Database & Auth)",
+          "description": "Postgres database with Row Level Security + authentication backend",
+          "capabilities": [
+            "All data storage with per-business RLS isolation",
+            "User authentication (email + Google OAuth)",
+            "Session management"
+          ]
+        },
+        {
+          "id": "integrations.gtm_ga4",
+          "name": "Google Analytics / GTM",
+          "description": "Usage and conversion tracking",
+          "events_tracked": [
+            "account_created (with signup_method: email or google_oauth)",
+            "plan_purchased (with plan_name and billing_period)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data_model",
+      "name": "Core Data Model",
+      "description": "Key data structures powering the application",
+      "entities": [
+        {
+          "name": "Business",
+          "fields": ["business_id", "bar_name", "address", "phone", "contact_email", "bar_type", "plan", "has_subscription", "partner_id", "created_at"]
+        },
+        {
+          "name": "Inventory Item",
+          "fields": ["id", "business_id", "name", "category", "unit", "cost_per_unit", "item_type", "default_vendor_id", "reorder_level"]
+        },
+        {
+          "name": "Inventory Count",
+          "fields": ["id", "business_id", "inventory_item_id", "quantity_on_hand", "counted_at"]
+        },
+        {
+          "name": "Menu Item",
+          "fields": ["id", "business_id", "name", "category", "item_type"]
+        },
+        {
+          "name": "Recipe",
+          "fields": ["id", "menu_item_id", "ingredients: [{inventory_item_id, quantity_oz, notes}]"]
+        },
+        {
+          "name": "Sales Transaction",
+          "fields": ["id", "business_id", "menu_item_id (nullable if unmatched)", "quantity_sold", "unit_price", "gross_sales", "sale_date", "station", "raw_item_name"]
+        },
+        {
+          "name": "Purchase Record",
+          "fields": ["id", "business_id", "inventory_item_id", "quantity_purchased", "unit_cost", "purchase_date", "vendor_id"]
+        },
+        {
+          "name": "Modifier Rule",
+          "fields": ["id", "business_id", "modifier_name", "action (add/remove/multiply/ignore)", "inventory_item_id", "qty_delta", "qty_unit", "multiply_factor", "notes"]
+        },
+        {
+          "name": "Vendor",
+          "fields": ["id", "business_id", "name", "email", "phone", "address", "website", "account_number", "rep_name", "payment_terms"]
+        },
+        {
+          "name": "POS Connection",
+          "fields": ["id", "business_id", "provider", "access_token", "connected_at", "last_sync_at", "status"]
+        },
+        {
+          "name": "Item Alias",
+          "fields": ["id", "business_id", "raw_name", "menu_item_id or inventory_item_id", "type (menu/inventory)"]
+        },
+        {
+          "name": "Purchase Import Draft",
+          "fields": ["id", "business_id", "file_name", "raw_text (OCR output)", "extracted_lines: [{raw_item_name, qty, unit, confidence, match_status}]", "status (pending/confirmed/error)", "created_at"]
+        },
+        {
+          "name": "Drink Library Entry",
+          "fields": ["id", "business_id", "name", "category", "glassware", "garnish", "instructions", "notes", "ingredients: [{ingredient_name, quantity_oz, notes}]"]
+        },
+        {
+          "name": "Variance Summary (calculated, not stored)",
+          "fields": ["inventory_item_id", "expected_usage_oz", "actual_usage_oz", "variance_oz", "variance_percent", "status (critical/warning/normal)", "estimated_loss_dollars"]
+        }
+      ]
+    }
+  ]
+}
