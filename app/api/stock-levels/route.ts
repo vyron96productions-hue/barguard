@@ -49,6 +49,13 @@ export async function GET() {
       })
     }
 
+    console.log('[stock-levels] inv_items=%d counts=%d recipe_rows=%d recipe_keys=%d',
+      (items ?? []).length,
+      latestCountMap.size,
+      (recipes ?? []).length,
+      Object.keys(recipesByInvItem).length,
+    )
+
     // Find earliest count date to scope sales/purchase queries
     const allCountDates = Array.from(latestCountMap.values()).map((c) => c.count_date).sort()
     const earliestDate = allCountDates[0] ?? null
