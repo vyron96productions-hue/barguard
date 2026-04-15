@@ -129,7 +129,7 @@ export default function HomePage() {
         {/* Integration strip */}
         <div style={{ marginBottom: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
           <p style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 700, color: '#f1f5f9', maxWidth: 600, lineHeight: 1.45, margin: 0, fontFamily: 'var(--font-montserrat)', letterSpacing: '-0.3px' }}>
-            No need to change your setup — BarGuard connects directly with Square and Clover.<br />
+            No need to change your setup — BarGuard connects directly with Square, Clover, and Toast.<br />
             <span style={{ color: '#f59e0b' }}>More integrations coming soon.</span>
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 40 }}>
@@ -147,6 +147,14 @@ export default function HomePage() {
               width={120}
               height={52}
               style={{ height: 52, width: 'auto', opacity: 0.85 }}
+            />
+            <span style={{ width: 1, height: 36, background: '#1e293b' }} />
+            <Image
+              src="/toast-logo.avif"
+              alt="Toast POS"
+              width={120}
+              height={48}
+              style={{ height: 48, width: 'auto', opacity: 0.85 }}
             />
           </div>
         </div>
