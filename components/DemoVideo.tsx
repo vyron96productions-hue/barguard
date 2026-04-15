@@ -48,6 +48,7 @@ export default function DemoVideo() {
             src="/demo-thumbnail.webp"
             alt="BarGuard demo video thumbnail"
             fill
+            priority
             sizes="(max-width: 768px) 100vw, 880px"
             style={{ objectFit: 'cover' }}
           />
