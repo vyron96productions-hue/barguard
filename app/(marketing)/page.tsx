@@ -150,7 +150,7 @@ export default function HomePage() {
             />
             <span style={{ width: 1, height: 36, background: '#1e293b' }} />
             <Image
-              src="/toast-logo.avif"
+              src="/toast-logo.png"
               alt="Toast POS"
               width={120}
               height={48}
