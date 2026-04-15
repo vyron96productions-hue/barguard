@@ -105,7 +105,7 @@ export async function GET() {
 
         // Purchases since last count
         const purchasedOz = (purchasesMap[item.id] ?? [])
-          .filter((p) => p.purchase_date > lastCountDate)
+          .filter((p) => p.purchase_date >= lastCountDate)
           .reduce((s, p) => s + p.quantity_oz, 0)
 
         // Sales usage since last count
@@ -114,7 +114,7 @@ export async function GET() {
           const datesMap = salesMap[recipe.menu_item_id]
           if (!datesMap) continue
           for (const [date, qty] of Object.entries(datesMap)) {
-            if (date > lastCountDate) {
+            if (date >= lastCountDate) {
               usedOz += qty * recipe.oz_per_sale
             }
           }
@@ -132,7 +132,7 @@ export async function GET() {
             const datesMap = salesMap[recipe.menu_item_id]
             if (!datesMap) continue
             for (const [date, qty] of Object.entries(datesMap)) {
-              if (date > lastCountDate) nativeUsed += qty * recipe.oz_per_sale
+              if (date >= lastCountDate) nativeUsed += qty * recipe.oz_per_sale
             }
           }
           estimated_qty = Math.max(0, count.quantity_on_hand - nativeUsed)
