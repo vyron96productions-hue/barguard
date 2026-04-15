@@ -20,7 +20,7 @@ export async function GET() {
     const [rulesResult, nestedResult, rawResult] = await Promise.all([
       supabase
         .from('modifier_rules')
-        .select('id, modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes')
+        .select('id, modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes, swap_remove_item_id, swap_remove_category, swap_remove_qty, swap_remove_unit, swap_add_item_id, swap_add_qty, swap_add_unit')
         .eq('business_id', businessId)
         .order('modifier_name'),
       // Nested modifiers (Square-style, and Toast after the fix)
@@ -66,7 +66,11 @@ export async function PUT(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
     const body = await req.json()
-    const { modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes } = body
+    const {
+      modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes,
+      swap_remove_item_id, swap_remove_category, swap_remove_qty, swap_remove_unit,
+      swap_add_item_id, swap_add_qty, swap_add_unit,
+    } = body
 
     if (!modifier_name || !action) {
       return NextResponse.json({ error: 'modifier_name and action are required' }, { status: 400 })
@@ -84,6 +88,13 @@ export async function PUT(req: NextRequest) {
           qty_unit: qty_unit ?? null,
           multiply_factor: multiply_factor ?? null,
           notes: notes ?? null,
+          swap_remove_item_id: swap_remove_item_id ?? null,
+          swap_remove_category: swap_remove_category ?? null,
+          swap_remove_qty: swap_remove_qty ?? null,
+          swap_remove_unit: swap_remove_unit ?? null,
+          swap_add_item_id: swap_add_item_id ?? null,
+          swap_add_qty: swap_add_qty ?? null,
+          swap_add_unit: swap_add_unit ?? null,
         },
         { onConflict: 'business_id,modifier_name' }
       )

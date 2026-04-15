@@ -11,12 +11,19 @@ const COMMON_UNITS = [
 interface ModifierRule {
   id: string
   modifier_name: string
-  action: 'add' | 'remove' | 'multiply' | 'ignore'
+  action: 'add' | 'remove' | 'multiply' | 'ignore' | 'swap'
   inventory_item_id: string | null
   qty_delta: number | null
   qty_unit: string | null
   multiply_factor: number | null
   notes: string | null
+  swap_remove_item_id: string | null
+  swap_remove_category: string | null
+  swap_remove_qty: number | null
+  swap_remove_unit: string | null
+  swap_add_item_id: string | null
+  swap_add_qty: number | null
+  swap_add_unit: string | null
 }
 
 interface InventoryItem {
@@ -31,6 +38,7 @@ const ACTION_LABELS: Record<string, string> = {
   remove:   'Remove ingredient',
   add:      'Add ingredient',
   multiply: 'Multiply recipe',
+  swap:     'Swap ingredient',
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -38,15 +46,25 @@ const ACTION_COLORS: Record<string, string> = {
   remove:   '#ef4444',
   add:      '#22c55e',
   multiply: '#f59e0b',
+  swap:     '#a78bfa',
 }
 
 interface RowState {
-  action: 'add' | 'remove' | 'multiply' | 'ignore'
+  action: 'add' | 'remove' | 'multiply' | 'ignore' | 'swap'
   inventory_item_id: string
   qty_delta: string
   qty_unit: string
   multiply_factor: string
   notes: string
+  // swap fields
+  swap_remove_mode: 'item' | 'category'
+  swap_remove_item_id: string
+  swap_remove_category: string
+  swap_remove_qty: string
+  swap_remove_unit: string
+  swap_add_item_id: string
+  swap_add_qty: string
+  swap_add_unit: string
   dirty: boolean
   saving: boolean
 }
@@ -77,6 +95,11 @@ export default function ModifierRulesPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Unique categories from inventory items — used for swap-by-category picker
+  const inventoryCategories = Array.from(
+    new Set(inventoryItems.map((i) => i.category).filter(Boolean))
+  ).sort() as string[]
+
   // Merge seen + existing rules into display rows
   const allModifierNames = Array.from(new Set([
     ...seenModifiers,
@@ -98,6 +121,14 @@ export default function ModifierRulesPage() {
       qty_unit: rule?.qty_unit ?? selectedItem?.unit ?? 'oz',
       multiply_factor: rule?.multiply_factor != null ? String(rule.multiply_factor) : '2',
       notes: rule?.notes ?? '',
+      swap_remove_mode: rule?.swap_remove_category ? 'category' : 'item',
+      swap_remove_item_id: rule?.swap_remove_item_id ?? '',
+      swap_remove_category: rule?.swap_remove_category ?? '',
+      swap_remove_qty: rule?.swap_remove_qty != null ? String(rule.swap_remove_qty) : '',
+      swap_remove_unit: rule?.swap_remove_unit ?? 'each',
+      swap_add_item_id: rule?.swap_add_item_id ?? '',
+      swap_add_qty: rule?.swap_add_qty != null ? String(rule.swap_add_qty) : '',
+      swap_add_unit: rule?.swap_add_unit ?? 'each',
       dirty: false,
       saving: false,
     }
@@ -120,6 +151,20 @@ export default function ModifierRulesPage() {
       setError(`Enter a valid multiplier greater than 0 for "${name}"`)
       return
     }
+    if (state.action === 'swap') {
+      if (state.swap_remove_mode === 'item' && !state.swap_remove_item_id) {
+        setError(`Select an ingredient to remove for the swap on "${name}"`)
+        return
+      }
+      if (state.swap_remove_mode === 'category' && !state.swap_remove_category) {
+        setError(`Select a category to remove for the swap on "${name}"`)
+        return
+      }
+      if (!state.swap_add_item_id) {
+        setError(`Select an ingredient to add for the swap on "${name}"`)
+        return
+      }
+    }
     setRowState((prev) => ({ ...prev, [name]: { ...state, saving: true } }))
     setError(null)
 
@@ -131,6 +176,14 @@ export default function ModifierRulesPage() {
       qty_unit: ['add', 'remove'].includes(state.action) ? (state.qty_unit || 'oz') : null,
       multiply_factor: state.action === 'multiply' && state.multiply_factor ? parseFloat(state.multiply_factor) : null,
       notes: state.notes || null,
+      // swap fields — always send, API ignores them when action !== 'swap'
+      swap_remove_item_id: state.action === 'swap' && state.swap_remove_mode === 'item' ? (state.swap_remove_item_id || null) : null,
+      swap_remove_category: state.action === 'swap' && state.swap_remove_mode === 'category' ? (state.swap_remove_category || null) : null,
+      swap_remove_qty: state.action === 'swap' && state.swap_remove_qty ? parseFloat(state.swap_remove_qty) : null,
+      swap_remove_unit: state.action === 'swap' ? (state.swap_remove_unit || 'each') : null,
+      swap_add_item_id: state.action === 'swap' ? (state.swap_add_item_id || null) : null,
+      swap_add_qty: state.action === 'swap' && state.swap_add_qty ? parseFloat(state.swap_add_qty) : null,
+      swap_add_unit: state.action === 'swap' ? (state.swap_add_unit || 'each') : null,
     }
 
     const res = await fetch('/api/modifier-rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -164,7 +217,7 @@ export default function ModifierRulesPage() {
     setNewModifierName('')
     setRowState((prev) => ({
       ...prev,
-      [name]: { action: 'ignore', inventory_item_id: '', qty_delta: '', qty_unit: 'oz', multiply_factor: '2', notes: '', dirty: true, saving: false },
+      [name]: { action: 'ignore', inventory_item_id: '', qty_delta: '', qty_unit: 'oz', multiply_factor: '2', notes: '', swap_remove_mode: 'item', swap_remove_item_id: '', swap_remove_category: '', swap_remove_qty: '', swap_remove_unit: 'each', swap_add_item_id: '', swap_add_qty: '', swap_add_unit: 'each', dirty: true, saving: false },
     }))
     // Scroll to new row (just re-render is enough since it'll appear in the list)
     setSeenModifiers((prev) => Array.from(new Set([...prev, name])).sort())
@@ -268,6 +321,7 @@ export default function ModifierRulesPage() {
                     <option value="remove">Remove ingredient</option>
                     <option value="add">Add ingredient</option>
                     <option value="multiply">Multiply recipe</option>
+                    <option value="swap">Swap ingredient</option>
                   </select>
 
                   {/* Remove/Add: inventory item + oz */}
@@ -330,6 +384,101 @@ export default function ModifierRulesPage() {
                     </div>
                   )}
 
+                  {/* Swap: remove + add */}
+                  {state.action === 'swap' && (
+                    <div className="w-full flex flex-col gap-2 mt-1">
+                      {/* Remove row */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wider text-red-400/70 w-10 shrink-0">Remove</span>
+                        {/* Mode toggle */}
+                        <div className="flex rounded-lg overflow-hidden border border-slate-700 text-[10px]">
+                          <button
+                            onClick={() => updateRow(name, { swap_remove_mode: 'item' })}
+                            className={`px-2 py-1 ${state.swap_remove_mode === 'item' ? 'bg-slate-600 text-slate-100' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                          >Specific item</button>
+                          <button
+                            onClick={() => updateRow(name, { swap_remove_mode: 'category' })}
+                            className={`px-2 py-1 ${state.swap_remove_mode === 'category' ? 'bg-slate-600 text-slate-100' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                          >By category</button>
+                        </div>
+                        {state.swap_remove_mode === 'item' ? (
+                          <select
+                            value={state.swap_remove_item_id}
+                            onChange={(e) => updateRow(name, { swap_remove_item_id: e.target.value })}
+                            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-red-500/50 max-w-[200px]"
+                          >
+                            <option value="">— select ingredient —</option>
+                            {inventoryItems.map((item) => (
+                              <option key={item.id} value={item.id}>{item.name}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <select
+                            value={state.swap_remove_category}
+                            onChange={(e) => updateRow(name, { swap_remove_category: e.target.value })}
+                            className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-red-500/50 max-w-[200px]"
+                          >
+                            <option value="">— select category —</option>
+                            {inventoryCategories.map((cat) => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        )}
+                        {state.swap_remove_mode === 'item' && (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number" min="0" step="0.1"
+                              value={state.swap_remove_qty}
+                              onChange={(e) => updateRow(name, { swap_remove_qty: e.target.value })}
+                              placeholder="qty"
+                              className="w-16 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-red-500/50"
+                            />
+                            <select
+                              value={state.swap_remove_unit}
+                              onChange={(e) => updateRow(name, { swap_remove_unit: e.target.value })}
+                              className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-red-500/50"
+                            >
+                              {COMMON_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                            </select>
+                          </div>
+                        )}
+                        {state.swap_remove_mode === 'category' && (
+                          <span className="text-[10px] text-slate-600 italic">uses recipe qty</span>
+                        )}
+                      </div>
+                      {/* Add row */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wider text-green-400/70 w-10 shrink-0">Add</span>
+                        <select
+                          value={state.swap_add_item_id}
+                          onChange={(e) => updateRow(name, { swap_add_item_id: e.target.value })}
+                          className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-green-500/50 max-w-[200px]"
+                        >
+                          <option value="">— select ingredient —</option>
+                          {inventoryItems.map((item) => (
+                            <option key={item.id} value={item.id}>{item.name}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number" min="0" step="0.1"
+                            value={state.swap_add_qty}
+                            onChange={(e) => updateRow(name, { swap_add_qty: e.target.value })}
+                            placeholder="qty"
+                            className="w-16 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-green-500/50"
+                          />
+                          <select
+                            value={state.swap_add_unit}
+                            onChange={(e) => updateRow(name, { swap_add_unit: e.target.value })}
+                            className="px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-green-500/50"
+                          >
+                            {COMMON_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Save + delete */}
                   <div className="flex items-center gap-2 ml-auto">
                     {state.dirty && (
@@ -377,6 +526,15 @@ export default function ModifierRulesPage() {
                     When &quot;{name}&quot; is applied, BarGuard will expect <span className="text-slate-500">{state.multiply_factor}× all base recipe ingredients</span> per sale.
                   </p>
                 )}
+                {state.action === 'swap' && (state.swap_remove_item_id || state.swap_remove_category) && state.swap_add_item_id && (
+                  <p className="mt-2 text-[11px] text-slate-600">
+                    When &quot;{name}&quot; is applied, BarGuard will{' '}
+                    {state.swap_remove_mode === 'category'
+                      ? <><span className="text-red-400/70">remove the &quot;{state.swap_remove_category}&quot; ingredient from the item&apos;s recipe</span> (whichever cheese/sauce that item uses)</>
+                      : <span className="text-red-400/70">remove {state.swap_remove_qty || 'recipe qty'} {state.swap_remove_unit} of {inventoryItems.find(i => i.id === state.swap_remove_item_id)?.name ?? '—'}</span>
+                    }{' '}and <span className="text-green-400/70">add {state.swap_add_qty || '?'} {state.swap_add_unit} of {inventoryItems.find(i => i.id === state.swap_add_item_id)?.name ?? '—'}</span> per sale.
+                  </p>
+                )}
               </div>
             )
           })}
@@ -391,6 +549,7 @@ export default function ModifierRulesPage() {
           <li><span className="text-red-400">Remove ingredient</span> — subtracts the oz amount from expected usage for that item (e.g. &quot;no bacon&quot; = remove 1 strip / 0.5 oz)</li>
           <li><span className="text-green-400">Add ingredient</span> — adds oz to expected usage (e.g. &quot;extra shot&quot; = add 1.0 oz vodka)</li>
           <li><span className="text-amber-400">Multiply recipe</span> — scales all ingredients by a factor (e.g. &quot;double&quot; = 2× everything in the base recipe)</li>
+          <li><span className="text-violet-400">Swap ingredient</span> — removes one ingredient and adds another. Use &quot;By category&quot; mode when different menu items use different cheeses/sauces — it removes whatever that item&apos;s recipe has in that category and adds the substitute.</li>
         </ul>
       </div>
     </div>

@@ -9,6 +9,7 @@ import {
   type RecipeMap,
   type SaleRecord,
   type ModifierRuleMap,
+  type InventoryItemCategories,
 } from '@/lib/calculations'
 import { convertToOz } from '@/lib/conversions'
 
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
 
     const { data: inventoryItems } = await supabase
       .from('inventory_items')
-      .select('id, name, unit')
+      .select('id, name, unit, category')
       .eq('business_id', businessId)
 
     const recipeMap: RecipeMap = {}
@@ -87,7 +88,11 @@ export async function POST(req: NextRequest) {
     }
 
     const itemUnits: Record<string, string> = {}
-    for (const item of inventoryItems ?? []) itemUnits[item.id] = item.unit
+    const inventoryCategories: InventoryItemCategories = {}
+    for (const item of inventoryItems ?? []) {
+      itemUnits[item.id] = item.unit
+      inventoryCategories[item.id] = (item as any).category ?? null
+    }
 
     const sales: SaleRecord[] = (salesData ?? []).map((s) => ({
       menu_item_id: s.menu_item_id,
@@ -102,23 +107,30 @@ export async function POST(req: NextRequest) {
     if (!isShiftMode) {
       const { data: modRulesData } = await supabase
         .from('modifier_rules')
-        .select('modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor')
+        .select('modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, swap_remove_item_id, swap_remove_category, swap_remove_qty, swap_remove_unit, swap_add_item_id, swap_add_qty, swap_add_unit')
         .eq('business_id', businessId)
       if (modRulesData?.length) {
         modifierRuleMap = {}
-        for (const r of modRulesData) {
+        for (const r of modRulesData as any[]) {
           modifierRuleMap[r.modifier_name.toLowerCase().trim()] = {
-            action: r.action as 'add' | 'remove' | 'multiply' | 'ignore',
+            action: r.action,
             inventory_item_id: r.inventory_item_id,
             qty_delta: r.qty_delta,
             qty_unit: r.qty_unit,
             multiply_factor: r.multiply_factor,
+            swap_remove_item_id: r.swap_remove_item_id,
+            swap_remove_category: r.swap_remove_category,
+            swap_remove_qty: r.swap_remove_qty,
+            swap_remove_unit: r.swap_remove_unit,
+            swap_add_item_id: r.swap_add_item_id,
+            swap_add_qty: r.swap_add_qty,
+            swap_add_unit: r.swap_add_unit,
           }
         }
       }
     }
 
-    const expectedUsage  = calculateExpectedUsage(sales, recipeMap, itemUnits, modifierRuleMap)
+    const expectedUsage  = calculateExpectedUsage(sales, recipeMap, itemUnits, modifierRuleMap, inventoryCategories)
     const totalRevenue   = aggregateRevenue(sales)
     const guestEstimate  = estimateGuestCount(sales)
 

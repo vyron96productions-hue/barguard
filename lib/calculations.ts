@@ -19,7 +19,7 @@ export interface SaleRecord {
 }
 
 export interface ModifierRule {
-  action: 'add' | 'remove' | 'multiply' | 'ignore'
+  action: 'add' | 'remove' | 'multiply' | 'ignore' | 'swap'
   /** Inventory item to add/remove (for add/remove actions) */
   inventory_item_id?: string | null
   /** Quantity to add or remove per unit sold */
@@ -28,6 +28,18 @@ export interface ModifierRule {
   qty_unit?: string | null
   /** Multiplier applied to all base recipe ingredients (for multiply action, e.g. 2 = double) */
   multiply_factor?: number | null
+  // ── Swap action fields ────────────────────────────────────────────────────
+  /** Specific inventory item to remove (swap: specific-item mode) */
+  swap_remove_item_id?: string | null
+  /** Category to remove from the item's recipe (swap: by-category mode) */
+  swap_remove_category?: string | null
+  /** Qty to remove — null in category mode means "use recipe qty for that ingredient" */
+  swap_remove_qty?: number | null
+  swap_remove_unit?: string | null
+  /** Inventory item to add in its place */
+  swap_add_item_id?: string | null
+  swap_add_qty?: number | null
+  swap_add_unit?: string | null
 }
 
 /** Keyed by lowercase-trimmed modifier name */
@@ -45,11 +57,18 @@ export interface InventoryItemUnit {
  * Calculate expected usage (oz) for each inventory item
  * based on sales quantities and recipes.
  */
+/**
+ * Maps inventory_item_id → category (lowercase).
+ * Needed for swap rules that remove by category rather than specific item.
+ */
+export type InventoryItemCategories = Record<string, string | null>
+
 export function calculateExpectedUsage(
   sales: SaleRecord[],
   recipeMap: RecipeMap,
   itemUnits: InventoryItemUnit,
-  modifierRules?: ModifierRuleMap
+  modifierRules?: ModifierRuleMap,
+  inventoryCategories?: InventoryItemCategories
 ): Record<string, number> {
   const expected: Record<string, number> = {}
 
@@ -86,6 +105,37 @@ export function calculateExpectedUsage(
           for (const ingredient of ingredients) {
             const extraOz = convertToOz(ingredient.quantity, ingredient.unit) * extraFactor * sale.quantity_sold
             expected[ingredient.inventory_item_id] = (expected[ingredient.inventory_item_id] ?? 0) + extraOz
+          }
+        }
+
+        if (rule.action === 'swap') {
+          // ── Remove phase ─────────────────────────────────────────────────
+          if (rule.swap_remove_item_id) {
+            // Specific item: always remove this exact ingredient
+            if (rule.swap_remove_qty) {
+              const removeOz = convertToOz(rule.swap_remove_qty, rule.swap_remove_unit ?? 'oz') * sale.quantity_sold
+              expected[rule.swap_remove_item_id] = Math.max(0, (expected[rule.swap_remove_item_id] ?? 0) - removeOz)
+            }
+          } else if (rule.swap_remove_category && inventoryCategories) {
+            // Category mode: remove whichever recipe ingredient(s) belong to this category.
+            // Uses the recipe qty for that ingredient unless swap_remove_qty overrides it.
+            const targetCat = rule.swap_remove_category.toLowerCase().trim()
+            for (const ingredient of ingredients) {
+              const cat = (inventoryCategories[ingredient.inventory_item_id] ?? '').toLowerCase().trim()
+              if (cat === targetCat) {
+                const removeQtyOz = rule.swap_remove_qty
+                  ? convertToOz(rule.swap_remove_qty, rule.swap_remove_unit ?? 'oz')
+                  : convertToOz(ingredient.quantity, ingredient.unit)  // use recipe qty
+                const removeTotal = removeQtyOz * sale.quantity_sold
+                expected[ingredient.inventory_item_id] = Math.max(0, (expected[ingredient.inventory_item_id] ?? 0) - removeTotal)
+              }
+            }
+          }
+
+          // ── Add phase ─────────────────────────────────────────────────────
+          if (rule.swap_add_item_id && rule.swap_add_qty) {
+            const addOz = convertToOz(rule.swap_add_qty, rule.swap_add_unit ?? 'oz') * sale.quantity_sold
+            expected[rule.swap_add_item_id] = (expected[rule.swap_add_item_id] ?? 0) + addOz
           }
         }
       }
