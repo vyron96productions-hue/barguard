@@ -581,6 +581,7 @@ RETURNS uuid
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT business_id
   FROM   user_businesses
@@ -596,6 +597,7 @@ RETURNS text
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT CASE
     WHEN role = 'owner' THEN 'admin'
@@ -613,6 +615,7 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM user_businesses
@@ -629,6 +632,7 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT CASE current_client_role()
     WHEN 'admin'    THEN true
@@ -653,7 +657,9 @@ RETURNS TABLE (
   gross_sales   numeric,
   guest_count   integer
 )
-LANGUAGE sql STABLE
+LANGUAGE sql
+STABLE
+SET search_path = public
 AS $$
   SELECT
     menu_item_id,
