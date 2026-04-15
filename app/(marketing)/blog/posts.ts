@@ -24,6 +24,179 @@ export interface Post {
 
 export const POSTS: Post[] = [
   {
+    slug: 'how-to-do-a-bar-inventory-count',
+    title: 'How to Do a Bar Inventory Count',
+    excerpt: 'A bar inventory count only works if your team follows the same method every time. Here is a simple step-by-step process to count bottles accurately and catch costly variance faster.',
+    category: 'Operations',
+    date: 'April 15, 2026',
+    readTime: '8 min read',
+    image: '/images/blogs/how-to-do-a-bar-inventory-count.png',
+    imageAlt: 'bar manager counting liquor inventory with a clipboard and bottles on shelves',
+    metaTitle: 'How to Do a Bar Inventory Count Accurately | BarGuard',
+    metaDescription: 'Learn how to do a bar inventory count accurately with a simple step-by-step process for bottles, kegs, and variances that reduces costly mistakes.',
+    content: [
+      {
+        type: 'p',
+        text: 'If your counts feel rushed, inconsistent, or impossible to trust, the problem usually is not effort. It is process. A bar inventory count only becomes useful when everyone counts the same way, at the same time, and with the same definitions for partial bottles, cases, and storage locations.',
+      },
+      {
+        type: 'p',
+        text: 'The goal is not just to finish inventory. The goal is to produce numbers you can compare week over week, connect to sales data, and use to spot waste, over-pouring, theft, and ordering mistakes. That is why many operators eventually move from spreadsheets to a <a href="/bar-inventory-app">bar inventory app</a> once they want faster counts and cleaner variance reporting.',
+      },
+      {
+        type: 'stats',
+        items: [
+          { number: '1', label: 'standard process every counter should follow' },
+          { number: '2', label: 'full counts recommended each week for spirits' },
+          { number: '5-10%', label: 'variance level that usually deserves review' },
+          { number: '100%', label: 'of locations counted before purchases are entered' },
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'Why Count Accuracy Matters',
+      },
+      {
+        type: 'p',
+        text: 'An inaccurate count creates bad decisions in every direction. You may think you need to reorder when you do not. You may miss a theft pattern because the last count was off. You may blame bartenders for variance that was actually caused by inconsistent bottle estimates. Accurate counts are what make your pour cost, depletion, and shrinkage numbers believable.',
+      },
+      {
+        type: 'callout',
+        text: 'If two different managers would count the same shelf two different ways, your process is not standardized enough yet.',
+      },
+      {
+        type: 'h2',
+        text: 'Step 1: Set Up the Count Before You Touch a Bottle',
+      },
+      {
+        type: 'p',
+        text: 'Choose a fixed count time, usually before open or right after close, and use that same window every cycle. Print or load the item list in shelf order so counters can move through the room once instead of bouncing around. Separate full bottles, partials, kegs, wine, beer, and back-stock so the team is not making decisions on the fly.',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Count on the same day and time every week.',
+          'Freeze transfers and receiving until the count is complete.',
+          'Group inventory sheets by bar, storage room, and service station.',
+          'Make sure every item name matches the product your team actually stocks.',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'Step 2: Count Full Units First',
+      },
+      {
+        type: 'p',
+        text: 'Start with sealed bottles, unopened wine, full kegs, and full cases. These are the fastest numbers to capture and the least subjective. Counting full units first also makes it easier to isolate the slower part of the process later: estimating partial bottles.',
+      },
+      {
+        type: 'p',
+        text: 'If you are using a spreadsheet, keep your par levels and purchase units visible during the count so you can catch obvious mistakes early. If you are using <a href="/bar-inventory-app">bar inventory tracking software</a>, this is where shelf-ordered item lists and mobile-friendly counting screens can save a lot of time.',
+      },
+      {
+        type: 'h2',
+        text: 'Step 3: Estimate Partial Bottles the Same Way Every Time',
+      },
+      {
+        type: 'p',
+        text: 'Partials are where most count quality breaks down. Do not let one person count in quarters, another in tenths, and another by guessing. Pick one method for every spirit bottle in the building and train the whole team on it. Most bars use tenths or quarters. The best method is the one your team can apply consistently.',
+      },
+      {
+        type: 'ol',
+        items: [
+          'Hold the bottle upright at eye level.',
+          'Estimate the remaining liquid using your standard fraction system.',
+          'Round the same way every time instead of debating borderline bottles.',
+          'Enter the count immediately before moving to the next item.',
+        ],
+      },
+      {
+        type: 'p',
+        text: 'If a bottle is nearly empty, count it as the nearest agreed fraction instead of creating one-off values. Consistency beats fake precision. A repeatable 0.1 estimate is more useful than a different guess every week.',
+      },
+      {
+        type: 'h2',
+        text: 'Step 4: Count Every Storage Location',
+      },
+      {
+        type: 'p',
+        text: 'Do not stop at the front bar. Include back bar shelves, keg coolers, walk-ins, liquor rooms, event storage, and any office stash managers keep for emergencies. Missing one storage area makes your count incomplete even if every visible shelf is perfect.',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Main bar and service wells',
+          'Back bar display bottles',
+          'Storage rooms and cages',
+          'Beer coolers and keg rooms',
+          'Satellite bars and private-event setups',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'Step 5: Reconcile Purchases and Transfers Immediately',
+      },
+      {
+        type: 'p',
+        text: 'Once the physical count is done, confirm that every delivery received since the last count has been entered and that any transfers between locations are recorded. Many bars think they have a shrinkage problem when they really have a paperwork problem. Clean receiving and transfer records are part of count accuracy, not a separate admin task.',
+      },
+      {
+        type: 'h2',
+        text: 'Step 6: Review Variance Before the Trail Goes Cold',
+      },
+      {
+        type: 'p',
+        text: 'A count is only valuable if someone reviews the results right away. Compare actual depletion to expected depletion from sales and recipes, then flag unusual variance while the week is still fresh. The faster you review, the easier it is to connect discrepancies to a shift, station, event, or receiving issue.',
+      },
+      {
+        type: 'p',
+        text: 'Look first at high-value spirits, high-volume pours, and any item with repeated discrepancies. Those are usually the quickest path to finding whether the issue is over-pouring, theft, missed comps, unrecorded waste, or a bad counting habit.',
+      },
+      {
+        type: 'h2',
+        text: 'Common Mistakes That Ruin Bar Inventory Counts',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Letting different people use different partial-bottle methods.',
+          'Counting after a delivery has arrived but before it is entered.',
+          'Skipping secondary storage areas or event stock.',
+          'Changing item names or bottle sizes mid-count.',
+          'Waiting days to review variance results.',
+          'Treating the count as complete even when team members had to guess on too many items.',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'How to Make Counts Faster Without Losing Accuracy',
+      },
+      {
+        type: 'p',
+        text: 'The fastest counts are not the ones where people rush. They are the ones where the list is organized in shelf order, the fraction rules are standardized, and the review happens in one system instead of across handwritten sheets and spreadsheets. Speed comes from process design, not from asking managers to work sloppier.',
+      },
+      {
+        type: 'p',
+        text: 'If your team is spending hours every week on counts and still struggling to trust the numbers, the process may be ready for software. A dedicated system can reduce manual entry, standardize counting rules, and make it easier to compare counts against sales without building formulas from scratch.',
+      },
+      {
+        type: 'h2',
+        text: 'The Bottom Line',
+      },
+      {
+        type: 'p',
+        text: 'A good bar inventory count is simple, repeatable, and reviewable. Standardize when you count, how you estimate partials, and how quickly you investigate variance. When those pieces are in place, inventory stops being a chore and starts becoming a control system.',
+      },
+      {
+        type: 'p',
+        text: 'If you want a faster process with fewer counting errors, <a href="/bar-inventory-app">see how BarGuard automates your inventory counts</a>.',
+      },
+      {
+        type: 'cta',
+      },
+    ],
+  },
+  {
     slug: 'bar-shrinkage-how-much-are-you-losing',
     title: 'How Much Is Your Bar Losing to Shrinkage? (And How to Stop It)',
     excerpt: 'The average bar loses 20–25% of its inventory to shrinkage every year. Here\'s what\'s causing it, how to calculate your number, and what you can do about it.',

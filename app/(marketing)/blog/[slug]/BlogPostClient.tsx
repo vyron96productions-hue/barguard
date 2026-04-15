@@ -6,6 +6,7 @@ import { Post, Block } from '../posts'
 
 // Map of slug → related slugs (hand-picked for topical relevance)
 const RELATED: Record<string, string[]> = {
+  'how-to-do-a-bar-inventory-count': ['bar-inventory-management-guide', 'bar-shrinkage-how-much-are-you-losing'],
   'bar-shrinkage-how-much-are-you-losing': ['bar-inventory-management-guide', 'bartender-theft-signs-prevention'],
   'bar-inventory-management-guide': ['bar-shrinkage-how-much-are-you-losing', 'over-pouring-bar-losses'],
   'over-pouring-bar-losses': ['bar-shrinkage-how-much-are-you-losing', 'bar-inventory-management-guide'],

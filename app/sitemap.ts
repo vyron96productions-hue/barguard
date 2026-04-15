@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/partners`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/contact`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.6 },
     { url: `${base}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${base}/blog/how-to-do-a-bar-inventory-count`, lastModified: new Date('2026-04-15'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/bar-shrinkage-how-much-are-you-losing`, lastModified: new Date('2026-03-18'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/bar-inventory-management-guide`, lastModified: new Date('2026-03-10'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/over-pouring-bar-losses`, lastModified: new Date('2026-03-05'), changeFrequency: 'monthly', priority: 0.6 },
