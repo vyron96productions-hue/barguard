@@ -1,31 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
+// Prefixes that indicate a flat sale line item is really a modifier/add-on
+const MODIFIER_PREFIXES = [
+  'extra ', 'no ', 'add ', 'sub ', 'without ', 'with ', 'light ', 'heavy ',
+  'double ', 'triple ', 'half ', 'side ', 'on the side',
+]
+
+function looksLikeModifier(name: string): boolean {
+  const lower = name.toLowerCase().trim()
+  return MODIFIER_PREFIXES.some((p) => lower.startsWith(p))
+}
+
 // GET — return all rules + all unique modifier names seen in sales_transactions
 export async function GET() {
   try {
     const { supabase, businessId } = await getAuthContext()
 
-    const [rulesResult, salesResult] = await Promise.all([
+    const [rulesResult, nestedResult, rawResult] = await Promise.all([
       supabase
         .from('modifier_rules')
         .select('id, modifier_name, action, inventory_item_id, qty_delta, qty_unit, multiply_factor, notes')
         .eq('business_id', businessId)
         .order('modifier_name'),
+      // Nested modifiers (Square-style, and Toast after the fix)
       supabase
         .from('sales_transactions')
         .select('modifiers')
         .eq('business_id', businessId)
         .not('modifiers', 'is', null),
+      // Flat line items that look like add-ons (Toast sends some modifiers this way)
+      supabase
+        .from('sales_transactions')
+        .select('raw_item_name')
+        .eq('business_id', businessId),
     ])
 
-    // Collect unique modifier names seen in actual sales data
     const seen = new Set<string>()
-    for (const row of salesResult.data ?? []) {
+
+    // From nested modifiers array
+    for (const row of nestedResult.data ?? []) {
       if (Array.isArray(row.modifiers)) {
         for (const m of row.modifiers) {
           if (typeof m === 'string' && m.trim()) seen.add(m.trim())
         }
+      }
+    }
+
+    // From flat raw_item_name values that look like modifier add-ons
+    for (const row of rawResult.data ?? []) {
+      if (typeof row.raw_item_name === 'string' && looksLikeModifier(row.raw_item_name)) {
+        seen.add(row.raw_item_name.trim())
       }
     }
 
