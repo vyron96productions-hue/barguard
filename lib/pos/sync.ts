@@ -16,23 +16,40 @@ export async function importPosItemsToSupabase(
   if (items.length === 0) return 0
 
   // ── Idempotency: delete existing transactions for this date range + provider ──
-  // This prevents double-deductions when re-syncing a range that overlaps a
-  // previously synced range (e.g. sync 4/10, then sync 4/10–4/12).
+  // Only fetch uploads that overlap this period (not all historical ones) to
+  // avoid building a huge .in() clause that exceeds the PostgREST URL limit
+  // and silently fails, causing transactions to stack on every re-sync.
   const { data: existingUploads } = await adminSupabase
     .from('sales_uploads')
     .select('id')
     .eq('business_id', businessId)
     .eq('pos_type', provider)
+    .lte('period_start', periodEnd)
+    .gte('period_end', periodStart)
 
   if (existingUploads?.length) {
     const uploadIds = existingUploads.map((u: { id: string }) => u.id)
-    await adminSupabase
-      .from('sales_transactions')
-      .delete()
-      .eq('business_id', businessId)
-      .gte('sale_date', periodStart)
-      .lte('sale_date', periodEnd)
-      .in('upload_id', uploadIds)
+
+    // Delete transactions in batches to stay under the PostgREST URL limit
+    const CHUNK = 50
+    for (let c = 0; c < uploadIds.length; c += CHUNK) {
+      await adminSupabase
+        .from('sales_transactions')
+        .delete()
+        .eq('business_id', businessId)
+        .gte('sale_date', periodStart)
+        .lte('sale_date', periodEnd)
+        .in('upload_id', uploadIds.slice(c, c + CHUNK))
+    }
+
+    // Also delete the stale upload records themselves so they don't accumulate
+    // (each re-sync creates a new upload; without cleanup they build up over time)
+    for (let c = 0; c < uploadIds.length; c += CHUNK) {
+      await adminSupabase
+        .from('sales_uploads')
+        .delete()
+        .in('id', uploadIds.slice(c, c + CHUNK))
+    }
   }
 
   const { data: upload, error: uploadErr } = await adminSupabase
