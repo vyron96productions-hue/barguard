@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'End User License Agreement â€” BarGuard',
+  title: 'End User License Agreement — BarGuard',
   description: 'Read the BarGuard End User License Agreement covering use of the BarGuard application, website, and related services. Effective April 15, 2026.',
   alternates: { canonical: 'https://barguard.app/eula' },
   openGraph: {
-    title: 'End User License Agreement â€” BarGuard',
+    title: 'End User License Agreement — BarGuard',
     description: 'Read the BarGuard End User License Agreement covering use of the BarGuard application, website, and related services.',
     url: 'https://barguard.app/eula',
     type: 'website',
