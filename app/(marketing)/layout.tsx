@@ -112,6 +112,7 @@ export default async function MarketingLayout({ children }: { children: React.Re
                 <p style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Legal</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <Link href="/privacy" data-gtm-event="footer_click" data-gtm-label="footer_privacy" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Privacy Policy</Link>
+                  <Link href="/eula" data-gtm-event="footer_click" data-gtm-label="footer_eula" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>EULA</Link>
                   <Link href="/terms" data-gtm-event="footer_click" data-gtm-label="footer_terms" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Terms of Service</Link>
                   <Link href="/refund" data-gtm-event="footer_click" data-gtm-label="footer_refund" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>Refund Policy</Link>
                   <Link href="/status" data-gtm-event="footer_click" data-gtm-label="footer_status" style={{ fontSize: 14, color: '#94a3b8', textDecoration: 'none' }}>System Status</Link>
