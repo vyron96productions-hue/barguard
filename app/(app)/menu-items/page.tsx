@@ -114,7 +114,15 @@ export default function RecipeMappingPage() {
   const [bootstrapError, setBootstrapError]       = useState<string | null>(null)
   const [bootstrapResult, setBootstrapResult]     = useState<import('@/app/api/recipes/ai-bootstrap/route').BootstrapResult | null>(null)
 
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
   useEffect(() => { fetchAll() }, [])
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   async function fetchAll() {
     setLoading(true)
@@ -469,11 +477,11 @@ export default function RecipeMappingPage() {
     ))
   }
 
-  const drinkItems = menuItems.filter(i => isDrink(i.item_type))
-  const foodItems  = menuItems.filter(i => isFood(i.item_type))
+  const drinkItems = menuItems.filter(i => isDrink(i.item_type)).sort((a, b) => a.name.localeCompare(b.name))
+  const foodItems  = menuItems.filter(i => isFood(i.item_type)).sort((a, b) => a.name.localeCompare(b.name))
 
   const filteredMenuItems = typeFilter === 'all'
-    ? menuItems
+    ? [...menuItems].sort((a, b) => a.name.localeCompare(b.name))
     : typeFilter === 'food'
       ? foodItems
       : drinkItems
@@ -1305,6 +1313,17 @@ export default function RecipeMappingPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Back to top */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700 hover:border-slate-600 transition-colors shadow-lg flex items-center justify-center"
+          title="Back to top"
+        >
+          ↑
+        </button>
       )}
 
       {/* AI Bootstrap overlay */}
