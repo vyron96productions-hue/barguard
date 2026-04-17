@@ -1,5 +1,6 @@
 import { adminSupabase } from '@/lib/supabase/admin'
 import type { NormalizedSaleItem, PosProvider } from './types'
+import { logger } from '@/lib/logger'
 
 /**
  * Saves normalized POS sale items into sales_uploads + sales_transactions,
@@ -94,25 +95,39 @@ export async function importPosItemsToSupabase(
 
   const BATCH = 200
   let totalInserted = 0
+  let resolvedCount = 0
+  let unresolvedCount = 0
 
   for (let i = 0; i < items.length; i += BATCH) {
-    const batch = items.slice(i, i + BATCH).map((item) => ({
-      upload_id: upload.id,
-      business_id: businessId,
-      sale_date: item.sale_date,
-      sale_timestamp: item.sale_timestamp ?? null,
-      raw_item_name: item.raw_item_name,
-      menu_item_id: resolveMenuItemId(item.raw_item_name),
-      quantity_sold: item.quantity_sold,
-      gross_sales: item.gross_sales,
-      station: item.station ?? null,
-      modifiers: item.modifiers ?? null,
-    }))
+    const batch = items.slice(i, i + BATCH).map((item) => {
+      const menuItemId = resolveMenuItemId(item.raw_item_name)
+      if (menuItemId) resolvedCount++; else unresolvedCount++
+      return {
+        upload_id: upload.id,
+        business_id: businessId,
+        sale_date: item.sale_date,
+        sale_timestamp: item.sale_timestamp ?? null,
+        raw_item_name: item.raw_item_name,
+        menu_item_id: menuItemId,
+        quantity_sold: item.quantity_sold,
+        gross_sales: item.gross_sales,
+        station: item.station ?? null,
+        modifiers: item.modifiers ?? null,
+      }
+    })
 
     const { error } = await adminSupabase.from('sales_transactions').insert(batch)
     if (error) throw new Error(`Failed to insert transactions: ${error.message}`)
     totalInserted += batch.length
   }
+
+  logger.info('pos/sync', 'menu_item_id resolution', {
+    businessId, provider, total: totalInserted,
+    resolved: resolvedCount, unresolved: unresolvedCount,
+    unresolvedNames: unresolvedCount > 0
+      ? items.filter((i) => !resolveMenuItemId(i.raw_item_name)).map((i) => i.raw_item_name).slice(0, 20)
+      : [],
+  })
 
   return totalInserted
 }

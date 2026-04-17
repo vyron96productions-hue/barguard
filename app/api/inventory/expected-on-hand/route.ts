@@ -118,12 +118,13 @@ export async function GET() {
       )
     }
 
-    // 5. Recipes for menu items that appear in sales
-    const menuItemIds = [...new Set(sales.map((s) => s.menu_item_id as string))]
+    // 5. Recipes for all menu items — do NOT filter with .in() here.
+    // menu_item_recipes has no business_id column; RLS scopes it via the FK
+    // to menu_items. A large .in(menuItemIds) list hits PostgREST's URL limit
+    // and silently returns nothing, making deductions appear as zero.
     const { data: recipes } = await supabase
       .from('menu_item_recipes')
       .select('menu_item_id, inventory_item_id, quantity, unit')
-      .in('menu_item_id', menuItemIds)
 
     const recipeMap: Record<string, Array<{ inventory_item_id: string; quantity: number; unit: string }>> = {}
     for (const r of recipes ?? []) {
