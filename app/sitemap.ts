@@ -16,7 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${base}/blog/how-to-do-a-bar-inventory-count`, lastModified: new Date('2026-04-15'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/bar-shrinkage-how-much-are-you-losing`, lastModified: new Date('2026-03-18'), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${base}/blog/bar-inventory-management-guide`, lastModified: new Date('2026-03-10'), changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/blog/bar-inventory-management-guide`, lastModified: new Date('2026-04-17'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/over-pouring-bar-losses`, lastModified: new Date('2026-03-05'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/bartender-theft-signs-prevention`, lastModified: new Date('2026-03-31'), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/blog/how-to-reduce-liquor-cost-percentage`, lastModified: new Date('2026-04-07'), changeFrequency: 'monthly', priority: 0.6 },
@@ -34,5 +34,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/stop-bartender-theft`, lastModified: new Date('2026-04-12'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/bar-profit-tracking`, lastModified: new Date('2026-04-12'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/automated-inventory-system`, lastModified: new Date('2026-04-12'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/how-to-track-bar-inventory`, lastModified: new Date('2026-04-17'), changeFrequency: 'monthly', priority: 0.85 },
   ]
 }

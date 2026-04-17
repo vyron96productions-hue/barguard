@@ -8,7 +8,7 @@ import { Post, Block } from '../posts'
 const RELATED: Record<string, string[]> = {
   'how-to-do-a-bar-inventory-count': ['bar-inventory-management-guide', 'bar-shrinkage-how-much-are-you-losing'],
   'bar-shrinkage-how-much-are-you-losing': ['bar-inventory-management-guide', 'bartender-theft-signs-prevention'],
-  'bar-inventory-management-guide': ['bar-shrinkage-how-much-are-you-losing', 'over-pouring-bar-losses'],
+  'bar-inventory-management-guide': ['bar-shrinkage-how-much-are-you-losing', 'how-to-do-a-bar-inventory-count'],
   'over-pouring-bar-losses': ['bar-shrinkage-how-much-are-you-losing', 'bar-inventory-management-guide'],
   'bartender-theft-signs-prevention': ['stop-bartender-theft', 'bar-shrinkage-how-much-are-you-losing'],
   'how-to-reduce-liquor-cost-percentage': ['over-pouring-bar-losses', 'bar-shrinkage-how-much-are-you-losing'],

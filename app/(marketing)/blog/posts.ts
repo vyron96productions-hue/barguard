@@ -341,44 +341,133 @@ export const POSTS: Post[] = [
   },
   {
     slug: 'bar-inventory-management-guide',
-    title: 'Bar Inventory Management: The Complete Guide for Bar Owners',
-    excerpt: 'Most bars are losing thousands of dollars a month to poor inventory tracking. This guide walks you through how to set up a real system — and the key numbers you need to watch.',
+    title: 'Bar Inventory Management: How to Track, Control, and Eliminate Loss in Your Bar',
+    excerpt: 'Most bar owners don\'t know how much inventory they\'re losing — because tracking it manually is slow, inconsistent, and easy to get wrong. Here\'s how to fix it.',
     category: 'Operations',
-    date: 'March 10, 2026',
-    readTime: '9 min read',
+    date: 'April 17, 2026',
+    readTime: '10 min read',
     image: '/images/blogs/bar-inventory-management-guide.png',
-    imageAlt: 'bar inventory management system overview',
-    metaTitle: 'Bar Inventory Management: Complete Guide for Bar Owners',
-    metaDescription: 'Most bars lose thousands a month to poor inventory tracking. This guide walks you through how to set up a real system and the key numbers to watch.',
+    imageAlt: 'bar manager reviewing inventory tracking system to eliminate stock loss',
+    metaTitle: 'Bar Inventory Management: Track, Control & Eliminate Loss | BarGuard',
+    metaDescription: 'Learn how to track bar inventory, reduce shrinkage, and stop overpouring. Discover how modern bar inventory systems like BarGuard help protect your profits.',
     content: [
       {
         type: 'p',
-        text: 'Ask ten bar owners how they manage inventory and you\'ll get ten different answers — everything from a clipboard spreadsheet to "I kind of just eyeball it." The eyeball method feels fast and easy until the month you realize you can\'t explain a $4,000 gap between what you sold and what you bought. Inventory management isn\'t glamorous, but it\'s the foundation of a profitable bar.',
-      },
-      {
-        type: 'h2',
-        text: 'Why Bar Inventory Management Is Different',
+        text: 'Most bar owners don\'t actually know how much inventory they\'re losing.',
       },
       {
         type: 'p',
-        text: 'Bar inventory is harder to manage than retail or restaurant inventory for one simple reason: every product is dispensed in small, variable increments, hundreds of times per shift, by multiple people, without a scan or a weigh. A 750ml bottle of whiskey might yield 16 drinks — or 12, depending on who\'s pouring. That variability is where your money goes.',
+        text: 'Not because they don\'t care — but because tracking it manually is slow, inconsistent, and easy to get wrong.',
       },
       {
         type: 'p',
-        text: 'In retail, if a bottle of whiskey leaves the shelf, it\'s scanned and recorded. In a bar, when a quarter of that same bottle disappears into a glass, it often disappears from your accounting too. Good inventory management bridges that gap.',
+        text: 'The reality is simple: if you\'re not tracking your inventory properly, you are losing money every single night.',
       },
       {
         type: 'stats',
         items: [
-          { number: '3–9%', label: 'ideal pour cost as % of revenue' },
-          { number: '$1,000+', label: 'average weekly loss from untracked inventory' },
-          { number: '10%', label: 'target max shrinkage rate' },
-          { number: '52x', label: 'inventory counts per year for weekly trackers' },
+          { number: '20–25%', label: 'of bar inventory lost to shrinkage annually' },
+          { number: '$30,000+', label: 'average annual loss from untracked inventory' },
+          { number: '3', label: 'things a proper system connects: counts, sales, recipes' },
+          { number: '10%', label: 'target max shrinkage rate for a well-run bar' },
         ],
       },
       {
         type: 'h2',
-        text: 'The Core Metrics Every Bar Owner Should Track',
+        text: 'What Is Bar Inventory Management?',
+      },
+      {
+        type: 'p',
+        text: 'Bar inventory management is the process of tracking what you have in stock, what you\'re selling, what should be left, and what actually is left.',
+      },
+      {
+        type: 'p',
+        text: 'The gap between "what should be there" and "what\'s actually there" is where loss happens. This includes overpouring, spillage, theft, and incorrect counts.',
+      },
+      {
+        type: 'h2',
+        text: 'Why Most Bars Struggle With Inventory Tracking',
+      },
+      {
+        type: 'p',
+        text: 'Traditional inventory systems rely on manual counts, spreadsheets, and guesswork. That creates problems like inconsistent counting times, human error, and no real connection to sales data — which means you can\'t answer the most important question: where is my money actually going?',
+      },
+      {
+        type: 'callout',
+        text: 'A spreadsheet can\'t tell you that your well vodka is running 35% over expected. A connected system can — and it can tell you which shift caused it.',
+      },
+      {
+        type: 'h2',
+        text: 'How to Track Bar Inventory the Right Way',
+      },
+      {
+        type: 'p',
+        text: 'Modern inventory tracking connects three things: inventory counts, sales data, and recipes. When these are connected, you can calculate expected usage vs. actual usage — and that gap is exactly what <a href="/how-to-track-bar-inventory">a proper bar inventory tracking system</a> is designed to surface.',
+      },
+      {
+        type: 'h2',
+        text: 'Step-by-Step: How to Track Bar Inventory',
+      },
+      {
+        type: 'h3',
+        text: '1. Set Up Your Inventory Items',
+      },
+      {
+        type: 'p',
+        text: 'Add all bottles, kegs, and ingredients into your system with accurate units and categories. BarGuard lets you add items manually, bulk import via CSV, or auto-categorize your full inventory list using AI — so setup takes minutes, not hours.',
+      },
+      {
+        type: 'h3',
+        text: '2. Track Your Stock Levels',
+      },
+      {
+        type: 'p',
+        text: 'You need accurate counts of what you physically have. This can be done by manual entry, barcode scanning, or CSV uploads. Each count is timestamped so you always know when it was recorded and can compare count cycles accurately.',
+      },
+      {
+        type: 'h3',
+        text: '3. Connect Sales Data',
+      },
+      {
+        type: 'p',
+        text: 'Your POS system tells you what was sold — and that data drives expected usage. BarGuard integrates directly with Square, Clover, Toast, and other major POS systems. Without this connection, your variance numbers are always just estimates.',
+      },
+      {
+        type: 'h3',
+        text: '4. Build Recipes for Your Drinks',
+      },
+      {
+        type: 'p',
+        text: 'Each drink needs a recipe that defines ingredients and quantities. This allows the system to calculate how much inventory should have been used based on what was actually sold. No recipes means no theoretical usage — and no way to calculate variance.',
+      },
+      {
+        type: 'h3',
+        text: '5. Run a Variance Calculation',
+      },
+      {
+        type: 'p',
+        text: 'This is where everything comes together. BarGuard compares expected usage (from sales and recipes) vs. actual usage (from inventory counts) and shows you overpours, missing inventory, and estimated dollar loss — by item, by category, by shift.',
+      },
+      {
+        type: 'h2',
+        text: 'Where Bars Lose the Most Money',
+      },
+      {
+        type: 'p',
+        text: 'Once you start tracking properly, patterns become obvious. The biggest sources of loss are:',
+      },
+      {
+        type: 'ul',
+        items: [
+          'Overpouring — bartenders giving away extra alcohol without realizing it. A quarter ounce over per drink adds up to hundreds of dollars on a busy Saturday night.',
+          'Theft — untracked drinks, free pours, or inventory disappearing. Internal theft accounts for 35–40% of all bar shrinkage.',
+          'Spillage and waste — poor processes and lack of accountability.',
+          'Inconsistent counts — irregular or inaccurate tracking that hides problems until they become expensive.',
+        ],
+      },
+      {
+        type: 'h2',
+        text: 'The Core Metrics You Need to Watch',
       },
       {
         type: 'h3',
@@ -386,15 +475,15 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Pour cost is the cost of goods sold divided by revenue from that category. If you buy a bottle of vodka for $18 and it sells $90 worth of drinks, your pour cost is 20%. Industry targets vary by concept: high-volume bars should aim for 18–22% on spirits, while craft cocktail programs often run 22–28% due to premium ingredients. Knowing your pour cost per category tells you immediately where your margins are leaking.',
+        text: 'Pour cost is cost of goods sold divided by revenue. High-volume bars should aim for 18–22% on spirits. If yours is consistently above 25%, something is leaking — and variance tracking will tell you where.',
       },
       {
         type: 'h3',
-        text: 'Variance / Shrinkage Rate',
+        text: 'Variance Rate',
       },
       {
         type: 'p',
-        text: 'Variance is the difference between theoretical usage (based on sales data) and actual usage (based on physical counts). A 5% variance on a high-volume category is a signal. A 20% variance is a crisis. Track this weekly, by product category, and by bar station if you have multiple service areas.',
+        text: 'Variance is the gap between theoretical usage and actual usage. A 5% variance on a high-volume item is a signal. A 20% variance is a crisis. Track this weekly per category, not as a single blended number.',
       },
       {
         type: 'h3',
@@ -402,59 +491,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Running out of your top-five spirits on a Saturday night is an operational failure that costs you in both sales and customer experience. Reorder points tell you the minimum quantity at which you need to place a new order. Set them based on your actual usage rate, lead time from your distributor, and a safety buffer for high-demand periods.',
-      },
-      {
-        type: 'h3',
-        text: 'Dead Stock',
-      },
-      {
-        type: 'p',
-        text: 'Every bottle sitting on your back bar that hasn\'t been touched in 60 days is cash you\'ve already spent that isn\'t working for you. Tracking dead stock and making deliberate decisions about it — menu specials, signature cocktails, returns to distributors — keeps your working capital moving.',
-      },
-      {
-        type: 'h2',
-        text: 'How to Set Up a Bar Inventory System',
-      },
-      {
-        type: 'h3',
-        text: 'Step 1: Build Your Master Item List',
-      },
-      {
-        type: 'p',
-        text: 'Start with a complete list of every product you stock — every spirit, beer, wine, mixer, garnish, and supply item. Include the unit of measure (bottle, keg, case), pack size, your cost per unit, and the category. This becomes your inventory bible. Be meticulous here: getting this wrong creates cascading inaccuracies in every count that follows.',
-      },
-      {
-        type: 'h3',
-        text: 'Step 2: Establish Your Count Cadence',
-      },
-      {
-        type: 'p',
-        text: 'Weekly counts are the industry standard for spirits and high-cost items. Beer kegs and high-turnover items may warrant twice-weekly counts at busy operations. The important thing is consistency: count on the same day, at the same time (typically before open or after close), every cycle. Inconsistent counting produces noisy data that\'s hard to act on.',
-      },
-      {
-        type: 'h3',
-        text: 'Step 3: Connect Your POS Data',
-      },
-      {
-        type: 'p',
-        text: 'Your inventory counts alone don\'t tell you much without something to compare them against. Your POS sales data — specifically, the quantities of each menu item sold — is what lets you calculate theoretical usage. Build out your drink recipes (what\'s in each drink and how much) so your system can automatically calculate how much product each sale should have consumed.',
-      },
-      {
-        type: 'h3',
-        text: 'Step 4: Run Variance Reports After Every Count',
-      },
-      {
-        type: 'p',
-        text: 'After each count, compare actual usage to theoretical usage. Flag any item with variance above your threshold (most operators use 5–10%). Investigate immediately — don\'t let variances accumulate across multiple count cycles before you look at them. The trail goes cold fast.',
-      },
-      {
-        type: 'h3',
-        text: 'Step 5: Act on What You Find',
-      },
-      {
-        type: 'p',
-        text: 'A variance report that no one acts on is just an expense. When you find a category with consistent over-variance, trace it: Is it one bar station? One shift? One product? Talk to staff, review POS voids and comps, check your camera footage if needed. The goal isn\'t punishment — it\'s plugging the leak.',
+        text: 'Running out of your top spirits on a Saturday night is an operational failure. Reorder points — set based on actual usage rate and distributor lead time — prevent it. A good system flags these automatically.',
       },
       {
         type: 'h2',
@@ -463,18 +500,17 @@ export const POSTS: Post[] = [
       {
         type: 'ul',
         items: [
-          'Counting only spirits and ignoring beer, wine, and NA beverages.',
-          'Using weight or "eyeball" estimates instead of actual bottle counts.',
+          'Counting only spirits and ignoring beer, wine, and food items.',
           'Letting the same person who pours the drinks also count the inventory.',
           'Counting too infrequently — monthly counts hide problems that weekly counts would catch.',
-          'Not reconciling purchase orders: if received quantities aren\'t recorded, your counts will always look off.',
-          'Having no standard drink recipes, making it impossible to calculate theoretical usage.',
-          'Treating variances as a curiosity rather than a management signal.',
+          'Having no standard drink recipes, making theoretical usage impossible to calculate.',
+          'Not reconciling purchases: if received quantities aren\'t recorded, counts will always look off.',
+          'Treating variances as a curiosity instead of a management signal.',
         ],
       },
       {
         type: 'callout',
-        text: 'Best practice: the person who counts inventory should not be the bartender who was last on shift. Separation of duties is one of the simplest loss-prevention controls a bar can implement.',
+        text: 'Best practice: the person who counts inventory should never be the bartender who was last on shift. Separation of duties is one of the simplest loss-prevention controls a bar can implement.',
       },
       {
         type: 'h2',
@@ -482,11 +518,23 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'A spreadsheet can technically do everything described above. The problem is that spreadsheets are slow, error-prone, and produce data that\'s hard to act on without a lot of manual work. They also don\'t connect to your POS, which means theoretical usage calculations have to be done by hand.',
+        text: 'A spreadsheet can technically track inventory. The problem is that spreadsheets are slow, error-prone, and don\'t connect to your POS — which means theoretical usage has to be calculated by hand, every single cycle.',
       },
       {
         type: 'p',
-        text: 'Inventory software automates the comparison between your counts and your POS data, flags variances instantly, tracks trends over time, and gives you the kind of at-a-glance reporting that makes management decisions easier. For any bar doing more than $10,000 a month in liquor sales, the time savings and loss-detection value of a dedicated system almost always outweighs the cost.',
+        text: 'A dedicated system like BarGuard automates the comparison between your counts and your sales data, flags variances instantly, and gives you reporting that\'s actually actionable. For any bar doing more than $10,000 a month in liquor sales, the loss-detection value alone almost always outweighs the cost.',
+      },
+      {
+        type: 'h2',
+        text: 'The Bottom Line',
+      },
+      {
+        type: 'p',
+        text: 'If you\'re not tracking your inventory properly, you are losing money. Not sometimes — every day. The difference between profitable bars and struggling ones is simple: they know their numbers.',
+      },
+      {
+        type: 'p',
+        text: 'Ready to start? <a href="/how-to-track-bar-inventory">See exactly how to track bar inventory step-by-step</a> — or start your free trial and see where your losses are coming from.',
       },
       {
         type: 'cta',
