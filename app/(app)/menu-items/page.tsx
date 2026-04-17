@@ -104,6 +104,7 @@ export default function RecipeMappingPage() {
   const [aiGenSaving, setAiGenSaving]     = useState(false)
   const [aiGenDone, setAiGenDone]         = useState(false)
   const [aiGenError, setAiGenError]       = useState<string | null>(null)
+  const [aiGenInfo, setAiGenInfo]         = useState<string | null>(null)
   const [aiGenSkipped, setAiGenSkipped]   = useState(0)
 
   // AI Bootstrap (no inventory items yet — generate ingredients + recipes from menu names)
@@ -217,6 +218,7 @@ export default function RecipeMappingPage() {
     setShowAiGen(true)
     setAiGenLoading(true)
     setAiGenError(null)
+    setAiGenInfo(null)
     setAiGenDone(false)
     setAiGenSkipped(0)
     setAiGenRows([])
@@ -225,7 +227,7 @@ export default function RecipeMappingPage() {
       const data = await res.json()
       if (!res.ok) { setAiGenError(data.error ?? 'Failed to generate suggestions'); setAiGenLoading(false); return }
       const sugs: AiGenerateSuggestion[] = Array.isArray(data) ? data : (Array.isArray(data?.suggestions) ? data.suggestions : [])
-      if (data?.capped) setAiGenError(`Showing suggestions for the first 150 of ${data.total_eligible} items. Save these, then run again for the rest.`)
+      if (data?.capped) setAiGenInfo(`Showing suggestions for the first 150 of ${data.total_eligible} items. Save these, then run again for the rest.`)
       setAiGenRows(sugs.map((s) => ({
         ...s,
         included: true,
@@ -1035,6 +1037,11 @@ export default function RecipeMappingPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
+                  {aiGenInfo && (
+                    <div className="px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                      {aiGenInfo}
+                    </div>
+                  )}
                   {/* Column headers — desktop */}
                   <div className="hidden sm:grid grid-cols-[24px_1fr_100px_90px_1fr_80px_80px] gap-2 px-3 pb-1">
                     {['', 'Menu Item Name', 'Category', 'Sell Price', '→ Inventory Item', 'Qty', 'Unit'].map((h) => (
@@ -1119,6 +1126,7 @@ export default function RecipeMappingPage() {
                 </div>
                 <div className="flex gap-3">
                   {aiGenError && <p className="text-xs text-red-400">{aiGenError}</p>}
+                  {aiGenInfo && <p className="text-xs text-amber-400">{aiGenInfo}</p>}
                   <button onClick={() => setShowAiGen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors">Cancel</button>
                   <button
                     onClick={confirmAiGen}
