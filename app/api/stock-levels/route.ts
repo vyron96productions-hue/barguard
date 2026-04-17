@@ -69,6 +69,18 @@ export async function GET() {
       rawPurchases = purchasesData ?? []
     }
 
+    // Diagnostic: log key numbers so we can trace the Miller Lite calc
+    const millerLiteItem = (items ?? []).find((i) => i.name === 'Miller Lite')
+    const millerLightSales = rawSales.filter((s) => s.menu_item_id === 'f133e15f-116e-411e-a28b-005e7e5d0346')
+    const millerLiteRecipes = (recipes ?? []).filter((r) => r.inventory_item_id === millerLiteItem?.id)
+    console.log('[stock-levels:diag] earliest=%s rawSales=%d millerLite_id=%s millerLight_sales=%d millerLite_recipes=%d',
+      earliest, rawSales.length, millerLiteItem?.id ?? 'NOT_FOUND', millerLightSales.length, millerLiteRecipes.length)
+    if (millerLiteItem) {
+      const lc = (counts ?? []).find((c) => c.inventory_item_id === millerLiteItem.id)
+      console.log('[stock-levels:diag] millerLite count_date=%s qty=%s unit=%s',
+        lc?.count_date, lc?.quantity_on_hand, millerLiteItem.unit)
+    }
+
     const calcMap = calculateExpectedOnHand(
       items  ?? [],
       counts ?? [],
@@ -76,6 +88,12 @@ export async function GET() {
       rawSales,
       recipes ?? [],
     )
+
+    if (millerLiteItem) {
+      const calc = calcMap.get(millerLiteItem.id)
+      console.log('[stock-levels:diag] millerLite calc: has_estimate=%s has_recipe=%s estimated_qty=%s deductions_oz=%s',
+        calc?.has_estimate, calc?.has_recipe, calc?.estimated_qty, calc?.deductions_since_oz)
+    }
 
     const result = (items ?? []).map((item) => {
       const count = latestCountMap.get(item.id) ?? null
