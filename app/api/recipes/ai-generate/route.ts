@@ -45,21 +45,18 @@ export async function GET() {
 
     if (eligible.length === 0) return NextResponse.json([])
 
-    // Cap per-run to avoid Anthropic output token rate limit (8k tokens/min).
-    // Items that already have menu items are filtered out upstream by existingNames,
-    // so subsequent runs will naturally pick up the next batch.
-    const CAP = 150
+    // 2 batches of 30 = 60 items per run.
+    // Each Claude call takes ~10-15s; 2 calls + 1x10s delay = ~35s total,
+    // well under Vercel's timeout. Subsequent runs skip items that already
+    // have menu items (filtered by existingNames above).
+    const CAP = 60
     const capped = eligible.slice(0, CAP)
     const wasCapped = eligible.length > CAP
 
     const invMap = new Map(eligible.map((i) => [i.id, i]))
 
-    // Batch to 30 items per call with an 8s delay between batches.
-    // 30 items ≈ 1200 output tokens. 5 batches × 1200 = 6000 tokens spread
-    // over ~52s stays under the 8k output tokens/min rate limit and
-    // under Vercel's 60s default function timeout.
     const BATCH_SIZE = 30
-    const BATCH_DELAY_MS = 8000
+    const BATCH_DELAY_MS = 10000
     const batches: typeof eligible[] = []
     for (let i = 0; i < capped.length; i += BATCH_SIZE) {
       batches.push(capped.slice(i, i + BATCH_SIZE))
