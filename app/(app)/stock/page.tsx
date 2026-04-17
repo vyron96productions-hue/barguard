@@ -1286,7 +1286,7 @@ function StockCard({ item, allCategories, onUpdate }: {
       category: category || null,
       unit,
       quantity_on_hand: qtyToSend ?? item.quantity_on_hand,
-      count_date: qtyToSend !== null ? new Date().toISOString().slice(0, 10) : item.count_date,
+      count_date: qtyToSend !== null ? new Date().toLocaleDateString('en-CA') : item.count_date,
       // Clear stale estimate so card immediately shows the new physical count
       ...(qtyToSend !== null ? { has_estimate: false, estimated_qty: null } : {}),
     })

@@ -17,11 +17,11 @@ function dateLabel(d: string) {
 function addDays(dateStr: string, n: number) {
   const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
+  return d.toLocaleDateString('en-CA')
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local timezone
 }
 
 type TypeFilter = 'all' | 'drink' | 'food'

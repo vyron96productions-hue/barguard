@@ -6,7 +6,7 @@ import type { DrinkProfitSummary } from '@/types'
 type Period  = '7d' | '30d' | 'month' | 'custom'
 type SortKey = 'profit' | 'margin' | 'revenue' | 'volume'
 
-function isoDate(d: Date) { return d.toISOString().slice(0, 10) }
+function isoDate(d: Date) { return d.toLocaleDateString('en-CA') }
 
 function getPresetRange(p: Exclude<Period, 'custom'>) {
   const today = new Date(); const end = isoDate(today)
