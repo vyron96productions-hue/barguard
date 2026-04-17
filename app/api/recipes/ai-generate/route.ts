@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 120
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export interface AiGenerateSuggestion {
@@ -43,11 +45,16 @@ export async function GET() {
 
     if (eligible.length === 0) return NextResponse.json([])
 
-    const itemList = eligible
-      .map((i) => `${i.id}|${i.name}|${i.unit}|${i.item_type ?? 'beverage'}|${i.category ?? ''}`)
-      .join('\n')
+    const invMap = new Map(eligible.map((i) => [i.id, i]))
 
-    const prompt = `You are a bar management assistant. Given these bar inventory items, generate ONE menu item per inventory item that a bar would actually sell.
+    // Batch to 50 items per call — prevents response truncation on large inventories
+    const BATCH_SIZE = 50
+    const batches: typeof eligible[] = []
+    for (let i = 0; i < eligible.length; i += BATCH_SIZE) {
+      batches.push(eligible.slice(i, i + BATCH_SIZE))
+    }
+
+    const SYSTEM = `You are a bar management assistant. Given bar inventory items, generate ONE menu item per item that a bar would actually sell.
 
 Rules by unit type:
 - Spirits/liqueurs/cognac (bottle/1L/1.75L): menu item = brand name as-is, category="shot", qty=1.5, unit="oz", sell_price=typical bar price for that spirit tier
@@ -55,28 +62,12 @@ Rules by unit type:
 - Beer bottle/can/pint: menu item = same name (clean it up), category="beer", qty=1, unit="each", sell_price=5-7
 - Beer case (unit=case): menu item = same name without "case", category="beer", qty=0.0417, unit="case", sell_price=5-6
 - Keg/sixthkeg: menu item = "[Name] Draft", category="beer", qty=1, unit="pint", sell_price=5-7
-- Food (lb/kg/each/portion): menu item = clean name, category appropriate for the food, item_type="food", qty=1, unit matching inventory, sell_price=estimate
+- Food (lb/kg/each/portion): menu item = clean name, category appropriate for food, item_type="food", qty=1, unit matching inventory, sell_price=estimate
 
 Do NOT generate menu items for: juices used as mixers, syrups, sodas, condiments.
+Return ONLY a JSON array, no markdown, no explanation.`
 
-Return ONLY a JSON array with no markdown, no explanation:
-[{"inventory_item_id":"<exact id>","menu_item_name":"<name>","category":"<cat>","item_type":"drink","sell_price":<number>,"quantity":<number>,"unit":"<unit>"}]
-
-Items (format: id|name|unit|type|category):
-${itemList}`
-
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8192,
-      messages: [{ role: 'user', content: prompt }],
-    })
-
-    if (!response.content[0] || response.content[0].type !== 'text') throw new Error('Unexpected AI response type')
-    const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
-    const jsonMatch = text.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
-
-    const raw = JSON.parse(jsonMatch[0]) as Array<{
+    type RawSuggestion = {
       inventory_item_id: string
       menu_item_name: string
       category: string
@@ -84,9 +75,43 @@ ${itemList}`
       sell_price: number | null
       quantity: number
       unit: string
-    }>
+    }
 
-    const invMap = new Map(eligible.map((i) => [i.id, i]))
+    async function runBatch(items: typeof eligible): Promise<RawSuggestion[]> {
+      const itemList = items
+        .map((i) => `${i.id}|${i.name}|${i.unit}|${i.item_type ?? 'beverage'}|${i.category ?? ''}`)
+        .join('\n')
+
+      const prompt = `Items (format: id|name|unit|type|category):\n${itemList}\n\nReturn JSON array:\n[{"inventory_item_id":"<exact id>","menu_item_name":"<name>","category":"<cat>","item_type":"drink","sell_price":<number>,"quantity":<number>,"unit":"<unit>"}]`
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8192,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: prompt }],
+      })
+
+      if (!response.content[0] || response.content[0].type !== 'text') return []
+      const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
+      const jsonMatch = text.match(/\[[\s\S]*\]/)
+      if (!jsonMatch) {
+        console.error('[ai-generate] batch parse failed, text snippet:', text.slice(0, 300))
+        return []
+      }
+      try {
+        return JSON.parse(jsonMatch[0]) as RawSuggestion[]
+      } catch {
+        console.error('[ai-generate] JSON.parse failed, snippet:', jsonMatch[0].slice(0, 300))
+        return []
+      }
+    }
+
+    const batchResults = await Promise.all(batches.map(runBatch))
+    const raw = batchResults.flat()
+
+    if (raw.length === 0) {
+      return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
+    }
 
     const suggestions: AiGenerateSuggestion[] = raw
       .filter((s) => invMap.has(s.inventory_item_id) && !existingNames.has(s.menu_item_name.toLowerCase().trim()))
