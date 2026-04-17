@@ -106,7 +106,12 @@ Return ONLY a JSON array, no markdown, no explanation.`
       }
     }
 
-    const batchResults = await Promise.all(batches.map(runBatch))
+    // Sequential — parallel Promise.all hits the 30k input tokens/min rate limit
+    // when inventory is large (700+ items = 14+ batches firing simultaneously)
+    const batchResults: RawSuggestion[][] = []
+    for (const batch of batches) {
+      batchResults.push(await runBatch(batch))
+    }
     const raw = batchResults.flat()
 
     if (raw.length === 0) {
