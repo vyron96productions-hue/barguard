@@ -2,6 +2,7 @@ import Sidebar from '@/components/Sidebar'
 import MobileNav from '@/components/MobileNav'
 import { TrialBanner } from '@/components/TrialBanner'
 import { BusinessProvider } from '@/app/(app)/BusinessContext'
+import ScrollToTop from '@/components/ScrollToTop'
 import Image from 'next/image'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+      <ScrollToTop />
     </BusinessProvider>
   )
 }
