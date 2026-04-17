@@ -5,7 +5,9 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const baseUrl = 'https://barguard.app'
 
-  const items = POSTS.map((post) => {
+  const items = [...POSTS]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .map((post) => {
     const url = `${baseUrl}/blog/${post.slug}`
     const image = post.image ? `${baseUrl}${post.image}` : null
 
