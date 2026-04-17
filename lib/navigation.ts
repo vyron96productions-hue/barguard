@@ -53,6 +53,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: '/connections',     label: 'POS Connections',  icon: '⇋', minRole: 'admin'   },
       { href: '/profile',         label: 'Account Settings', icon: '◎', minRole: 'employee'},
       { href: '/profile/team',    label: 'Team Members',     icon: '⊞', minRole: 'admin'   },
+      { href: '/help',            label: 'Setup Guide',      icon: '?', minRole: 'manager'  },
     ],
   },
 ]
