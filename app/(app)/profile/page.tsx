@@ -88,7 +88,7 @@ function ProfileContent() {
       setProfileMsg({ type: 'error', text: data.error ?? 'Failed to save' })
     } else {
       if (isNew) {
-        router.push('/pricing')
+        router.push('/dashboard')
       } else {
         setProfileMsg({ type: 'success', text: 'Saved!' })
       }
@@ -246,7 +246,7 @@ function ProfileContent() {
             disabled={saving}
             className="bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-900 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors"
           >
-            {saving ? 'Saving…' : isNew ? 'Save & Choose a Plan →' : 'Save Changes'}
+            {saving ? 'Saving…' : isNew ? 'Save & Start Free Trial →' : 'Save Changes'}
           </button>
         </form>
       </div>}
