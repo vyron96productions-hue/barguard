@@ -86,7 +86,7 @@ export async function GET() {
     // --- Get sales for last 30 days ---
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().slice(0, 10)
+    const thirtyDaysAgoStr = thirtyDaysAgo.toLocaleDateString('en-CA')
 
     const allMenuItemIds = [...new Set((recipes ?? []).map((r) => r.menu_item_id))]
 

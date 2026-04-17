@@ -4,7 +4,12 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
-  const { name, company, email, phone, client_count, message } = await req.json()
+  let name: string, company: string, email: string, phone: string | undefined, client_count: string | undefined, message: string | undefined
+  try {
+    ;({ name, company, email, phone, client_count, message } = await req.json())
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
 
   if (!name?.trim() || !company?.trim() || !email?.trim()) {
     return NextResponse.json({ error: 'Name, company, and email are required.' }, { status: 400 })

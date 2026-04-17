@@ -48,7 +48,18 @@ export async function GET(req: NextRequest) {
       query = query.eq('station', stationFilter)
     }
 
-    const { data: rawRows, error } = await query
+    // Fetch stations from the full date range regardless of the active station filter,
+    // so the UI can always show the complete station switcher.
+    const [{ data: rawRows, error }, { data: stationRows }] = await Promise.all([
+      query,
+      supabase
+        .from('sales_transactions')
+        .select('station')
+        .eq('business_id', businessId)
+        .gte('sale_date', dateStart)
+        .lte('sale_date', dateEnd)
+        .not('station', 'is', null),
+    ])
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -62,12 +73,8 @@ export async function GET(req: NextRequest) {
       menu_item: MenuItemJoin | null
     }>
 
-    // Collect available stations across all rows (before station filter for use by UI)
-    // We always return the station list from a separate unfiltered pass — but for simplicity
-    // we return it from the filtered rows + note: UI fetches stations separately if needed.
-    // Here we derive it from the raw result for the date range (ignoring stationFilter).
     const stationSet = new Set<string>()
-    for (const row of rows) {
+    for (const row of (stationRows ?? []) as Array<{ station: string | null }>) {
       if (row.station) stationSet.add(row.station)
     }
 

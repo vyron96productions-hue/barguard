@@ -29,8 +29,8 @@ interface AiGenRow extends AiGenerateSuggestion {
   edited_inv_id: string
 }
 
-const DRINK_CATEGORIES = ['cocktail', 'shot', 'beer', 'wine', 'non-alcoholic', 'spirits']
-const FOOD_CATEGORIES  = ['entree', 'appetizer', 'side', 'dessert', 'salad', 'soup', 'sandwich', 'pizza', 'breakfast', 'kids']
+const MENU_DRINK_CATEGORIES = ['cocktail', 'shot', 'beer', 'wine', 'non-alcoholic', 'spirits']
+const MENU_FOOD_CATEGORIES  = ['entree', 'appetizer', 'side', 'dessert', 'salad', 'soup', 'sandwich', 'pizza', 'breakfast', 'kids']
 const RECIPE_UNITS = ['oz', 'ml', 'l', 'bottle', 'wine_bottle', '1L', '1.75L', 'can', 'can_16oz', 'beer_bottle', 'beer_bottle_16oz', 'pint', 'each', 'slice', 'portion', 'lb', 'g', 'tbsp', 'tsp', 'box', 'bag']
 
 // Treat 'drink', 'beer', 'other', and undefined as drinks; only 'food' is food
@@ -854,7 +854,7 @@ export default function RecipeMappingPage() {
             className="w-32 bg-slate-800 border border-slate-700/80 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60"
           >
             <option value="">Category…</option>
-            {(itemType === 'food' ? FOOD_CATEGORIES : DRINK_CATEGORIES).map((c) => (
+            {(itemType === 'food' ? MENU_FOOD_CATEGORIES : MENU_DRINK_CATEGORIES).map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
@@ -1063,7 +1063,7 @@ export default function RecipeMappingPage() {
                             onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_category: e.target.value } : r))}
                             className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
                           >
-                            {(row.item_type === 'food' ? FOOD_CATEGORIES : DRINK_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
+                            {(row.item_type === 'food' ? MENU_FOOD_CATEGORIES : MENU_DRINK_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
                           </select>
                           <div className="relative w-24">
                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
@@ -1086,7 +1086,7 @@ export default function RecipeMappingPage() {
                         <input type="checkbox" checked={row.included} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, included: e.target.checked } : r))} className="w-4 h-4 accent-amber-500" />
                         <input value={row.edited_name} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_name: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500/60 w-full" />
                         <select value={row.edited_category} onChange={(e) => setAiGenRows((prev) => prev.map((r, i) => i === idx ? { ...r, edited_category: e.target.value } : r))} className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60 w-full">
-                          {(row.item_type === 'food' ? FOOD_CATEGORIES : DRINK_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
+                          {(row.item_type === 'food' ? MENU_FOOD_CATEGORIES : MENU_DRINK_CATEGORIES).map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                         <div className="relative">
                           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>

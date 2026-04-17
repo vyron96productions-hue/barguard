@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
-
-const FOOD_CATS = new Set(['food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods', 'sauces', 'condiments', 'dessert', 'supply'])
-const BEV_CATS = new Set(['spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic', 'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac', 'liqueur'])
+import { inferItemType } from '@/lib/categories'
 
 // PATCH /api/inventory-items/bulk-categories
 // Update category (and inferred item_type) for multiple inventory items at once
@@ -19,12 +17,7 @@ export async function PATCH(req: NextRequest) {
 
     const results = await Promise.all(
       updates.map(({ id, category }) => {
-        const catLower = category.toLowerCase()
-        const item_type = FOOD_CATS.has(catLower)
-          ? 'food'
-          : BEV_CATS.has(catLower)
-          ? 'beverage'
-          : undefined
+        const item_type = inferItemType(category) ?? undefined
 
         const payload: Record<string, string> = { category }
         if (item_type) payload.item_type = item_type

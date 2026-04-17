@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { logger, logError } from '@/lib/logger'
+import { localDateFromClient } from '@/lib/dates'
 import type { ScanType } from '@/lib/document-extraction'
 
 const ROUTE = 'onboarding/apply-prices'
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const entries: PriceEntry[] = body.entries
     const scanType: ScanType = body.scan_type ?? 'liquor'
+    const today = localDateFromClient(body.local_date)
 
     if (!Array.isArray(entries) || entries.length === 0) {
       return NextResponse.json({ error: 'entries array is required' }, { status: 400 })
@@ -122,7 +124,6 @@ export async function POST(req: NextRequest) {
 
     // ── 4. Write initial inventory counts ─────────────────────────────────
     if (stockEntries.length > 0) {
-      const today = new Date().toISOString().slice(0, 10)
 
       // Create one count-upload record for this onboarding batch
       const { data: countUpload } = await supabase

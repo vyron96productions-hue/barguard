@@ -35,13 +35,13 @@ function getLastFriday(year: number, month: number): Date {
 }
 
 export function getUpcomingHolidays(today: Date, daysAhead = 35): UpcomingHoliday[] {
-  const todayStr = today.toISOString().slice(0, 10)
+  const todayStr = today.toLocaleDateString('en-CA')
   const y = today.getFullYear()
   const upcoming: UpcomingHoliday[] = []
 
   // Helper to add a candidate date
   function addHoliday(name: string, d: Date) {
-    const dateStr = d.toISOString().slice(0, 10)
+    const dateStr = d.toLocaleDateString('en-CA')
     const diffMs = d.getTime() - today.getTime()
     const daysUntil = Math.ceil(diffMs / 86400000)
     if (daysUntil < 0 || daysUntil > daysAhead) return
@@ -55,8 +55,8 @@ export function getUpcomingHolidays(today: Date, daysAhead = 35): UpcomingHolida
     upcoming.push({
       name,
       date: dateStr,
-      lastYearStart: lyStart.toISOString().slice(0, 10),
-      lastYearEnd: lyEnd.toISOString().slice(0, 10),
+      lastYearStart: lyStart.toLocaleDateString('en-CA'),
+      lastYearEnd: lyEnd.toLocaleDateString('en-CA'),
       daysUntil,
     })
   }

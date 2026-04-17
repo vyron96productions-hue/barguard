@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 
 interface ConfirmLine {
   id: string
@@ -20,7 +21,9 @@ interface ConfirmBody {
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { supabase, businessId } = ctx
     const { id } = await params
     const body: ConfirmBody = await req.json()
 
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'No approved lines to import' }, { status: 400 })
     }
 
-    const purchaseDate = body.purchase_date ?? new Date().toISOString().slice(0, 10)
+    const purchaseDate = body.purchase_date ?? new Date().toLocaleDateString('en-CA')
 
     // ── Atomic status transition ───────────────────────────────────────────────
     // UPDATE WHERE status = 'pending' is atomic at the DB level — only one

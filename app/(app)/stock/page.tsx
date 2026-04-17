@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import CategoryCombobox from '@/components/CategoryCombobox'
 import { formatPackBreakdown } from '@/lib/beer-packaging'
-import { UNIT_LABELS, formatQty, INVENTORY_BEVERAGE_UNITS, INVENTORY_PAPER_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
+import { UNIT_LABELS, UNIT_TO_OZ, formatQty, INVENTORY_BEVERAGE_UNITS, INVENTORY_PAPER_UNITS, FOOD_UNITS as FOOD_UNITS_SET } from '@/lib/conversions'
 import { BEVERAGE_CATEGORIES, FOOD_CATEGORIES, PAPER_CATEGORIES, PRESET_CATEGORIES } from '@/lib/categories'
+import { isCasePack } from '@/lib/case-packs'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
 
@@ -12,14 +13,12 @@ const BEVERAGE_UNITS = INVENTORY_BEVERAGE_UNITS
 const FOOD_UNITS_LIST = Array.from(FOOD_UNITS_SET)
 const PAPER_UNITS_LIST = INVENTORY_PAPER_UNITS
 
-// Bottle-type units and their oz size — used for partial bottle display
-const BOTTLE_SIZE_OZ: Record<string, number> = {
-  'bottle':      25.36,    // 750ml spirit bottle
-  'wine_bottle': 25.36,    // 750ml wine bottle
-  '750ml':       25.36,
-  '1L':          33.814,
-  '1.75L':       59.1745,
-}
+// Bottle-type units that support the partial-bottle scan feature
+const BOTTLE_SCAN_UNITS = new Set(['bottle', 'wine_bottle', '750ml', '1L', '1.75L'])
+// Derive oz sizes from the canonical UNIT_TO_OZ map
+const BOTTLE_SIZE_OZ: Record<string, number> = Object.fromEntries(
+  [...BOTTLE_SCAN_UNITS].map((u) => [u, UNIT_TO_OZ[u] ?? 25.36])
+)
 const STANDARD_SHOT_OZ = 1.5
 const STANDARD_WINE_GLASS_OZ = 5.0
 const WINE_UNITS = new Set(['wine_bottle'])
@@ -1224,11 +1223,7 @@ function StockCard({ item, allCategories, onUpdate }: {
   const itemIsFood = item.item_type === 'food'
   const itemIsPaper = item.item_type === 'paper'
   const unitOptions = itemIsFood ? FOOD_UNITS_LIST : itemIsPaper ? PAPER_UNITS_LIST : BEVERAGE_UNITS
-  const isFoodCase = (
-    (item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart')) ||
-    (item.item_type === 'beverage' && (item.unit === 'gallon' || item.unit === 'quart' || item.unit === 'liter')) ||
-    item.item_type === 'paper'
-  ) && (item.pack_size ?? 0) > 1
+  const isFoodCase = isCasePack(item)
 
   function openEdit() {
     setName(item.name)

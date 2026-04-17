@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 import { PACKAGE_TYPE_SIZES, QUARTER_KEG_PINTS, SIXTH_KEG_PINTS } from '@/lib/beer-packaging'
 
 export async function GET() {
@@ -102,14 +103,14 @@ export async function POST(req: NextRequest) {
             .single()
 
       if (menuItem) {
-        // Create recipe linking them
-        await supabase.from('menu_item_recipes').insert({
+        // Create recipe linking them — log on failure but don't fail the whole request
+        const { error: recipeErr } = await supabase.from('menu_item_recipes').insert({
           menu_item_id: menuItem.id,
           inventory_item_id: data.id,
           quantity: recipeDefaults.qty,
           unit: recipeDefaults.unit,
         })
-        autoMenuItemName = name.trim()
+        if (!recipeErr) autoMenuItemName = name.trim()
       }
     }
 
@@ -173,7 +174,9 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'admin')
+    const { supabase, businessId } = ctx
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })

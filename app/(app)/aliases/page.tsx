@@ -67,7 +67,9 @@ export default function AliasesPage() {
     const res = await fetch('/api/aliases/resolve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, raw_name: rawName, target_id: targetId }),
+      // overwrite_existing: true — user's explicit match overwrites any previous
+      // incorrect auto-link so historical sales/counts are fully corrected.
+      body: JSON.stringify({ type, raw_name: rawName, target_id: targetId, overwrite_existing: true }),
     })
     return res.ok
   }

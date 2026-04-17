@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -31,7 +32,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'admin')
+    const { supabase, businessId } = ctx
     const { id } = await params
 
     const { error } = await supabase

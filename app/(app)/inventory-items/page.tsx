@@ -5,6 +5,7 @@ import CategoryCombobox from '@/components/CategoryCombobox'
 import { PACKAGE_TYPE_OPTIONS, PACKAGE_TYPE_SIZES, type PackageType } from '@/lib/beer-packaging'
 import { UNIT_LABELS, UNIT_TO_OZ, INVENTORY_BEVERAGE_UNITS, INVENTORY_FOOD_UNITS, INVENTORY_PAPER_UNITS, formatQty } from '@/lib/conversions'
 import { PRESET_CATEGORIES } from '@/lib/categories'
+import { isCasePack } from '@/lib/case-packs'
 import type { InventoryItem, Vendor } from '@/types'
 import type { AiCategorizeSuggestion } from '@/app/api/inventory-items/ai-categorize/route'
 import type { ExpectedOnHandItem } from '@/app/api/inventory/expected-on-hand/route'
@@ -85,11 +86,7 @@ export default function InventoryItemsPage() {
 
   async function handleSetStock(itemId: string) {
     const item = items.find((i) => i.id === itemId)
-    const isFCP = (
-      (item?.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart')) ||
-      (item?.item_type === 'beverage' && (item.unit === 'gallon' || item.unit === 'quart' || item.unit === 'liter')) ||
-      item?.item_type === 'paper'
-    ) && (item?.pack_size ?? 0) > 1
+    const isFCP = item ? isCasePack(item) : false
     let qty: number
     if (isFCP && item?.pack_size) {
       const c = parseInt(setStockValue || '0') || 0
@@ -104,7 +101,7 @@ export default function InventoryItemsPage() {
       await fetch('/api/inventory-counts/set-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inventory_item_id: itemId, quantity_on_hand: qty }),
+        body: JSON.stringify({ inventory_item_id: itemId, quantity_on_hand: qty, local_date: new Date().toLocaleDateString('en-CA') }),
       })
       setSetStockItemId(null)
       setSetStockValue('')
@@ -242,7 +239,7 @@ export default function InventoryItemsPage() {
     setEditCat(item.category ?? '')
     // Food weight units (lb, oz) with pack_size: cost stored as per-unit → display as per-case
     const packSz = item.pack_size
-    const isFoodWeightCase = (item.item_type === 'paper' || (item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart')) || (item.item_type === 'beverage' && (item.unit === 'gallon' || item.unit === 'quart' || item.unit === 'liter'))) && packSz != null && packSz > 0
+    const isFoodWeightCase = isCasePack(item)
     setEditCost(item.cost_per_unit != null
       ? String(isFoodWeightCase ? parseFloat((item.cost_per_unit * packSz!).toFixed(4)) : item.cost_per_unit)
       : '')
@@ -668,7 +665,7 @@ export default function InventoryItemsPage() {
                       </span>
                     )}
                     {item.cost_per_unit != null && (() => {
-                      const isFoodCase = (item.item_type === 'paper' || (item.item_type === 'food' && (item.unit === 'lb' || item.unit === 'oz' || item.unit === 'each' || item.unit === 'gallon' || item.unit === 'quart')) || (item.item_type === 'beverage' && (item.unit === 'gallon' || item.unit === 'quart' || item.unit === 'liter'))) && item.pack_size && item.pack_size > 0
+                      const isFoodCase = isCasePack(item)
                       const displayCost = isFoodCase
                         ? (item.cost_per_unit * item.pack_size!).toFixed(2)
                         : item.cost_per_unit.toFixed(2)
@@ -703,11 +700,7 @@ export default function InventoryItemsPage() {
                       const expectedNative = exp.expected_qty_oz / factor
                       const purchasedNative = (exp.purchases_since_oz / factor).toFixed(1).replace(/\.0$/, '')
                       const deductedNative  = (exp.deductions_since_oz / factor).toFixed(1).replace(/\.0$/, '')
-                      const isFCP = (
-                        (item.item_type === 'food' && (u === 'lb' || u === 'oz' || u === 'each' || u === 'gallon' || u === 'quart')) ||
-                        (item.item_type === 'beverage' && (u === 'gallon' || u === 'quart' || u === 'liter')) ||
-                        item.item_type === 'paper'
-                      ) && (item.pack_size ?? 0) > 1
+                      const isFCP = isCasePack(item)
                       const expRaw = Math.max(0, expectedNative)
                       const expCases = isFCP && item.pack_size ? Math.floor(expRaw / item.pack_size) : null
                       const expLoose = isFCP && item.pack_size ? Math.round((expRaw % item.pack_size) * 100) / 100 : null

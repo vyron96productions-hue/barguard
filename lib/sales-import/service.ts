@@ -57,6 +57,7 @@ export async function runSalesImport(
   filename: string,
   validRows: ValidatedSalesRow[],
   draftId?: string,
+  contentHash?: string,
 ): Promise<SalesImportResult> {
   const allDates    = validRows.map((r) => r.date).sort()
   const periodStart = allDates[0]
@@ -70,7 +71,8 @@ export async function runSalesImport(
     period_end:   periodEnd,
     row_count:    validRows.length,
   }
-  if (draftId) uploadPayload.email_import_draft_id = draftId
+  if (draftId)      uploadPayload.email_import_draft_id = draftId
+  if (contentHash)  uploadPayload.content_hash          = contentHash
 
   const { data: upload, error: uploadError } = await supabase
     .from('sales_uploads')

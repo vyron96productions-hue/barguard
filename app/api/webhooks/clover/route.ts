@@ -101,8 +101,8 @@ export async function POST(req: NextRequest) {
         if (!order.payType) continue
 
         const saleDate = order.createdTime
-          ? new Date(order.createdTime as number).toISOString().slice(0, 10)
-          : new Date().toISOString().slice(0, 10)
+          ? new Date(order.createdTime as number).toLocaleDateString('en-CA')
+          : new Date().toLocaleDateString('en-CA')
 
         const items: NormalizedSaleItem[] = []
         for (const li of order.lineItems?.elements ?? []) {
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'unknown'
-        const saleDate = new Date().toISOString().slice(0, 10)
+        const saleDate = new Date().toLocaleDateString('en-CA')
         await logPosSync('clover', saleDate, saleDate, 'error', 0, conn.business_id, msg)
       }
     }

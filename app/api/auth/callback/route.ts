@@ -5,6 +5,7 @@ import { createHash } from 'crypto'
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
+  try {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
   // invite_token is passed through if the user started the OAuth flow from /accept-invite
@@ -164,4 +165,7 @@ export async function GET(req: NextRequest) {
   })
 
   return NextResponse.redirect(`${origin}/profile?new=1`)
+  } catch {
+    return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  }
 }

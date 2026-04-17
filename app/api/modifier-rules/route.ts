@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 
 // Prefixes that indicate a flat sale line item is really a modifier/add-on
 const MODIFIER_PREFIXES = [
@@ -109,7 +110,9 @@ export async function PUT(req: NextRequest) {
 // DELETE — remove a modifier rule by id
 export async function DELETE(req: NextRequest) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { supabase, businessId } = ctx
     const { id } = await req.json()
 
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })

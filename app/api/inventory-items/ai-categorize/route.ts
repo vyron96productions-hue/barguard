@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import Anthropic from '@anthropic-ai/sdk'
+import { PRESET_CATEGORIES } from '@/lib/categories'
 
 export const maxDuration = 120
 
@@ -13,20 +14,6 @@ export interface AiCategorizeSuggestion {
   suggested_category: string
   item_type: 'beverage' | 'food' | 'paper'
 }
-
-const PRESET_CATEGORIES = [
-  // Beverages
-  'spirits', 'beer', 'wine', 'keg', 'mixer', 'non-alcoholic',
-  'rum', 'tequila', 'vodka', 'whiskey', 'gin', 'brandy', 'cognac', 'liqueur',
-  // Food
-  'food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods',
-  'sauces', 'condiments', 'dessert', 'supply',
-  // Paper / supplies
-  'cups & lids', 'napkins', 'plates & bowls', 'to-go containers',
-  'paper towels', 'straws & utensils', 'cleaning supplies', 'packaging',
-  // Other
-  'other',
-]
 
 // GET /api/inventory-items/ai-categorize
 // Uses Claude to suggest a category for every item that has no category
@@ -47,7 +34,7 @@ export async function GET() {
 
 Available categories:
 Beverage: spirits, beer, wine, keg, mixer, non-alcoholic, rum, tequila, vodka, whiskey, gin, brandy, cognac, liqueur
-Food: food, kitchen, produce, protein, dairy, dry goods, sauces, condiments, dessert, supply
+Food: food, kitchen, produce, proteins, dairy, dry goods, frozen, sauces, condiments, garnish, bread & starches, prep items, disposables
 Paper/Supplies: cups & lids, napkins, plates & bowls, to-go containers, paper towels, straws & utensils, cleaning supplies, packaging
 Other: other
 
@@ -56,7 +43,7 @@ Rules:
 - Liqueurs (Baileys, Kahlúa, Amaretto, Triple Sec, Chambord, Cointreau, etc.) → "liqueur"
 - Wine bottles/cases → "wine". Beer bottles/cans/cases → "beer". Kegs → "keg".
 - Mixers (tonic, club soda, juice, syrups) → "mixer"
-- Food items → best matching food category. Supplies → "supply".
+- Food items → best matching food category (e.g. proteins, produce, dairy). Supplies → "supply".
 - Paper goods, cups, napkins, plates, to-go boxes, paper towels, straws, cleaning products → appropriate paper/supplies category, item_type="paper"
 - If nothing fits → "other"
 

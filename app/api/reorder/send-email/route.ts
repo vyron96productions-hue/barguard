@@ -1,29 +1,40 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
-import { getAuthContext } from '@/lib/auth'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export async function POST(req: Request) {
-  const { supabase, businessId } = await getAuthContext()
-  if (!businessId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { supabase, businessId } = await getAuthContext()
 
-  const { vendorEmail, vendorName, orderText, businessName } = await req.json()
+    let vendorEmail: string, vendorName: string | undefined, orderText: string, businessName: string | undefined
+    try {
+      ;({ vendorEmail, vendorName, orderText, businessName } = await req.json())
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    }
 
-  if (!vendorEmail || !orderText) {
-    return NextResponse.json({ error: 'Missing vendor email or order text' }, { status: 400 })
-  }
+    if (!vendorEmail || !orderText) {
+      return NextResponse.json({ error: 'Missing vendor email or order text' }, { status: 400 })
+    }
 
-  // Get business contact email to CC the owner
-  const { data: biz } = await supabase
-    .from('businesses')
-    .select('contact_email')
-    .eq('id', businessId)
-    .single()
+    if (!EMAIL_RE.test(vendorEmail)) {
+      return NextResponse.json({ error: 'Invalid vendor email address' }, { status: 400 })
+    }
 
-  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    // Get business contact email to CC the owner
+    const { data: biz } = await supabase
+      .from('businesses')
+      .select('contact_email')
+      .eq('id', businessId)
+      .single()
 
-  const html = `
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+
+    const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b;">
       <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">${today}</p>
       <p>Hi ${vendorName},</p>
@@ -33,17 +44,18 @@ export async function POST(req: Request) {
     </div>
   `
 
-  const { error } = await resend.emails.send({
-    from: 'BarGuard <support@barguard.app>',
-    to: vendorEmail,
-    ...(biz?.contact_email ? { cc: biz.contact_email } : {}),
-    subject: `Purchase Order from ${businessName || 'My Bar'} — ${today}`,
-    html,
-  })
+    const { error } = await resend.emails.send({
+      from: 'BarGuard <support@barguard.app>',
+      to: vendorEmail,
+      ...(biz?.contact_email ? { cc: biz.contact_email } : {}),
+      subject: `Purchase Order from ${businessName || 'My Bar'} — ${today}`,
+      html,
+    })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
-  return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true })
+  } catch (e) { return authErrorResponse(e) }
 }

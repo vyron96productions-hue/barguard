@@ -5,6 +5,7 @@ import { fetchCloverSales } from './clover'
 import { fetchFocusSales } from './focus'
 import { importPosItemsToSupabase, autoCreateMenuItemsFromSales, logPosSync } from './sync'
 import { logger, logError } from '@/lib/logger'
+import { utcDateStr, yesterdayUtc } from '@/lib/dates'
 
 const ROUTE = 'pos/auto-sync'
 
@@ -31,7 +32,12 @@ export type PosConnectionRow = {
  * Returns number of transactions imported (0 on error).
  */
 export async function syncTodayForConnection(conn: PosConnectionRow): Promise<number> {
-  const today = new Date().toISOString().slice(0, 10)
+  // Use yesterday+today UTC window so sales in the final hours of a local day
+  // (when UTC has already flipped to "tomorrow") are never missed.
+  // importPosItemsToSupabase is idempotent — re-syncing yesterday is always safe.
+  const today     = utcDateStr()
+  const yesterday = yesterdayUtc()
+  const startDate = yesterday
   const { business_id: businessId, pos_type: posType } = conn
 
   try {
@@ -56,19 +62,19 @@ export async function syncTodayForConnection(conn: PosConnectionRow): Promise<nu
             }).eq('id', conn.id)
           }
         }
-        items = await fetchToastSales(accessToken, conn.location_id!, today, today)
+        items = await fetchToastSales(accessToken, conn.location_id!, startDate, today)
         break
       }
       case 'square': {
-        items = await fetchSquareSales(conn.access_token, conn.location_id!, today, today)
+        items = await fetchSquareSales(conn.access_token, conn.location_id!, startDate, today)
         break
       }
       case 'clover': {
-        items = await fetchCloverSales(conn.access_token, conn.location_id!, today, today)
+        items = await fetchCloverSales(conn.access_token, conn.location_id!, startDate, today)
         break
       }
       case 'focus': {
-        items = await fetchFocusSales(conn.location_id!, conn.merchant_id!, conn.access_token, conn.refresh_token!, today, today)
+        items = await fetchFocusSales(conn.location_id!, conn.merchant_id!, conn.access_token, conn.refresh_token!, startDate, today)
         break
       }
       default:
@@ -76,18 +82,18 @@ export async function syncTodayForConnection(conn: PosConnectionRow): Promise<nu
         return 0
     }
 
-    const count = await importPosItemsToSupabase(posType as never, today, today, items, businessId)
+    const count = await importPosItemsToSupabase(posType as never, startDate, today, items, businessId)
 
     if (posType === 'toast' || posType === 'focus') {
       await autoCreateMenuItemsFromSales(items, businessId)
     }
 
-    await logPosSync(posType as never, today, today, 'success', count, businessId)
+    await logPosSync(posType as never, startDate, today, 'success', count, businessId)
     logger.info(ROUTE, 'Auto-sync complete', { businessId, posType, imported: count })
     return count
   } catch (e) {
     logError(ROUTE, e, { businessId, posType })
-    await logPosSync(posType as never, today, today, 'error', 0, businessId, e instanceof Error ? e.message : 'Auto-sync failed').catch(() => {})
+    await logPosSync(posType as never, startDate, today, 'error', 0, businessId, e instanceof Error ? e.message : 'Auto-sync failed').catch(() => {})
     return 0
   }
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { parseCsvText } from '@/lib/csv'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
@@ -22,6 +23,22 @@ export async function POST(req: NextRequest) {
 
     const mapping: Record<string, string> = JSON.parse(mappingRaw)
     const text = await file.text()
+
+    // Reject duplicate uploads — same file content for the same business
+    const contentHash = createHash('sha256').update(text).digest('hex')
+    const { data: existingUpload } = await supabase
+      .from('sales_uploads')
+      .select('id, filename, period_start, period_end')
+      .eq('business_id', businessId)
+      .eq('content_hash', contentHash)
+      .maybeSingle()
+    if (existingUpload) {
+      logger.warn(ROUTE, 'Duplicate upload rejected', { businessId, filename: file.name, contentHash, existing_upload_id: existingUpload.id })
+      return NextResponse.json({
+        error: `This file has already been imported (${existingUpload.filename}, ${existingUpload.period_start} – ${existingUpload.period_end}). Uploading it again would double-count every sale.`,
+      }, { status: 409 })
+    }
+
     const { rows, errors } = parseCsvText(text)
 
     if (errors.length > 0 && rows.length === 0) {
@@ -59,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     logger.info(ROUTE, 'Importing sales', { businessId, filename: file.name, valid_rows: validRows.length, row_errors: rowErrors.length })
-    const result = await runSalesImport(supabase, businessId, file.name, validRows)
+    const result = await runSalesImport(supabase, businessId, file.name, validRows, undefined, contentHash)
     logger.info(ROUTE, 'Import complete', { businessId, ...result })
 
     return NextResponse.json({ ...result, row_errors: rowErrors })

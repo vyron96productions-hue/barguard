@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { runSalesImport } from '@/lib/sales-import/service'
 import type { ValidatedSalesRow } from '@/lib/sales-import/types'
@@ -17,7 +18,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { businessId } = ctx
     const { id } = await params
 
     // ── Atomic CAS: transition status pending_review → processing ──────────────

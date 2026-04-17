@@ -6,7 +6,7 @@ function isoWeekStart(): string {
   const day = d.getDay() // 0=Sun
   const diff = d.getDate() - day + (day === 0 ? -6 : 1)
   const mon = new Date(d.setDate(diff))
-  return mon.toISOString().slice(0, 10)
+  return mon.toLocaleDateString('en-CA')
 }
 
 function monthStart(): string {
@@ -14,15 +14,15 @@ function monthStart(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
+function todayLocal(): string {
+  return new Date().toLocaleDateString('en-CA')
 }
 
 export async function GET() {
   try {
     const { supabase, businessId } = await getAuthContext()
 
-    const today     = todayIso()
+    const today     = todayLocal()
     const weekStart = isoWeekStart()
     const monStart  = monthStart()
 
@@ -45,7 +45,7 @@ export async function GET() {
     // Category breakdown (all time past 90 days for analytics)
     const ninetyDaysAgo = new Date()
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-    const since90 = ninetyDaysAgo.toISOString().slice(0, 10)
+    const since90 = ninetyDaysAgo.toLocaleDateString('en-CA')
 
     const { data: items } = await supabase
       .from('expense_receipt_items')

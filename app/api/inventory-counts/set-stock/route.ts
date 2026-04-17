@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { logError } from '@/lib/logger'
+import { localDateFromClient } from '@/lib/dates'
 
 const ROUTE = 'inventory-counts/set-stock'
 
@@ -12,7 +13,7 @@ const ROUTE = 'inventory-counts/set-stock'
 export async function POST(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
-    const { inventory_item_id, quantity_on_hand } = await req.json()
+    const { inventory_item_id, quantity_on_hand, local_date } = await req.json()
 
     if (!inventory_item_id || quantity_on_hand == null) {
       return NextResponse.json({ error: 'inventory_item_id and quantity_on_hand are required' }, { status: 400 })
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 404 })
 
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateFromClient(local_date)
 
     // Ensure a count_upload record exists for manual corrections
     const { data: uploadRow } = await supabase
