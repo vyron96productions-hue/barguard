@@ -51,7 +51,7 @@ export default function AliasesPage() {
     <div className="space-y-5 max-w-2xl">
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-gray-100">Alias Resolution</h1>
-        <p className="text-gray-500 mt-1 text-sm">Map raw CSV names to your normalized items so calculations work correctly.</p>
+        <p className="text-gray-500 mt-1 text-sm">Map raw POS/CSV names to your menu and inventory items so stock deductions work correctly.</p>
       </div>
 
       {loading ? (
@@ -67,7 +67,7 @@ export default function AliasesPage() {
             <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
               <div className="px-4 sm:px-5 py-4 border-b border-gray-800">
                 <h2 className="font-semibold text-gray-100 text-sm sm:text-base">Unmatched Menu Names</h2>
-                <p className="text-xs text-gray-500 mt-1">From your sales CSV — no matching menu item found.</p>
+                <p className="text-xs text-gray-500 mt-1">Raw names from your POS or CSV imports that don't match any menu item.</p>
               </div>
               <div className="divide-y divide-gray-800">
                 {unmatched.menu_names.filter((n) => !resolved.has(n)).map((rawName) => (
@@ -120,6 +120,11 @@ function AliasRow({
   onResolve: (targetId: string) => void
 }) {
   const [selected, setSelected] = useState('')
+  const [search, setSearch] = useState('')
+  const [open, setOpen] = useState(false)
+  const selectedLabel = options.find((o) => o.id === selected)?.label ?? ''
+  const filtered = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+
   return (
     <div className="px-4 sm:px-5 py-4 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
       {/* Raw name */}
@@ -129,16 +134,44 @@ function AliasRow({
 
       <span className="hidden sm:block text-gray-600 text-sm shrink-0">→</span>
 
-      {/* Select + Save row */}
+      {/* Searchable combobox + Save */}
       <div className="flex gap-2 sm:contents">
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          className="flex-1 sm:flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-200"
-        >
-          <option value="">Select match…</option>
-          {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
+        <div className="relative flex-1 sm:flex-1">
+          <input
+            type="text"
+            placeholder={selected ? selectedLabel : 'Search menu item…'}
+            value={open ? search : selectedLabel}
+            onChange={(e) => { setSearch(e.target.value); setOpen(true) }}
+            onFocus={() => { setSearch(''); setOpen(true) }}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            className={`w-full bg-gray-800 border rounded px-3 py-2 text-sm text-gray-200 focus:outline-none ${
+              selected ? 'border-amber-500/40' : 'border-gray-700'
+            }`}
+          />
+          {selected && !open && (
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 text-xs pointer-events-none">✓</span>
+          )}
+          {open && (
+            <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-gray-800 border border-gray-700 rounded shadow-xl max-h-52 overflow-y-auto">
+              {filtered.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-gray-500">No matches</p>
+              ) : (
+                filtered.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onMouseDown={() => { setSelected(o.id); setSearch(''); setOpen(false) }}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-700 transition-colors ${
+                      selected === o.id ? 'text-amber-400 bg-gray-700/50' : 'text-gray-200'
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
         <button
           onClick={() => onResolve(selected)}
           disabled={!selected || saving}
