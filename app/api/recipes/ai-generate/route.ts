@@ -54,11 +54,12 @@ export async function GET() {
 
     const invMap = new Map(eligible.map((i) => [i.id, i]))
 
-    // Batch to 30 items per call with a 15s delay between batches.
+    // Batch to 30 items per call with an 8s delay between batches.
     // 30 items ≈ 1200 output tokens. 5 batches × 1200 = 6000 tokens spread
-    // over ~60s stays safely under the 8k output tokens/min rate limit.
+    // over ~52s stays under the 8k output tokens/min rate limit and
+    // under Vercel's 60s default function timeout.
     const BATCH_SIZE = 30
-    const BATCH_DELAY_MS = 15000
+    const BATCH_DELAY_MS = 8000
     const batches: typeof eligible[] = []
     for (let i = 0; i < capped.length; i += BATCH_SIZE) {
       batches.push(capped.slice(i, i + BATCH_SIZE))
