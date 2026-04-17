@@ -50,6 +50,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/status',
   '/api/email-imports/poll',
   '/api/email-imports/cleanup',
+  '/api/cron/',
 ]
 
 function isPrivateRoute(pathname: string): boolean {
