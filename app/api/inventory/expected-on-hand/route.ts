@@ -132,19 +132,23 @@ export async function GET() {
       recipeMap[r.menu_item_id].push(r)
     }
 
-    // 6. Deductions per inventory item (oz), filtered to after each item's last count
+    // 6. Deductions per inventory item (oz), filtered to after each item's last count.
+    // For items with no count, accumulate all deductions in the query window —
+    // this lets the "COUNT THIS" badge appear on food items that have never been
+    // physically counted but are actively being sold.
     const deductionsOz: Record<string, number> = {}
     for (const sale of sales) {
       const itemRecipes = recipeMap[sale.menu_item_id as string] ?? []
       for (const recipe of itemRecipes) {
         const lc = latestCount[recipe.inventory_item_id]
-        if (!lc || sale.sale_date < lc.date) continue
+        // If there IS a count, only count sales after it. If no count, include all sales.
+        if (lc && sale.sale_date < lc.date) continue
         const oz = convertToOz(recipe.quantity * sale.quantity_sold, recipe.unit)
         deductionsOz[recipe.inventory_item_id] = (deductionsOz[recipe.inventory_item_id] ?? 0) + oz
       }
     }
 
-    // 7. Build result — only items with a physical count baseline
+    // 7. Build result — items with a physical count baseline get full expected-qty math.
     const result: ExpectedOnHandItem[] = items
       .filter((item) => latestCount[item.id])
       .map((item) => {
@@ -167,6 +171,23 @@ export async function GET() {
         }
       })
 
-    return NextResponse.json(result)
+    // Also include items with NO count but with active deductions.
+    // These get deductions_since_oz > 0 so the "COUNT THIS" badge appears,
+    // but expected_qty is 0 (no baseline to anchor a real estimate).
+    const uncounted: ExpectedOnHandItem[] = items
+      .filter((item) => !latestCount[item.id] && (deductionsOz[item.id] ?? 0) > 0)
+      .map((item) => ({
+        id:   item.id,
+        name: item.name,
+        unit: item.unit,
+        expected_qty:        0,
+        expected_qty_oz:     0,
+        last_count_qty:      null,
+        last_count_date:     null,
+        purchases_since_oz:  0,
+        deductions_since_oz: deductionsOz[item.id]!,
+      }))
+
+    return NextResponse.json([...result, ...uncounted])
   } catch (e) { return authErrorResponse(e) }
 }

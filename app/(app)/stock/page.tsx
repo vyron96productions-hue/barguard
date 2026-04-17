@@ -843,7 +843,7 @@ export default function StockPage() {
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {item.category && <span className="text-xs text-slate-600">{item.category}</span>}
-                        {expected !== null ? (
+                        {expected !== null && (expItem ? expItem.last_count_qty !== null : item.quantity_on_hand !== null) ? (
                           <span className={`text-xs ${needsHighlight ? 'text-amber-400/90' : 'text-slate-500'}`}>
                             Expected:{' '}
                             <span className={`font-medium ${needsHighlight ? 'text-amber-300' : 'text-slate-300'}`}>
