@@ -171,7 +171,7 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const { supabase, businessId } = await getAuthContext()
-    const { id, name, unit, category, quantity_on_hand } = await req.json()
+    const { id, name, unit, category, quantity_on_hand, count_date: clientDate } = await req.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
     const FOOD_CATS = new Set(['food', 'kitchen', 'produce', 'protein', 'dairy', 'dry goods', 'sauces', 'condiments', 'dessert', 'supply'])
@@ -197,7 +197,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (quantity_on_hand !== null && quantity_on_hand !== undefined) {
-      const today = new Date().toISOString().slice(0, 10)
+      const today = (clientDate && /^\d{4}-\d{2}-\d{2}$/.test(clientDate))
+        ? clientDate
+        : new Date().toISOString().slice(0, 10)
 
       const { data: upload, error: uploadError } = await supabase
         .from('inventory_count_uploads')

@@ -6,15 +6,18 @@ import { logTeamActivity } from '@/lib/team-activity'
 export async function POST(req: NextRequest) {
   try {
     const { supabase, businessId, user } = await getAuthContext()
-    const { counts } = await req.json() as {
+    const { counts, count_date: clientDate } = await req.json() as {
       counts: Array<{ id: string; quantity: number }>
+      count_date?: string
     }
 
     if (!Array.isArray(counts) || counts.length === 0) {
       return NextResponse.json({ error: 'counts array required' }, { status: 400 })
     }
 
-    const today = new Date().toISOString().slice(0, 10)
+    const today = (clientDate && /^\d{4}-\d{2}-\d{2}$/.test(clientDate))
+      ? clientDate
+      : new Date().toISOString().slice(0, 10)
 
     // Verify all items belong to this business and get their names/units
     const ids = counts.map((c) => c.id)

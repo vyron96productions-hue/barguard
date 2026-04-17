@@ -221,7 +221,7 @@ export default function StockPage() {
     await fetch('/api/inventory-counts/bulk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ counts }),
+      body: JSON.stringify({ counts, count_date: new Date().toLocaleDateString('en-CA') }),
     })
     setCountSaving(false)
     setCountDone(true)
@@ -1274,6 +1274,7 @@ function StockCard({ item, allCategories, onUpdate }: {
         quantity_on_hand: qtyToSend,
         package_type: item.package_type ?? null,
         pack_size: item.pack_size ?? null,
+        count_date: new Date().toLocaleDateString('en-CA'),
       }),
     })
     const data = await res.json()
