@@ -47,19 +47,23 @@ export async function GET() {
     let rawPurchases: Array<{ inventory_item_id: string | null; quantity_purchased: number; unit_type: string | null; purchase_date: string }> = []
 
     if (earliest) {
+      // PostgREST default cap is 1000 rows — override to 100k so high-volume
+      // bars with many daily transactions don't get silently truncated.
       const [{ data: salesData }, { data: purchasesData }] = await Promise.all([
         supabase
           .from('sales_transactions')
           .select('menu_item_id, quantity_sold, sale_date')
           .eq('business_id', businessId)
           .gte('sale_date', earliest)
-          .not('menu_item_id', 'is', null),
+          .not('menu_item_id', 'is', null)
+          .limit(100000),
         supabase
           .from('purchases')
           .select('inventory_item_id, quantity_purchased, unit_type, purchase_date')
           .eq('business_id', businessId)
           .gte('purchase_date', earliest)
-          .not('inventory_item_id', 'is', null),
+          .not('inventory_item_id', 'is', null)
+          .limit(10000),
       ])
       rawSales     = salesData     ?? []
       rawPurchases = purchasesData ?? []
