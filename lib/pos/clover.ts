@@ -25,14 +25,24 @@ export async function exchangeCloverCode(
   merchantId: string,
   _redirectUri: string
 ): Promise<PosTokenResponse> {
+  if (!APP_ID || !APP_SECRET) {
+    throw new Error('Clover OAuth credentials not configured (CLOVER_CLIENT_ID / CLOVER_CLIENT_SECRET missing)')
+  }
+
+  const tokenUrl = `${BASE_AUTH}/oauth/token`
   const params = new URLSearchParams({ client_id: APP_ID, client_secret: APP_SECRET, code })
-  const res = await fetch(`${BASE_AUTH}/oauth/token?${params}`, { method: 'GET' })
+  console.log('[clover] token exchange →', tokenUrl, { merchantId, env: process.env.CLOVER_ENVIRONMENT ?? 'sandbox' })
+
+  const res = await fetch(`${tokenUrl}?${params}`, { method: 'GET' })
   const rawText = await res.text()
   let data: Record<string, unknown>
   try { data = JSON.parse(rawText) } catch { throw new Error(`Clover returned non-JSON (${res.status}): ${rawText.slice(0, 200)}`) }
-  if (!res.ok || !data.access_token) throw new Error((data.message as string) ?? 'Clover token exchange failed')
+  if (!res.ok || !data.access_token) {
+    console.error('[clover] token exchange failed', { status: res.status, message: data.message })
+    throw new Error((data.message as string) ?? `Clover token exchange failed (HTTP ${res.status})`)
+  }
 
-  // Fetch merchant name
+  // Fetch merchant name (non-fatal)
   let locationName = merchantId
   try {
     const mRes = await fetch(`${BASE_API}/v3/merchants/${merchantId}`, {
@@ -40,7 +50,10 @@ export async function exchangeCloverCode(
     })
     const mData = await mRes.json()
     if (mData.name) locationName = mData.name
-  } catch { /* non-fatal */ }
+    else console.warn('[clover] merchant lookup returned no name', { status: mRes.status, merchantId })
+  } catch (e) {
+    console.warn('[clover] merchant name fetch failed (non-fatal)', e instanceof Error ? e.message : e)
+  }
 
   return {
     access_token: data.access_token as string,

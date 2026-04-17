@@ -28,11 +28,14 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`${baseUrl}/connections?error=clover_invalid_state`)
   }
 
+  console.log('[clover/callback] received', { merchantId, hasCode: !!code, hasState: !!state })
+
   try {
     const redirectUri = `${baseUrl}/api/pos/clover/callback`
     const token = await exchangeCloverCode(code, merchantId, redirectUri)
+    console.log('[clover/callback] token exchange ok', { merchantId, locationName: token.location_name })
 
-    await adminSupabase.from('pos_connections').upsert({
+    const { error: upsertError } = await adminSupabase.from('pos_connections').upsert({
       business_id: businessId,
       pos_type: 'clover',
       access_token: token.access_token,
@@ -46,9 +49,16 @@ export async function GET(req: Request) {
       is_active: true,
     }, { onConflict: 'business_id,pos_type' })
 
+    if (upsertError) {
+      console.error('[clover/callback] DB upsert failed', upsertError.message)
+      return NextResponse.redirect(`${baseUrl}/connections?error=${encodeURIComponent(upsertError.message)}`)
+    }
+
+    console.log('[clover/callback] connection saved', { businessId, merchantId })
     return NextResponse.redirect(`${baseUrl}/connections?success=clover`)
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'unknown'
+    console.error('[clover/callback] error', msg)
     return NextResponse.redirect(`${baseUrl}/connections?error=${encodeURIComponent(msg)}`)
   }
 }
