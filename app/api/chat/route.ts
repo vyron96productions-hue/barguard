@@ -1,6 +1,29 @@
+import { headers } from 'next/headers'
 import Anthropic from '@anthropic-ai/sdk'
+import { logger } from '@/lib/logger'
 
 const client = new Anthropic()
+
+// ---------------------------------------------------------------------------
+// IP-based rate limiter — 10 requests per 60s per IP
+// In-memory per serverless instance; good enough to stop trivial abuse.
+// ---------------------------------------------------------------------------
+const RATE_LIMIT_MAX   = 10
+const RATE_LIMIT_MS    = 60_000
+const rateLimitStore   = new Map<string, { count: number; resetAt: number }>()
+
+function isRateLimited(ip: string): boolean {
+  const now    = Date.now()
+  const record = rateLimitStore.get(ip)
+
+  if (!record || record.resetAt <= now) {
+    rateLimitStore.set(ip, { count: 1, resetAt: now + RATE_LIMIT_MS })
+    return false
+  }
+  if (record.count >= RATE_LIMIT_MAX) return true
+  record.count++
+  return false
+}
 
 const SYSTEM_PROMPT = `You are the BarGuard assistant — a friendly, knowledgeable helper embedded on the BarGuard website. You speak like someone who has actually worked in bars and genuinely understands the pain of inventory loss. You're warm, direct, and a little conversational — not robotic or corporate.
 
@@ -55,6 +78,17 @@ TONE GUIDELINES:
 Never make up features that don't exist. Never promise specific savings amounts. Don't claim to be human if asked directly.`
 
 export async function POST(req: Request) {
+  // Rate-limit by IP — blocks trivial abuse of the public AI endpoint
+  const hdrs = await headers()
+  const ip   = hdrs.get('x-forwarded-for')?.split(',')[0]?.trim()
+            ?? hdrs.get('x-real-ip')
+            ?? 'unknown'
+
+  if (isRateLimited(ip)) {
+    logger.warn('chat', 'Rate limit hit', { ip })
+    return new Response('Too many requests', { status: 429 })
+  }
+
   const { messages } = await req.json()
 
   if (!messages || !Array.isArray(messages)) {

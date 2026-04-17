@@ -10,6 +10,7 @@ import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { runSalesImport } from '@/lib/sales-import/service'
 import type { ValidatedSalesRow } from '@/lib/sales-import/types'
+import { logger, logError } from '@/lib/logger'
 
 export async function POST(
   _req: NextRequest,
@@ -19,26 +20,50 @@ export async function POST(
     const { businessId } = await getAuthContext()
     const { id } = await params
 
-    // Load draft — explicit businessId check before any write
-    const { data: draft, error: draftErr } = await adminSupabase
+    // ── Atomic CAS: transition status pending_review → processing ──────────────
+    // Using a single UPDATE with a WHERE status='pending_review' clause instead
+    // of read-then-write. Only ONE concurrent request can win this transition;
+    // any simultaneous confirm request will get 0 rows back and return 409.
+    const { data: claimed, error: claimErr } = await adminSupabase
       .from('sales_import_drafts')
-      .select('id, business_id, status, filename, valid_row_count')
+      .update({ status: 'processing' })
       .eq('id', id)
-      .eq('business_id', businessId)  // cross-business rejection
+      .eq('business_id', businessId)    // cross-business rejection
+      .eq('status', 'pending_review')   // CAS guard — only wins if still pending
+      .select('id, filename, valid_row_count')
       .single()
 
-    if (draftErr || !draft) {
-      return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
-    }
+    if (claimErr || !claimed) {
+      // Could be: not found, wrong business, already processing/imported, or DB error.
+      // Do a read to give the caller a meaningful error message.
+      const { data: existing } = await adminSupabase
+        .from('sales_import_drafts')
+        .select('status')
+        .eq('id', id)
+        .eq('business_id', businessId)
+        .single()
 
-    if (draft.status !== 'pending_review') {
+      if (!existing) {
+        return NextResponse.json({ error: 'Draft not found' }, { status: 404 })
+      }
+
+      logger.warn('email-imports/confirm', 'Concurrent confirm blocked by CAS guard', {
+        draftId: id, currentStatus: existing.status,
+      })
       return NextResponse.json(
-        { error: `Draft cannot be confirmed — current status: ${draft.status}` },
+        { error: `Draft cannot be confirmed — current status: ${existing.status}` },
         { status: 409 }
       )
     }
 
+    const draft = claimed
+
     if (draft.valid_row_count === 0) {
+      // Roll back the status claim so the draft doesn't get stuck in 'processing'
+      await adminSupabase
+        .from('sales_import_drafts')
+        .update({ status: 'pending_review' })
+        .eq('id', id)
       return NextResponse.json({ error: 'Draft has no valid rows to import' }, { status: 422 })
     }
 
@@ -79,7 +104,7 @@ export async function POST(
     )
 
     // Mark draft as imported and link to the new sales_upload
-    await adminSupabase
+    const { error: finalErr } = await adminSupabase
       .from('sales_import_drafts')
       .update({
         status:          'imported',
@@ -88,8 +113,24 @@ export async function POST(
       })
       .eq('id', id)
 
+    if (finalErr) {
+      // Import succeeded but the status update failed — log loudly so we can fix manually
+      logError('email-imports/confirm', finalErr, {
+        draftId: id, uploadId: result.upload_id,
+        note: 'Import written but draft status not updated to imported',
+      })
+    }
+
+    logger.info('email-imports/confirm', 'Import confirmed', {
+      draftId: id, uploadId: result.upload_id,
+      rowsImported: result.rows_imported ?? null,
+    })
+
     return NextResponse.json({ ...result, draft_id: id })
   } catch (e) {
+    // If an exception fires after we claimed the draft (status='processing'),
+    // the draft will be stuck. Log with enough context to fix manually.
+    logError('email-imports/confirm', e, { draftId: 'unknown — check processing drafts' })
     return authErrorResponse(e)
   }
 }

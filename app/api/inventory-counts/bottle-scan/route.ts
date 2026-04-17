@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { logError } from '@/lib/logger'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -29,6 +31,9 @@ Rules:
 
 export async function POST(req: NextRequest) {
   try {
+    // Authentication required — this endpoint calls Claude Vision (billable)
+    await getAuthContext()
+
     const formData = await req.formData()
     const file = formData.get('image') as File | null
     if (!file) return NextResponse.json({ error: 'No image provided' }, { status: 400 })
@@ -68,7 +73,7 @@ export async function POST(req: NextRequest) {
       notes: parsed.notes ?? '',
     })
   } catch (e) {
-    console.error('bottle-scan error', e)
+    logError('bottle-scan', e)
     return NextResponse.json({ error: 'Failed to analyze image' }, { status: 500 })
   }
 }
