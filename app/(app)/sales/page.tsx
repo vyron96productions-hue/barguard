@@ -358,8 +358,14 @@ export default function SalesLogPage() {
                                 {!item.matched && (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-600 border border-slate-700">unlinked</span>
                                 )}
-                                {item.item_type === 'food' && (
+                                {item.matched && item.item_type === 'food' && (
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400">food</span>
+                                )}
+                                {item.matched && item.item_type === 'beer' && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400">beer</span>
+                                )}
+                                {item.matched && (item.item_type === 'drink' || item.item_type === 'other') && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400">drink</span>
                                 )}
                               </div>
                             </td>
