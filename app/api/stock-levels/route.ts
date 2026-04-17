@@ -56,6 +56,7 @@ export async function GET() {
           .eq('business_id', businessId)
           .gte('sale_date', earliest)
           .not('menu_item_id', 'is', null)
+          .order('sale_date', { ascending: false })
           .limit(100000),
         supabase
           .from('purchases')

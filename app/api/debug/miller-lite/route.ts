@@ -27,6 +27,7 @@ export async function GET() {
       .eq('business_id', businessId)
       .gte('sale_date', earliest ?? '2026-01-01')
       .not('menu_item_id', 'is', null)
+      .order('sale_date', { ascending: false })
       .limit(100000)
 
     // Find sales for each recipe menu_item_id
