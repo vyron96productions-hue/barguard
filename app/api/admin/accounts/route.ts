@@ -83,22 +83,11 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { user, adminSupabase } = await getAdminContext()
+    const { adminSupabase } = await getAdminContext()
     const { business_id, plan, disabled, bar_name, contact_email } = await req.json()
 
     if (!business_id) {
       return NextResponse.json({ error: 'business_id required' }, { status: 400 })
-    }
-
-    // Legacy plan is a permanent grandfather grant — only the platform owner can assign it.
-    if (plan === 'legacy') {
-      const ownerEmail = process.env.PLATFORM_OWNER_EMAIL
-      if (!ownerEmail || user.email !== ownerEmail) {
-        return NextResponse.json(
-          { error: 'Only the platform owner can assign the legacy plan.' },
-          { status: 403 }
-        )
-      }
     }
 
     const updates: Record<string, unknown> = {}
