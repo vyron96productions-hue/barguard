@@ -224,7 +224,8 @@ export default function RecipeMappingPage() {
       const res = await fetch('/api/recipes/ai-generate')
       const data = await res.json()
       if (!res.ok) { setAiGenError(data.error ?? 'Failed to generate suggestions'); setAiGenLoading(false); return }
-      const sugs: AiGenerateSuggestion[] = Array.isArray(data) ? data : []
+      const sugs: AiGenerateSuggestion[] = Array.isArray(data) ? data : (Array.isArray(data?.suggestions) ? data.suggestions : [])
+      if (data?.capped) setAiGenError(`Showing suggestions for the first 150 of ${data.total_eligible} items. Save these, then run again for the rest.`)
       setAiGenRows(sugs.map((s) => ({
         ...s,
         included: true,

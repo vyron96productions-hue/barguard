@@ -45,13 +45,23 @@ export async function GET() {
 
     if (eligible.length === 0) return NextResponse.json([])
 
+    // Cap per-run to avoid Anthropic output token rate limit (8k tokens/min).
+    // Items that already have menu items are filtered out upstream by existingNames,
+    // so subsequent runs will naturally pick up the next batch.
+    const CAP = 150
+    const capped = eligible.slice(0, CAP)
+    const wasCapped = eligible.length > CAP
+
     const invMap = new Map(eligible.map((i) => [i.id, i]))
 
-    // Batch to 50 items per call — prevents response truncation on large inventories
-    const BATCH_SIZE = 50
+    // Batch to 30 items per call with a 15s delay between batches.
+    // 30 items ≈ 1200 output tokens. 5 batches × 1200 = 6000 tokens spread
+    // over ~60s stays safely under the 8k output tokens/min rate limit.
+    const BATCH_SIZE = 30
+    const BATCH_DELAY_MS = 15000
     const batches: typeof eligible[] = []
-    for (let i = 0; i < eligible.length; i += BATCH_SIZE) {
-      batches.push(eligible.slice(i, i + BATCH_SIZE))
+    for (let i = 0; i < capped.length; i += BATCH_SIZE) {
+      batches.push(capped.slice(i, i + BATCH_SIZE))
     }
 
     const SYSTEM = `You are a bar management assistant. Given bar inventory items, generate ONE menu item per item that a bar would actually sell.
@@ -106,11 +116,10 @@ Return ONLY a JSON array, no markdown, no explanation.`
       }
     }
 
-    // Sequential — parallel Promise.all hits the 30k input tokens/min rate limit
-    // when inventory is large (700+ items = 14+ batches firing simultaneously)
     const batchResults: RawSuggestion[][] = []
-    for (const batch of batches) {
-      batchResults.push(await runBatch(batch))
+    for (let i = 0; i < batches.length; i++) {
+      if (i > 0) await new Promise((r) => setTimeout(r, BATCH_DELAY_MS))
+      batchResults.push(await runBatch(batches[i]))
     }
     const raw = batchResults.flat()
 
@@ -135,7 +144,7 @@ Return ONLY a JSON array, no markdown, no explanation.`
         }
       })
 
-    return NextResponse.json(suggestions)
+    return NextResponse.json({ suggestions, capped: wasCapped, total_eligible: eligible.length })
   } catch (e) {
     return authErrorResponse(e)
   }
