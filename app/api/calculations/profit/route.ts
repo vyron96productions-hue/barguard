@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { calculateDrinkCostFromRecipe, profitMarginPct, type ItemCostInfo } from '@/lib/drink-costing'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'calculations/profit'
 
 export async function POST(req: NextRequest) {
   try {
@@ -125,7 +128,7 @@ export async function POST(req: NextRequest) {
       ? deleteQuery.eq('shift_label', shiftLabelVal)
       : deleteQuery.is('shift_label', null)
     const { error: deleteError } = await deleteQuery
-    if (deleteError) console.error('[profit] delete failed:', deleteError.message)
+    if (deleteError) logger.warn(ROUTE, 'Delete old summaries failed', { error: deleteError.message })
 
     const insertRows = results.map((r) => ({
       business_id: businessId,
@@ -146,7 +149,7 @@ export async function POST(req: NextRequest) {
       .from('drink_profit_summaries')
       .insert(insertRows)
 
-    if (insertError) console.error('[profit] insert failed:', insertError.message)
+    if (insertError) logger.warn(ROUTE, 'Insert summaries failed', { error: insertError.message })
 
     return NextResponse.json(results)
   } catch (e) { return authErrorResponse(e) }

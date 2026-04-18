@@ -9,12 +9,14 @@ export const PRICE_IDS: Record<string, string> = {
   enterprise_annual: 'price_1TLKDuB1YIRqnSkIhgmyixyr',
 }
 
-export const PLAN_ORDER: Plan[] = ['basic', 'pro', 'enterprise', 'legacy']
+// Ordered from lowest to highest paid tier. 'legacy' is excluded because
+// planHasFeature() grants legacy full access via the early-return above.
+const PAID_PLAN_ORDER: Exclude<Plan, 'legacy'>[] = ['basic', 'pro', 'enterprise']
 
 export function planHasFeature(plan: Plan, requiredPlan: 'basic' | 'pro' | 'enterprise') {
   if (plan === 'legacy') return true
-  const current = PLAN_ORDER.indexOf(plan)
-  const required = PLAN_ORDER.indexOf(requiredPlan)
+  const current = PAID_PLAN_ORDER.indexOf(plan as Exclude<Plan, 'legacy'>)
+  const required = PAID_PLAN_ORDER.indexOf(requiredPlan)
   return current >= required
 }
 

@@ -3,6 +3,9 @@ import crypto from 'crypto'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { importPosItemsToSupabase, logPosSync } from '@/lib/pos/sync'
 import type { NormalizedSaleItem } from '@/lib/pos/types'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'webhooks/clover'
 
 const APP_SECRET = process.env.CLOVER_CLIENT_SECRET ?? ''
 
@@ -37,14 +40,23 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text()
   const signatureHeader = req.headers.get('x-clover-auth') ?? ''
 
-  // Clover verification pings don't include a signature — let them through
-  if (signatureHeader && !verifyCloverSignature(rawBody, signatureHeader)) {
+  // Parse body early so we can check for verificationCode before auth
+  let parsed: Record<string, unknown>
+  try { parsed = JSON.parse(rawBody) } catch { parsed = {} }
+
+  // Clover verification pings arrive unsigned — only allow unsigned requests for those
+  if (!signatureHeader) {
+    if (parsed.verificationCode) return NextResponse.json({ received: true })
+    logger.warn(ROUTE, 'Missing signature on non-verification request')
+    return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+  }
+
+  if (!verifyCloverSignature(rawBody, signatureHeader)) {
+    logger.warn(ROUTE, 'Signature verification failed')
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  // Respond to verification pings
-  let parsed: Record<string, unknown>
-  try { parsed = JSON.parse(rawBody) } catch { parsed = {} }
+  // Respond to signed verification pings too
   if (parsed.verificationCode) {
     return NextResponse.json({ received: true })
   }
@@ -91,7 +103,7 @@ export async function POST(req: NextRequest) {
       if (dedupError) {
         // Non-duplicate error (e.g. 42P01 = table missing, network issue).
         // Log prominently but continue processing — a missed dedup is preferable to dropping a sale.
-        console.error(`[clover] dedup insert failed: code=${dedupError.code} msg=${dedupError.message} order=${orderId}`)
+        logger.error(ROUTE, 'Dedup insert failed — continuing', { code: dedupError.code, error: dedupError.message, order_id: orderId })
       }
 
       try {

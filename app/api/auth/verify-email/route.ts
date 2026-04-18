@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { adminSupabase } from '@/lib/supabase/admin'
+import { logger } from '@/lib/logger'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+const ROUTE = 'auth/verify-email'
 
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
@@ -212,11 +214,11 @@ export async function GET(req: NextRequest) {
             </table>
           </div>
         `,
-      }).catch((err) => { console.error('[verify-email] owner notification failed:', err) })
+      }).catch((err) => { logger.warn(ROUTE, 'Owner notification email failed', { error: err instanceof Error ? err.message : String(err) }) })
     }
   } catch (err) {
     // Welcome email failure is non-fatal — user is already verified, but log for observability
-    console.error('[verify-email] welcome email failed:', err)
+    logger.warn(ROUTE, 'Welcome email failed', { error: err instanceof Error ? err.message : String(err) })
   }
 
   return NextResponse.redirect(`${origin}/welcome`)

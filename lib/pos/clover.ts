@@ -1,4 +1,7 @@
 import type { NormalizedSaleItem, PosTokenResponse } from './types'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'pos/clover'
 
 const BASE_AUTH = process.env.CLOVER_ENVIRONMENT === 'production'
   ? 'https://www.clover.com'
@@ -31,14 +34,14 @@ export async function exchangeCloverCode(
 
   const tokenUrl = `${BASE_AUTH}/oauth/token`
   const params = new URLSearchParams({ client_id: APP_ID, client_secret: APP_SECRET, code })
-  console.log('[clover] token exchange →', tokenUrl, { merchantId, env: process.env.CLOVER_ENVIRONMENT ?? 'sandbox' })
+  logger.info(ROUTE, 'Token exchange', { tokenUrl, merchantId, env: process.env.CLOVER_ENVIRONMENT ?? 'sandbox' })
 
   const res = await fetch(`${tokenUrl}?${params}`, { method: 'GET' })
   const rawText = await res.text()
   let data: Record<string, unknown>
   try { data = JSON.parse(rawText) } catch { throw new Error(`Clover returned non-JSON (${res.status}): ${rawText.slice(0, 200)}`) }
   if (!res.ok || !data.access_token) {
-    console.error('[clover] token exchange failed', { status: res.status, message: data.message })
+    logger.error(ROUTE, 'Token exchange failed', { status: res.status, message: data.message })
     throw new Error((data.message as string) ?? `Clover token exchange failed (HTTP ${res.status})`)
   }
 
@@ -50,9 +53,9 @@ export async function exchangeCloverCode(
     })
     const mData = await mRes.json()
     if (mData.name) locationName = mData.name
-    else console.warn('[clover] merchant lookup returned no name', { status: mRes.status, merchantId })
+    else logger.warn(ROUTE, 'Merchant lookup returned no name', { status: mRes.status, merchantId })
   } catch (e) {
-    console.warn('[clover] merchant name fetch failed (non-fatal)', e instanceof Error ? e.message : e)
+    logger.warn(ROUTE, 'Merchant name fetch failed (non-fatal)', { error: e instanceof Error ? e.message : String(e) })
   }
 
   return {

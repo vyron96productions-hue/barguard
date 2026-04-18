@@ -58,11 +58,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const aliasLines = body.lines.filter((l) => l.save_alias && l.inventory_item_id && l.raw_item_name)
-    for (const line of aliasLines) {
+    if (aliasLines.length > 0) {
       await supabase
         .from('inventory_item_aliases')
         .upsert(
-          { business_id: businessId, raw_name: line.raw_item_name, inventory_item_id: line.inventory_item_id },
+          aliasLines.map((line) => ({
+            business_id: businessId,
+            raw_name: line.raw_item_name,
+            inventory_item_id: line.inventory_item_id,
+          })),
           { onConflict: 'business_id,raw_name' }
         )
     }

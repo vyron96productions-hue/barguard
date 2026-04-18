@@ -25,7 +25,7 @@ export async function getAuthContext() {
     .select('business_id, role, client_role, membership_status')
     .eq('user_id', user.id)
     .eq('membership_status', 'active')  // removed members are rejected here
-    .single()
+    .maybeSingle()
 
   if (ubErr || !ubRaw) throw new AuthError('No business found for this account', 403)
 

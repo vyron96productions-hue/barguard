@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import Anthropic from '@anthropic-ai/sdk'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'recipes/ai-generate'
 
 export const maxDuration = 120
 
@@ -103,13 +106,13 @@ Return ONLY a JSON array, no markdown, no explanation.`
       const text = (response.content[0] as { type: 'text'; text: string }).text.trim()
       const jsonMatch = text.match(/\[[\s\S]*\]/)
       if (!jsonMatch) {
-        console.error('[ai-generate] batch parse failed, text snippet:', text.slice(0, 300))
+        logger.warn(ROUTE, 'Batch parse failed — no JSON array found', { snippet: text.slice(0, 300) })
         return []
       }
       try {
         return JSON.parse(jsonMatch[0]) as RawSuggestion[]
       } catch {
-        console.error('[ai-generate] JSON.parse failed, snippet:', jsonMatch[0].slice(0, 300))
+        logger.warn(ROUTE, 'JSON.parse failed on AI response', { snippet: jsonMatch[0].slice(0, 300) })
         return []
       }
     }

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { inferItemType } from '@/lib/categories'
 import { calculateExpectedOnHand, earliestCountDate } from '@/lib/inventory-calc'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'stock-levels'
 
 export async function GET() {
   try {
@@ -38,7 +41,7 @@ export async function GET() {
       .from('menu_item_recipes')
       .select('menu_item_id, inventory_item_id, quantity, unit')
     if (recipesError) {
-      console.error('[stock-levels] recipes query failed:', recipesError.message)
+      logger.warn(ROUTE, 'Recipes query failed', { error: recipesError.message })
     }
 
     const earliest = earliestCountDate(counts ?? [])
@@ -47,6 +50,12 @@ export async function GET() {
     let rawPurchases: Array<{ inventory_item_id: string | null; quantity_purchased: number; unit_type: string | null; purchase_date: string }> = []
 
     if (earliest) {
+      // Cap the sales window to 90 days so high-volume bars don't pull unbounded history.
+      // Bars that haven't counted in 90+ days will get approximate estimates — acceptable
+      // tradeoff vs. scanning potentially years of transactions on every page load.
+      const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA')
+      const salesFrom = earliest > ninetyDaysAgo ? earliest : ninetyDaysAgo
+
       // PostgREST default cap is 1000 rows — override to 100k so high-volume
       // bars with many daily transactions don't get silently truncated.
       const [{ data: salesData }, { data: purchasesData }] = await Promise.all([
@@ -54,7 +63,7 @@ export async function GET() {
           .from('sales_transactions')
           .select('menu_item_id, quantity_sold, sale_date')
           .eq('business_id', businessId)
-          .gte('sale_date', earliest)
+          .gte('sale_date', salesFrom)
           .not('menu_item_id', 'is', null)
           .order('sale_date', { ascending: false })
           .limit(100000),

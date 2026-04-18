@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
 import { requireMinimumClientRole } from '@/lib/client-access'
 import { PACKAGE_TYPE_SIZES, QUARTER_KEG_PINTS, SIXTH_KEG_PINTS } from '@/lib/beer-packaging'
+import { logger } from '@/lib/logger'
+
+const ROUTE = 'inventory-items'
 
 export async function GET() {
   try {
@@ -203,7 +206,7 @@ export async function DELETE(req: NextRequest) {
       .eq('business_id', businessId)
       .select('id')
     if (orphanedPurchases?.length) {
-      console.log(`[inventory-items] delete item=${id}: orphaned ${orphanedPurchases.length} purchase record(s)`)
+      logger.info(ROUTE, 'Item deleted — purchase records orphaned', { item_id: id, orphaned: orphanedPurchases.length })
     }
 
     await supabase.from('purchase_import_draft_lines').update({ inventory_item_id: null }).eq('inventory_item_id', id)

@@ -210,14 +210,14 @@ export async function autoCreateMenuItemsFromSales(
     await adminSupabase.from('menu_item_aliases').insert(
       insertedMenu.map((m) => ({ business_id: businessId, raw_name: m.name, menu_item_id: m.id }))
     )
-    for (const m of insertedMenu) {
-      await adminSupabase
+    await Promise.all(insertedMenu.map((m) =>
+      adminSupabase
         .from('sales_transactions')
         .update({ menu_item_id: m.id })
         .eq('business_id', businessId)
         .eq('raw_item_name', m.name)
         .is('menu_item_id', null)
-    }
+    ))
   }
 
   // NOTE: We intentionally do NOT create inventory_items from sales data.

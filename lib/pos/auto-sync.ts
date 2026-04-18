@@ -1,5 +1,5 @@
 import { adminSupabase } from '@/lib/supabase/admin'
-import { fetchToastSales, connectToast } from './toast'
+import { fetchToastSales, maybeRefreshToastToken } from './toast'
 import { fetchSquareSales } from './square'
 import { fetchCloverSales } from './clover'
 import { fetchFocusSales } from './focus'
@@ -45,23 +45,7 @@ export async function syncTodayForConnection(conn: PosConnectionRow): Promise<nu
 
     switch (posType) {
       case 'toast': {
-        let accessToken = conn.access_token
-        if (conn.token_expires_at) {
-          const expiresAt = new Date(conn.token_expires_at).getTime()
-          const nearExpiry = expiresAt - Date.now() < 5 * 60 * 1000
-          if (nearExpiry && conn.client_secret) {
-            const reauthed = await connectToast(conn.merchant_id!, conn.client_secret, conn.location_id!)
-            accessToken = reauthed.access_token
-            const newExpiresAt = reauthed.expires_in
-              ? new Date(Date.now() + reauthed.expires_in * 1000).toISOString()
-              : null
-            await adminSupabase.from('pos_connections').update({
-              access_token: reauthed.access_token,
-              refresh_token: reauthed.refresh_token ?? null,
-              ...(newExpiresAt ? { token_expires_at: newExpiresAt } : {}),
-            }).eq('id', conn.id)
-          }
-        }
+        const accessToken = await maybeRefreshToastToken(conn)
         items = await fetchToastSales(accessToken, conn.location_id!, startDate, today)
         break
       }
@@ -84,9 +68,7 @@ export async function syncTodayForConnection(conn: PosConnectionRow): Promise<nu
 
     const count = await importPosItemsToSupabase(posType as never, startDate, today, items, businessId)
 
-    if (posType === 'toast' || posType === 'focus') {
-      await autoCreateMenuItemsFromSales(items, businessId)
-    }
+    await autoCreateMenuItemsFromSales(items, businessId)
 
     await logPosSync(posType as never, startDate, today, 'success', count, businessId)
     logger.info(ROUTE, 'Auto-sync complete', { businessId, posType, imported: count })
