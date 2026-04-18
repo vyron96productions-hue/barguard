@@ -12,6 +12,7 @@ export async function getAdminContext() {
     .from('user_businesses')
     .select('business_id, is_admin')
     .eq('user_id', user.id)
+    .eq('membership_status', 'active')
     .single()
 
   const ub = ubRaw as unknown as { business_id: string; is_admin: boolean } | null

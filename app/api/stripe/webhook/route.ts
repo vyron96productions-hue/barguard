@@ -39,7 +39,9 @@ function notifySupport(subject: string, html: string) {
       </div>
       ${html}
     </div>`,
-  }).catch(() => {/* ignore notification failures */})
+  }).catch((err: unknown) => {
+    logger.warn(ROUTE, 'Support notification email failed to send', { subject, error: err instanceof Error ? err.message : String(err) })
+  })
 }
 
 export async function POST(req: NextRequest) {

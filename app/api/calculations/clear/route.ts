@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 
 export async function POST() {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { supabase, businessId } = ctx
     const { error } = await supabase
       .from('inventory_usage_summaries')
       .delete()

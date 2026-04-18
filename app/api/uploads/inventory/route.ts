@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 import { parseCsvText } from '@/lib/csv'
 import { resolveInventoryItemId } from '@/lib/aliases'
 import { isValidDate, parseFloatSafe } from '@/lib/validation'
@@ -10,7 +11,9 @@ const ROUTE = 'uploads/inventory'
 
 export async function POST(req: NextRequest) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { supabase, businessId } = ctx
 
     const formData = await req.formData()
     const file = formData.get('file') as File | null

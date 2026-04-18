@@ -1,0 +1,9 @@
+date,item_name,quantity,unit_cost,unit_type,vendor
+2026-04-16,Shaved Sirloin,10,18.50,lb,Sysco
+2026-04-16,Chicken Wings,15,4.20,lb,Sysco
+2026-04-16,Cheese Provolone,5,6.80,lb,Sysco
+2026-04-16,Hoagie Buns,2,12.00,each,Sysco
+2026-04-16,Tequila Silver,6,22.00,bottle,Republic National
+2026-04-16,Bourbon Whiskey,4,28.00,bottle,Republic National
+2026-04-16,Vodka,6,18.00,bottle,Republic National
+2026-04-16,Bud Light Case,3,24.00,case,Budweiser Dist.

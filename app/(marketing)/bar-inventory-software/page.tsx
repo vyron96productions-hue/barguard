@@ -171,7 +171,7 @@ export default function BarInventorySoftwarePage() {
         <section style={{ marginBottom: 80 }}>
           <h3 style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Related Resources</h3>
           <div className="seo-grid-2">
-            [
+            {[
               { href: '/reduce-liquor-cost', label: 'Reduce Liquor Cost', desc: 'Identify exactly what\'s driving your pour cost above target.' },
               { href: '/stop-bartender-theft', label: 'Stop Bartender Theft', desc: 'Use shift-level variance data to catch suspicious patterns early.' },
               { href: '/bar-profit-tracking', label: 'Bar Profit Tracking', desc: 'Connect POS revenue to inventory costs — see your real margin by drink and shift.' },

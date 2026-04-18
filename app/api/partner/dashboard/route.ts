@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPartnerContext } from '@/lib/partner-auth'
 import { authErrorResponse } from '@/lib/auth'
 
-const PLAN_MRR: Record<string, number> = { basic: 99, pro: 199, enterprise: 399, legacy: 0 }
+const PLAN_MRR: Record<string, number> = { basic: 129, pro: 249, enterprise: 449, legacy: 0 }
 
 // GET /api/partner/dashboard — partner-facing dashboard data
 export async function GET() {

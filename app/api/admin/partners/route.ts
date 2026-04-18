@@ -23,7 +23,7 @@ export async function GET() {
       .not('partner_id', 'is', null)
 
     const countMap: Record<string, { total: number; active: number; mrr: number }> = {}
-    const PLAN_MRR: Record<string, number> = { basic: 99, pro: 199, enterprise: 399, legacy: 0 }
+    const PLAN_MRR: Record<string, number> = { basic: 129, pro: 249, enterprise: 449, legacy: 0 }
 
     for (const biz of merchantCounts ?? []) {
       if (!biz.partner_id) continue

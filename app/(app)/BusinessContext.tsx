@@ -21,7 +21,7 @@ const defaultData: BusinessData = {
   plan:         null,
   trialEndsAt:  null,
   isAdmin:      false,
-  clientRole:   'admin',   // safe default — UI hides nothing until we know
+  clientRole:   'employee', // most-restrictive default while loading — gates resolve once fetch completes
   isOwner:      false,
   loading:      true,
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 import {
   calculateExpectedUsage,
   calculateActualUsage,
@@ -15,7 +16,9 @@ import { convertToOz } from '@/lib/conversions'
 
 export async function POST(req: NextRequest) {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { supabase, businessId } = ctx
     const body = await req.json()
     const { period_start, period_end, shift_start, shift_end } = body
     // Normalize shift_label: treat empty string as null so it maps to the

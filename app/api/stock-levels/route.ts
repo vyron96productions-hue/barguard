@@ -78,25 +78,6 @@ export async function GET() {
       recipes ?? [],
     )
 
-    // Diagnostic — one value per line so logs don't truncate
-    const ml = (items ?? []).find((i) => i.name === 'Miller Lite')
-    if (ml) {
-      const lc   = (counts ?? []).find((c) => c.inventory_item_id === ml.id)
-      const calc = calcMap.get(ml.id)
-      const mlSales = rawSales.filter((s) => s.menu_item_id === 'f133e15f-116e-411e-a28b-005e7e5d0346').length
-      const mlRecs  = (recipes ?? []).filter((r) => r.inventory_item_id === ml.id).length
-      console.log('[diag] earliest=' + earliest)
-      console.log('[diag] rawSales=' + rawSales.length)
-      console.log('[diag] ml.id=' + ml.id)
-      console.log('[diag] ml.unit=' + ml.unit)
-      console.log('[diag] lc.count_date=' + lc?.count_date)
-      console.log('[diag] lc.qty=' + lc?.quantity_on_hand)
-      console.log('[diag] millerLight_sales=' + mlSales)
-      console.log('[diag] millerLite_recipes=' + mlRecs)
-      console.log('[diag] calc.has_recipe=' + calc?.has_recipe)
-      console.log('[diag] calc.deductions_oz=' + calc?.deductions_since_oz)
-      console.log('[diag] calc.estimated_qty=' + calc?.estimated_qty)
-    }
 
     const result = (items ?? []).map((item) => {
       const count = latestCountMap.get(item.id) ?? null

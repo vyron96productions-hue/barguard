@@ -60,7 +60,6 @@ export async function GET(req: NextRequest) {
       })
     } catch {}
 
-    return NextResponse.json({ ok: false, error: message }, { status: 200 })
-    // Return 200 so Vercel doesn't treat it as a cron failure and stop retrying
+    return NextResponse.json({ ok: false, error: message }, { status: 500 })
   }
 }

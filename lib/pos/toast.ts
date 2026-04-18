@@ -47,20 +47,6 @@ export async function connectToast(
   }
 }
 
-export async function refreshToastToken(
-  clientId: string,
-  clientSecret: string,
-  refreshToken: string
-): Promise<{ access_token: string; expires_in?: number }> {
-  const res = await fetch(`${BASE_URL}/authentication/v1/authentication/refresh`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ clientId, clientSecret, refreshToken }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error('Toast token refresh failed')
-  return { access_token: data.token.accessToken, expires_in: data.token.expiresIn }
-}
 
 export async function fetchToastSales(
   accessToken: string,

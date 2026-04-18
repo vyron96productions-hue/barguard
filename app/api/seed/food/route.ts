@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 
 /**
  * POST /api/seed/food
@@ -8,7 +9,9 @@ import { getAuthContext, authErrorResponse } from '@/lib/auth'
  */
 export async function POST() {
   try {
-    const { supabase, businessId } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'admin')
+    const { supabase, businessId } = ctx
 
     // ── 1. Food inventory items ──────────────────────────────────────────────
     const foodInventory = [

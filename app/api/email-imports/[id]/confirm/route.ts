@@ -132,8 +132,21 @@ export async function POST(
     return NextResponse.json({ ...result, draft_id: id })
   } catch (e) {
     // If an exception fires after we claimed the draft (status='processing'),
-    // the draft will be stuck. Log with enough context to fix manually.
-    logError('email-imports/confirm', e, { draftId: 'unknown — check processing drafts' })
+    // attempt to roll it back to pending_review so the user can retry.
+    // We don't have `id` in scope here if params threw, so guard carefully.
+    try {
+      const { id: draftId } = await params
+      if (draftId) {
+        await adminSupabase
+          .from('sales_import_drafts')
+          .update({ status: 'pending_review' })
+          .eq('id', draftId)
+          .eq('status', 'processing')
+      }
+    } catch (rollbackErr) {
+      logError('email-imports/confirm', rollbackErr, { note: 'Status rollback also failed — draft may be stuck in processing' })
+    }
+    logError('email-imports/confirm', e)
     return authErrorResponse(e)
   }
 }

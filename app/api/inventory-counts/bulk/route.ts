@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext, authErrorResponse } from '@/lib/auth'
+import { requireMinimumClientRole } from '@/lib/client-access'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { logTeamActivity } from '@/lib/team-activity'
 
 export async function POST(req: NextRequest) {
   try {
-    const { supabase, businessId, user } = await getAuthContext()
+    const ctx = await getAuthContext()
+    requireMinimumClientRole(ctx, 'manager')
+    const { supabase, businessId, user } = ctx
     const { counts, count_date: clientDate } = await req.json() as {
       counts: Array<{ id: string; quantity: number }>
       count_date?: string
