@@ -23,7 +23,7 @@ export type PosConnectionRow = {
   merchant_id: string | null
   location_id: string | null
   last_synced_at: string | null
-  client_secret?: string | null
+  client_secret: string | null
 }
 
 /**
