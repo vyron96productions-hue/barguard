@@ -171,11 +171,11 @@ export default function BarInventorySoftwarePage() {
         <section style={{ marginBottom: 80 }}>
           <h3 style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Related Resources</h3>
           <div className="seo-grid-2">
-            {[
-              { href: '/liquor-inventory-management', label: 'Liquor Inventory Management', desc: 'Track every ounce of your spirits, wine, and beer with oz-level precision.' },
-              { href: '/restaurant-inventory-software', label: 'Restaurant Inventory Software', desc: 'Manage beverages, food, and paper supplies in one unified system.' },
+            [
               { href: '/reduce-liquor-cost', label: 'Reduce Liquor Cost', desc: 'Identify exactly what\'s driving your pour cost above target.' },
               { href: '/stop-bartender-theft', label: 'Stop Bartender Theft', desc: 'Use shift-level variance data to catch suspicious patterns early.' },
+              { href: '/bar-profit-tracking', label: 'Bar Profit Tracking', desc: 'Connect POS revenue to inventory costs — see your real margin by drink and shift.' },
+              { href: '/pricing', label: 'View Pricing', desc: 'Plans from $129/month. ROI typically hits within the first week.' },
             ].map((l) => (
               <Link key={l.href} href={l.href} style={{ display: 'block', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: '18px 20px', textDecoration: 'none', transition: 'border-color 0.2s' }}>
                 <p style={{ color: '#f59e0b', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{l.label} →</p>

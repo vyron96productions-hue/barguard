@@ -10,7 +10,7 @@ const RELATED: Record<string, string[]> = {
   'bar-shrinkage-how-much-are-you-losing': ['bar-inventory-management-guide', 'bartender-theft-signs-prevention'],
   'bar-inventory-management-guide': ['bar-shrinkage-how-much-are-you-losing', 'how-to-do-a-bar-inventory-count'],
   'over-pouring-bar-losses': ['bar-shrinkage-how-much-are-you-losing', 'bar-inventory-management-guide'],
-  'bartender-theft-signs-prevention': ['stop-bartender-theft', 'bar-shrinkage-how-much-are-you-losing'],
+  'bartender-theft-signs-prevention': ['over-pouring-bar-losses', 'bar-shrinkage-how-much-are-you-losing'],
   'how-to-reduce-liquor-cost-percentage': ['over-pouring-bar-losses', 'bar-shrinkage-how-much-are-you-losing'],
   'stop-bartender-theft': ['bartender-theft-signs-prevention', 'bar-shrinkage-how-much-are-you-losing'],
 }

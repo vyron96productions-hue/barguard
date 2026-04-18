@@ -150,7 +150,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Look first at high-value spirits, high-volume pours, and any item with repeated discrepancies. Those are usually the quickest path to finding whether the issue is over-pouring, theft, missed comps, unrecorded waste, or a bad counting habit.',
+        text: 'Look first at high-value spirits, high-volume pours, and any item with repeated discrepancies. Those are usually the quickest path to finding whether the issue is over-pouring, <a href="/stop-bartender-theft">bartender theft</a>, missed comps, unrecorded waste, or a bad counting habit.',
       },
       {
         type: 'h2',
@@ -185,7 +185,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'A good bar inventory count is simple, repeatable, and reviewable. Standardize when you count, how you estimate partials, and how quickly you investigate variance. When those pieces are in place, inventory stops being a chore and starts becoming a control system.',
+        text: 'A good bar inventory count is simple, repeatable, and reviewable. Standardize when you count, how you estimate partials, and how quickly you investigate variance. When those pieces are in place, inventory stops being a chore and starts becoming a control system that feeds directly into your <a href="/bar-profit-tracking">bar profit tracking</a>.',
       },
       {
         type: 'p',
@@ -243,7 +243,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Internal theft — by bartenders, barbacks, or managers — accounts for roughly 35–40% of bar shrinkage according to industry studies. It takes many forms: bottles walked out the back door, drinks rung up as water but poured as liquor, cash pocketed on unrecorded sales, or simply sipping on shift. The challenge is that theft at the bar level is almost impossible to detect without hard data comparing what was sold versus what was consumed.',
+        text: 'Internal theft — by bartenders, barbacks, or managers — accounts for roughly 35–40% of bar shrinkage according to industry studies. It takes many forms: bottles walked out the back door, drinks rung up as water but poured as liquor, cash pocketed on unrecorded sales, or simply sipping on shift. The challenge is that theft at the bar level is almost impossible to detect without hard data comparing what was sold versus what was consumed. That\'s exactly what <a href="/stop-bartender-theft">shift-level theft detection software</a> is built to surface.',
       },
       {
         type: 'h3',
@@ -332,7 +332,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'The bars that get shrinkage under control share one thing: they treat inventory data as seriously as they treat their P&L. Shrinkage isn\'t a moral failing — it\'s a data problem. Give yourself the data, and you can fix it.',
+        text: 'The bars that get shrinkage under control share one thing: they treat inventory data as seriously as they treat their P&L. Shrinkage isn\'t a moral failing — it\'s a data problem. Give yourself the data, and you can fix it. The fastest path is <a href="/bar-inventory-software">bar inventory software</a> that flags expected-vs-actual gaps automatically — then use those numbers to <a href="/reduce-liquor-cost">reduce your liquor cost</a> to a sustainable target.',
       },
       {
         type: 'cta',
@@ -430,7 +430,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Your POS system tells you what was sold — and that data drives expected usage. BarGuard integrates directly with Square, Clover, Toast, and other major POS systems. Without this connection, your variance numbers are always just estimates.',
+        text: 'Your POS system tells you what was sold — and that data drives expected usage. BarGuard integrates directly with Square, Clover, Toast, and other major POS systems. Without this connection, your variance numbers are always just estimates — and patterns like <a href="/stop-bartender-theft">bartender theft</a> remain invisible.',
       },
       {
         type: 'h3',
@@ -522,7 +522,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'A dedicated system like BarGuard automates the comparison between your counts and your sales data, flags variances instantly, and gives you reporting that\'s actually actionable. For any bar doing more than $10,000 a month in liquor sales, the loss-detection value alone almost always outweighs the cost.',
+        text: 'A dedicated system like BarGuard automates the comparison between your counts and your sales data, flags variances instantly, and gives you reporting that\'s actually actionable. For any bar doing more than $10,000 a month in liquor sales, the loss-detection value alone almost always outweighs the cost. <a href="/pricing">See our plans starting at $129/month</a>.',
       },
       {
         type: 'h2',
@@ -534,7 +534,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Ready to start? <a href="/how-to-track-bar-inventory">See exactly how to track bar inventory step-by-step</a> — or start your free trial and see where your losses are coming from.',
+        text: 'Ready to start? <a href="/how-to-track-bar-inventory">See exactly how to track bar inventory step-by-step</a>, learn how to <a href="/reduce-liquor-cost">reduce your liquor cost percentage</a>, or start your free trial and see where your losses are coming from.',
       },
       {
         type: 'cta',
@@ -661,7 +661,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'When bartenders know their section\'s pour cost and variance data, behavior changes. This isn\'t about surveillance — it\'s about accountability. Most over-pouring is unintentional. When staff can see the impact of their pours on the bar\'s numbers, they adjust. Visibility is often more powerful than enforcement.',
+        text: 'When bartenders know their section\'s pour cost and variance data, behavior changes. This isn\'t about surveillance — it\'s about accountability. Most over-pouring is unintentional. When staff can see the impact of their pours on <a href="/bar-profit-tracking">your bar\'s real profit</a>, they adjust. Visibility is often more powerful than enforcement.',
       },
       {
         type: 'callout',
@@ -673,7 +673,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Over-pouring is fixable. It doesn\'t require firing good bartenders or turning your bar into a joyless measuring exercise. It requires data — knowing where your variance is coming from — and targeted action based on what that data shows. The bars that get it under control typically save 3–8% of their liquor revenue, which at any meaningful volume is thousands of dollars a month flowing back to the bottom line.',
+        text: 'Over-pouring is fixable. It doesn\'t require firing good bartenders or turning your bar into a joyless measuring exercise. It requires data — knowing where your variance is coming from — and targeted action based on what that data shows. The bars that get it under control typically save 3–8% of their liquor revenue, which at any meaningful volume is thousands of dollars a month flowing back to the bottom line. Start with <a href="/bar-inventory-software">bar inventory software</a> that tracks pour variance by shift, and use the data to <a href="/reduce-liquor-cost">reduce your liquor cost percentage</a> to where it should be.',
       },
       {
         type: 'cta',
@@ -788,7 +788,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'The old approach to catching theft was cameras, tip-offs, and gut instinct. The modern approach is variance data — and it\'s more reliable, less confrontational, and much harder to argue with.',
+        text: 'The old approach to catching theft was cameras, tip-offs, and gut instinct. The modern approach is variance data — and it\'s more reliable, less confrontational, and much harder to argue with. <a href="/stop-bartender-theft">Shift-based theft detection</a> surfaces patterns that no camera ever would.',
       },
       {
         type: 'p',
@@ -830,7 +830,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'The most effective anti-theft strategy is making theft difficult and detectable before it starts. When your team knows that variance is tracked weekly, that void logs are reviewed, and that inventory is counted by someone other than them — the calculus changes. Most theft is opportunistic, not premeditated. Remove the opportunity.',
+        text: 'The most effective anti-theft strategy is making theft difficult and detectable before it starts. When your team knows that variance is tracked weekly, that void logs are reviewed, and that inventory is counted by someone other than them — the calculus changes. Most theft is opportunistic, not premeditated. Remove the opportunity. <a href="/bar-inventory-software">Bar inventory software</a> that runs shift-based variance automatically is the strongest deterrent you can put in place.',
       },
       {
         type: 'ul',
@@ -853,7 +853,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Bartender theft is an uncomfortable topic, but avoiding it doesn\'t protect your business — it just keeps you in the dark. The good news is that modern inventory tracking makes it easier than ever to see what\'s actually happening at your bar, identify patterns before they become expensive, and address problems with data rather than drama. You don\'t have to run your bar like a prison. You just have to run it like a business.',
+        text: 'Bartender theft is an uncomfortable topic, but avoiding it doesn\'t protect your business — it just keeps you in the dark. The good news is that modern inventory tracking makes it easier than ever to see what\'s actually happening at your bar, identify patterns before they become expensive, and address problems with data rather than drama. Tighter controls also help you <a href="/reduce-liquor-cost">reduce your overall liquor cost</a> — theft and over-pouring almost always compound each other. You don\'t have to run your bar like a prison. You just have to run it like a business.',
       },
       {
         type: 'cta',
@@ -907,7 +907,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Even a small overpour adds up fast. An extra quarter ounce per drink across a busy night can turn into hundreds — or even thousands — in lost revenue.',
+        text: 'Even a small overpour adds up fast. An extra quarter ounce per drink across a busy night can turn into hundreds — or even thousands — in lost revenue. When combined with <a href="/stop-bartender-theft">bartender theft</a>, the gap between expected and actual usage widens even faster.',
       },
       {
         type: 'h3',
@@ -1016,7 +1016,7 @@ export const POSTS: Post[] = [
       },
       {
         type: 'p',
-        text: 'Most bars do not have a pricing problem. They have a control problem. Fix the control and your liquor cost follows.',
+        text: 'Most bars do not have a pricing problem. They have a control problem. Fix the control and your liquor cost follows — and you will see the improvement immediately in your <a href="/bar-profit-tracking">bar profit tracking</a>.',
       },
       {
         type: 'cta',
